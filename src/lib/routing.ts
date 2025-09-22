@@ -9,7 +9,7 @@ export interface LatLng {
 }
 
 const GRAPH_HOPPER_API = import.meta.env.VITE_GRAPHOPPER_API_URL || "https://graphhopper.com/api/1";
-const GRAPH_HOPPER_KEY = import.meta.env.VITE_GRAPHOPPER_API_KEY || "ecaf0074-5a6b-4e05-a880-db7db67f193f";
+const GRAPH_HOPPER_KEY = import.meta.env.VITE_GRAPHOPPER_API_KEY || "";
 
 export const decodePolyline = (encoded: string): [number, number][] => {
   return polyline.decode(encoded).map(([lat, lng]) => [lat, lng]);
