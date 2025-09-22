@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read access to all collections for authenticated users
+    match /{document=**} {
+      allow read: if true; // Public read for demo purposes
+      allow write: if false; // Only allow writes through Cloud Functions
+    }
+  }
+}

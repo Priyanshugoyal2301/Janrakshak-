@@ -43,18 +43,10 @@ const Layout = ({ children }: LayoutProps) => {
       )}
 
       {/* Sidebar */}
-      <div
-        className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white/80 backdrop-blur-xl border-r border-blue-100
-        transform transition-transform duration-300 ease-in-out lg:translate-x-0
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-      `}
-      >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-blue-100">
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-green-100 to-teal-200 text-gray-100 backdrop-blur-xl shadow-lg border-r border-blue-100 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-center justify-between h-16 px-6 border-b border-blue-100 bg-gradient-to-r from-green-100 to-teal-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl flex items-center justify-center">
-              <Droplets className="w-6 h-6 text-white" />
-            </div>
+            <img src="/favicon.svg" alt="JalRakshak Logo" className="w-10 h-10" />
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
                 JalRakshak
@@ -83,8 +75,8 @@ const Layout = ({ children }: LayoutProps) => {
                   flex items-center px-3 py-3 mb-2 rounded-xl transition-all duration-200
                   ${
                     isActive
-                      ? "bg-gradient-to-r from-blue-500 to-teal-500 text-white shadow-lg shadow-blue-200"
-                      : "text-slate-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-teal-50 hover:text-blue-700"
+                      ? "bg-gradient-to-r from-blue-400 to-teal-400 text-gray-800 shadow-md shadow-blue-400/30"
+                      : "text-gray-700 hover:bg-gradient-to-r hover:from-blue-100 hover:to-teal-100 hover:text-gray-800"
                   }
                 `}
                 onClick={() => setSidebarOpen(false)}

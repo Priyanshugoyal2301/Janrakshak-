@@ -24,8 +24,41 @@ const Reports = () => {
   const [reportText, setReportText] = useState("");
   const [location, setLocation] = useState("");
   const [urgency, setUrgency] = useState("moderate");
+  const [uploadedMedia, setUploadedMedia] = useState([]);
+
+  const handleSubmitReport = () => {
+    if (!location || !reportText) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const newReport = {
+      id: Date.now(),
+      user: "You",
+      location,
+      message: reportText,
+      urgency,
+      time: "Just now",
+      media: uploadedMedia,
+      verified: false,
+      likes: 0,
+      comments: 0,
+    };
+
+    const storedReports = JSON.parse(
+      localStorage.getItem("communityReports") || "[]"
+    );
+    storedReports.unshift(newReport);
+    localStorage.setItem("communityReports", JSON.stringify(storedReports));
+
+    setLocation("");
+    setReportText("");
+    setUrgency("moderate");
+    setUploadedMedia([]);
+  };
 
   const communityReports = [
+    ...JSON.parse(localStorage.getItem("communityReports") || "[]"),
     {
       id: 1,
       user: "Sarah M.",
@@ -103,6 +136,24 @@ const Reports = () => {
       default:
         return "text-blue-600 bg-blue-100";
     }
+  };
+
+  const handleMediaUpload = (type) => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept =
+      type === "image"
+        ? "image/*"
+        : type === "video"
+        ? "video/*"
+        : "audio/*";
+    fileInput.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files[0];
+      if (file) {
+        setUploadedMedia((prev) => [...prev, type]);
+      }
+    };
+    fileInput.click();
   };
 
   return (
@@ -205,6 +256,7 @@ const Reports = () => {
                     variant="outline"
                     size="sm"
                     className="flex flex-col items-center py-4"
+                    onClick={() => handleMediaUpload("image")}
                   >
                     <Camera className="w-5 h-5 mb-1" />
                     <span className="text-xs">Photo</span>
@@ -213,6 +265,7 @@ const Reports = () => {
                     variant="outline"
                     size="sm"
                     className="flex flex-col items-center py-4"
+                    onClick={() => handleMediaUpload("video")}
                   >
                     <Video className="w-5 h-5 mb-1" />
                     <span className="text-xs">Video</span>
@@ -221,6 +274,7 @@ const Reports = () => {
                     variant="outline"
                     size="sm"
                     className="flex flex-col items-center py-4"
+                    onClick={() => handleMediaUpload("audio")}
                   >
                     <Mic className="w-5 h-5 mb-1" />
                     <span className="text-xs">Audio</span>
@@ -228,7 +282,10 @@ const Reports = () => {
                 </div>
               </div>
 
-              <Button className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+              <Button
+                className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={handleSubmitReport}
+              >
                 <Send className="w-4 h-4 mr-2" />
                 Submit Report
               </Button>

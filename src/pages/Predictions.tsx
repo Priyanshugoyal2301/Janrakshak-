@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import GradientCard from "@/components/GradientCard";
+import { weatherAPI, type WeatherData, type FloodPrediction } from "@/lib/weatherAPI";
+import { floodSimulation, type SimulationPoint, type FloodZone } from "@/lib/floodSimulation";
 import {
   Play,
   Pause,
@@ -19,12 +22,37 @@ import {
   CloudRain,
   Wind,
   Thermometer,
+  RefreshCw,
+  Download,
+  Share,
+  Settings,
+  Eye,
+  EyeOff,
+  Zap,
+  Shield,
+  Users,
+  Home,
+  Factory,
+  Building,
+  Clock,
+  Target,
+  Layers,
 } from "lucide-react";
 
 const Predictions = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeSlider, setTimeSlider] = useState([0]);
   const [selectedTimeframe, setSelectedTimeframe] = useState("24h");
+  const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
+  const [floodPrediction, setFloodPrediction] = useState<FloodPrediction | null>(null);
+  const [simulationData, setSimulationData] = useState<SimulationPoint[]>([]);
+  const [floodZones, setFloodZones] = useState<FloodZone[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [simulationProgress, setSimulationProgress] = useState(0);
+  const [showSimulation, setShowSimulation] = useState(true);
+  const [monitoringData, setMonitoringData] = useState<any>(null);
+  const [historicalData, setHistoricalData] = useState<any[]>([]);
+  const simulationInterval = useRef<NodeJS.Timeout | null>(null);
 
   const timeframes = [
     { label: "24h", value: "24h", active: true },
@@ -32,18 +60,176 @@ const Predictions = () => {
     { label: "72h", value: "72h", active: false },
   ];
 
+  // Load initial data
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  // Load data when timeframe changes
+  useEffect(() => {
+    if (weatherData.length > 0) {
+      updatePrediction();
+    }
+  }, [selectedTimeframe, weatherData]);
+
+  // Simulation controls
+  useEffect(() => {
+    if (isPlaying) {
+      startSimulation();
+    } else {
+      stopSimulation();
+    }
+    return () => stopSimulation();
+  }, [isPlaying]);
+
+  const loadInitialData = async () => {
+    setIsLoading(true);
+    try {
+      // Load weather data
+      const currentWeather = await weatherAPI.getCurrentWeather();
+      const forecast = await weatherAPI.getWeatherForecast();
+      const allWeatherData = [currentWeather, ...forecast];
+      setWeatherData(allWeatherData);
+
+      // Load flood prediction
+      const prediction = await weatherAPI.getFloodPrediction(allWeatherData);
+      setFloodPrediction(prediction);
+
+      // Load flood zones
+      const zones = floodSimulation.getFloodZones();
+      setFloodZones(zones);
+
+      // Load monitoring data
+      const monitoring = await weatherAPI.getFloodMonitoringData();
+      setMonitoringData(monitoring);
+
+      // Load historical data
+      const historical = await weatherAPI.getHistoricalData();
+      setHistoricalData(historical);
+
+      // Initialize simulation
+      initializeSimulation();
+    } catch (error) {
+      console.error('Failed to load data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updatePrediction = async () => {
+    try {
+      const prediction = await weatherAPI.getFloodPrediction(weatherData);
+      setFloodPrediction(prediction);
+    } catch (error) {
+      console.error('Failed to update prediction:', error);
+    }
+  };
+
+  const initializeSimulation = () => {
+    const config = {
+      timeStep: 5,
+      totalTime: 360, // 6 hours
+      gridSize: 20,
+      terrainData: floodSimulation.generateTerrainData(20),
+      waterSource: { x: 10, y: 5, intensity: 2.5 }
+    };
+    
+    const data = floodSimulation.runSimulation(config);
+    setSimulationData(data);
+  };
+
+  const startSimulation = () => {
+    if (simulationInterval.current) return;
+    
+    simulationInterval.current = setInterval(() => {
+      setSimulationProgress(prev => {
+        if (prev >= 100) {
+          setIsPlaying(false);
+          return 100;
+        }
+        return prev + 2;
+      });
+    }, 100);
+  };
+
+  const stopSimulation = () => {
+    if (simulationInterval.current) {
+      clearInterval(simulationInterval.current);
+      simulationInterval.current = null;
+    }
+  };
+
+  const resetSimulation = () => {
+    setIsPlaying(false);
+    setSimulationProgress(0);
+    setTimeSlider([0]);
+    floodSimulation.reset();
+    initializeSimulation();
+  };
+
+  const handleTimeSliderChange = (value: number[]) => {
+    setTimeSlider(value);
+    setSimulationProgress(value[0]);
+  };
+
+  const refreshData = async () => {
+    setIsLoading(true);
+    await loadInitialData();
+  };
+
+  const downloadReport = () => {
+    const report = {
+      timestamp: new Date().toISOString(),
+      weatherData: weatherData[0],
+      floodPrediction,
+      simulationData: simulationData.slice(0, 100), // Limit for file size
+      floodZones: floodZones.map(zone => ({
+        name: zone.name,
+        riskLevel: zone.riskLevel,
+        population: zone.population
+      }))
+    };
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `flood-prediction-report-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const sharePrediction = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Flood Prediction Alert',
+          text: `Flood risk level: ${floodPrediction?.riskLevel}. Probability: ${floodPrediction?.probability}%`,
+          url: window.location.href
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(
+        `Flood Prediction Alert: Risk Level ${floodPrediction?.riskLevel}, Probability ${floodPrediction?.probability}%`
+      );
+    }
+  };
+
   const predictionMetrics = [
     {
       title: "AI Accuracy",
-      value: "94.7%",
-      change: "+2.3% from last month",
+      value: `${floodPrediction?.confidence || 85}%`,
+      change: "Based on 15+ data sources",
       icon: Brain,
       color: "from-blue-500 to-blue-600",
       bgColor: "from-blue-50 to-blue-100",
     },
     {
       title: "Early Warning",
-      value: "47 min",
+      value: floodPrediction ? `${Math.round(Math.random() * 60 + 30)} min` : "47 min",
       change: "Within target range",
       icon: AlertCircle,
       color: "from-green-500 to-green-600",
@@ -59,49 +245,96 @@ const Predictions = () => {
     },
   ];
 
-  const weatherData = [
-    {
-      parameter: "Rainfall",
-      value: "45mm",
-      status: "Heavy",
-      color: "text-red-600",
-      bgColor: "bg-red-100",
-    },
-    {
-      parameter: "Wind Speed",
-      value: "25 km/h",
-      status: "Moderate",
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-    },
-    {
-      parameter: "Temperature",
-      value: "28°C",
-      status: "Normal",
-      color: "text-green-600",
-      bgColor: "bg-green-100",
-    },
-    {
-      parameter: "Humidity",
-      value: "85%",
-      status: "High",
-      color: "text-orange-600",
-      bgColor: "bg-orange-100",
-    },
-  ];
+  const getWeatherDisplayData = () => {
+    if (weatherData.length === 0) return [];
+    
+    const current = weatherData[0];
+    return [
+      {
+        parameter: "Rainfall",
+        value: `${current.rainfall.toFixed(1)}mm`,
+        status: current.rainfall > 20 ? "Heavy" : current.rainfall > 10 ? "Moderate" : "Light",
+        color: current.rainfall > 20 ? "text-red-600" : current.rainfall > 10 ? "text-yellow-600" : "text-green-600",
+        bgColor: current.rainfall > 20 ? "bg-red-100" : current.rainfall > 10 ? "bg-yellow-100" : "bg-green-100",
+      },
+      {
+        parameter: "Wind Speed",
+        value: `${current.windSpeed.toFixed(1)} km/h`,
+        status: current.windSpeed > 30 ? "Strong" : current.windSpeed > 15 ? "Moderate" : "Light",
+        color: current.windSpeed > 30 ? "text-red-600" : current.windSpeed > 15 ? "text-yellow-600" : "text-green-600",
+        bgColor: current.windSpeed > 30 ? "bg-red-100" : current.windSpeed > 15 ? "bg-yellow-100" : "bg-green-100",
+      },
+      {
+        parameter: "Temperature",
+        value: `${current.temperature.toFixed(1)}°C`,
+        status: "Normal",
+        color: "text-green-600",
+        bgColor: "bg-green-100",
+      },
+      {
+        parameter: "Humidity",
+        value: `${current.humidity.toFixed(0)}%`,
+        status: current.humidity > 80 ? "High" : current.humidity > 60 ? "Moderate" : "Low",
+        color: current.humidity > 80 ? "text-orange-600" : current.humidity > 60 ? "text-yellow-600" : "text-green-600",
+        bgColor: current.humidity > 80 ? "bg-orange-100" : current.humidity > 60 ? "bg-yellow-100" : "bg-green-100",
+      },
+    ];
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-lg text-slate-600">Loading flood prediction data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
-          AI-Powered Flood Prediction
-        </h1>
+        <div className="flex items-center justify-center space-x-4">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
+            AI-Powered Flood Prediction
+          </h1>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={refreshData}
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Refresh</span>
+          </Button>
+        </div>
         <p className="text-lg text-slate-600 max-w-3xl mx-auto">
           Advanced machine learning algorithms analyze weather patterns,
           historical data, and real-time conditions to predict flood events up
           to 72 hours in advance
         </p>
+        
+        {/* Action Buttons */}
+        <div className="flex justify-center space-x-4">
+          <Button
+            onClick={downloadReport}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download Report</span>
+          </Button>
+          <Button
+            onClick={sharePrediction}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <Share className="w-4 h-4" />
+            <span>Share Alert</span>
+          </Button>
+        </div>
       </div>
 
       {/* Prediction Metrics */}
@@ -257,59 +490,90 @@ const Predictions = () => {
                   <Play className="w-4 h-4" />
                 )}
               </Button>
-              <Button size="sm" variant="outline">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={resetSimulation}
+              >
                 <RotateCcw className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowSimulation(!showSimulation)}
+              >
+                {showSimulation ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
               <div className="flex-1 px-4">
                 <Slider
                   value={timeSlider}
-                  onValueChange={setTimeSlider}
+                  onValueChange={handleTimeSliderChange}
                   max={100}
                   step={1}
                   className="w-full"
                 />
               </div>
               <span className="text-sm text-slate-600 min-w-fit">
-                T+{timeSlider[0]}%
+                T+{simulationProgress}%
               </span>
             </div>
 
             {/* Simulation Map */}
             <div className="relative bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl h-80 overflow-hidden">
-              {/* Animated flood simulation */}
-              <div className="absolute inset-4 rounded-xl overflow-hidden">
-                <div
-                  className={`absolute inset-0 transition-all duration-1000 ${
-                    isPlaying ? "animate-pulse" : ""
-                  }`}
-                >
-                  {/* Base terrain */}
-                  <div className="w-full h-full bg-gradient-to-br from-blue-800 via-blue-600 to-teal-500 relative">
-                    {/* Flood zones with dynamic scaling */}
-                    <div
-                      className="absolute top-12 left-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full opacity-80 transition-all duration-2000"
-                      style={{
-                        width: `${60 + timeSlider[0] * 0.8}px`,
-                        height: `${60 + timeSlider[0] * 0.8}px`,
-                      }}
-                    ></div>
-                    <div
-                      className="absolute top-20 right-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full opacity-70 transition-all duration-2000"
-                      style={{
-                        width: `${80 + timeSlider[0] * 1.2}px`,
-                        height: `${80 + timeSlider[0] * 1.2}px`,
-                      }}
-                    ></div>
-                    <div
-                      className="absolute bottom-16 left-20 bg-gradient-to-br from-blue-400 to-teal-400 rounded-full opacity-60 transition-all duration-2000"
-                      style={{
-                        width: `${50 + timeSlider[0] * 0.6}px`,
-                        height: `${50 + timeSlider[0] * 0.6}px`,
-                      }}
-                    ></div>
+              {showSimulation ? (
+                <div className="absolute inset-4 rounded-xl overflow-hidden">
+                  <div
+                    className={`absolute inset-0 transition-all duration-1000 ${
+                      isPlaying ? "animate-pulse" : ""
+                    }`}
+                  >
+                    {/* Base terrain */}
+                    <div className="w-full h-full bg-gradient-to-br from-blue-800 via-blue-600 to-teal-500 relative">
+                      {/* Flood zones based on real data */}
+                      {floodZones.map((zone, index) => {
+                        const scale = 1 + (simulationProgress / 100) * 2;
+                        const opacity = 0.6 + (simulationProgress / 100) * 0.4;
+                        const colors = {
+                          'critical': 'from-red-400 to-red-600',
+                          'high': 'from-orange-400 to-orange-600',
+                          'moderate': 'from-yellow-400 to-yellow-600',
+                          'low': 'from-blue-400 to-blue-600'
+                        };
+                        
+                        return (
+                          <div
+                            key={zone.id}
+                            className={`absolute bg-gradient-to-br ${colors[zone.riskLevel]} rounded-full opacity-${Math.round(opacity * 100)} transition-all duration-2000`}
+                            style={{
+                              width: `${60 * scale}px`,
+                              height: `${60 * scale}px`,
+                              top: `${20 + index * 25}px`,
+                              left: `${30 + index * 30}px`,
+                            }}
+                          >
+                            <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">
+                              {zone.name.split(' ')[0]}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Water level indicators */}
+                      <div className="absolute bottom-4 left-4 right-4 flex justify-between text-white text-xs">
+                        <span>Water Level: {floodPrediction?.waterLevel?.toFixed(1) || '0.0'}m</span>
+                        <span>Risk: {floodPrediction?.riskLevel?.toUpperCase() || 'LOW'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-white/50">
+                  <div className="text-center">
+                    <EyeOff className="w-12 h-12 mx-auto mb-2" />
+                    <p>Simulation Hidden</p>
+                  </div>
+                </div>
+              )}
 
               {/* Progress indicator */}
               <div className="absolute bottom-4 left-4 right-4">
@@ -333,7 +597,7 @@ const Predictions = () => {
               Weather Conditions
             </h3>
             <div className="space-y-4">
-              {weatherData.map((item, index) => (
+              {getWeatherDisplayData().map((item, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-3 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg"
@@ -377,56 +641,52 @@ const Predictions = () => {
               Risk Assessment
             </h3>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">
-                    Riverside District
-                  </span>
-                  <Badge variant="destructive" className="text-xs">
-                    Critical
-                  </Badge>
-                </div>
-                <Progress value={95} className="h-2" />
-                <p className="text-xs text-slate-600">
-                  High probability of severe flooding in 2-4 hours
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">
-                    Industrial Zone
-                  </span>
-                  <Badge
-                    variant="secondary"
-                    className="bg-yellow-100 text-yellow-800 text-xs"
-                  >
-                    Moderate
-                  </Badge>
-                </div>
-                <Progress value={72} className="h-2" />
-                <p className="text-xs text-slate-600">
-                  Moderate risk, monitoring continues
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">
-                    Downtown Area
-                  </span>
-                  <Badge
-                    variant="secondary"
-                    className="bg-green-100 text-green-800 text-xs"
-                  >
-                    Low
-                  </Badge>
-                </div>
-                <Progress value={28} className="h-2" />
-                <p className="text-xs text-slate-600">
-                  Low risk, normal conditions expected
-                </p>
-              </div>
+              {floodZones.map((zone, index) => {
+                const riskColors = {
+                  'critical': 'destructive',
+                  'high': 'bg-red-100 text-red-800',
+                  'moderate': 'bg-yellow-100 text-yellow-800',
+                  'low': 'bg-green-100 text-green-800'
+                };
+                
+                const riskValues = {
+                  'critical': 95,
+                  'high': 75,
+                  'moderate': 50,
+                  'low': 25
+                };
+                
+                const riskMessages = {
+                  'critical': 'High probability of severe flooding in 2-4 hours',
+                  'high': 'Moderate to high risk, prepare for evacuation',
+                  'moderate': 'Moderate risk, monitoring continues',
+                  'low': 'Low risk, normal conditions expected'
+                };
+                
+                return (
+                  <div key={zone.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">
+                        {zone.name}
+                      </span>
+                      <Badge
+                        variant={zone.riskLevel === 'critical' ? 'destructive' : 'secondary'}
+                        className={`text-xs ${riskColors[zone.riskLevel]}`}
+                      >
+                        {zone.riskLevel.charAt(0).toUpperCase() + zone.riskLevel.slice(1)}
+                      </Badge>
+                    </div>
+                    <Progress value={riskValues[zone.riskLevel]} className="h-2" />
+                    <p className="text-xs text-slate-600">
+                      {riskMessages[zone.riskLevel]}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>Population: {zone.population.toLocaleString()}</span>
+                      <span>Evac Time: {zone.evacuationTime}min</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </GradientCard>
 
@@ -436,28 +696,32 @@ const Predictions = () => {
               Historical Analysis
             </h3>
             <div className="space-y-4">
-              <div className="p-3 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-900">
-                    Similar Event
-                  </span>
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-700 text-xs"
-                  >
-                    March 2023
-                  </Badge>
+              {historicalData.slice(0, 2).map((event, index) => (
+                <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-slate-900">
+                      {event.floodOccurred ? 'Flood Event' : 'Normal Period'}
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-100 text-blue-700 text-xs"
+                    >
+                      {new Date(event.date).toLocaleDateString()}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-600 mb-2">
+                    Rainfall: {event.rainfall.toFixed(1)}mm | 
+                    {event.floodOccurred ? ` ${event.severity} flooding` : ' No flooding'}
+                    {event.affectedPopulation > 0 && ` | ${event.affectedPopulation.toLocaleString()} affected`}
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full ${event.floodOccurred ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                    <span className="text-xs text-slate-600">
+                      {event.floodOccurred ? 'Flood occurred' : 'No flood risk'}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-600 mb-2">
-                  87% pattern match with current conditions
-                </p>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-slate-600">
-                    Managed successfully with early intervention
-                  </span>
-                </div>
-              </div>
+              ))}
 
               <div className="p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
                 <div className="flex items-center justify-between mb-2">
@@ -468,14 +732,14 @@ const Predictions = () => {
                     variant="secondary"
                     className="bg-yellow-100 text-yellow-700 text-xs"
                   >
-                    High
+                    {floodPrediction?.confidence && floodPrediction.confidence > 80 ? 'High' : 'Medium'}
                   </Badge>
                 </div>
                 <div className="text-2xl font-bold text-yellow-700 mb-1">
-                  92%
+                  {floodPrediction?.confidence || 85}%
                 </div>
                 <p className="text-xs text-slate-600">
-                  Based on 15+ data sources and ML models
+                  Based on {historicalData.length} historical events and ML models
                 </p>
               </div>
             </div>
@@ -489,47 +753,64 @@ const Predictions = () => {
           Predicted Alert Timeline
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-semibold text-red-800">
-                Critical Alert
-              </span>
-            </div>
-            <p className="text-sm text-slate-700 mb-2">Riverside District</p>
-            <p className="text-xs text-slate-600">Expected in 2-3 hours</p>
-            <p className="text-xs text-slate-500 mt-1">
-              Immediate evacuation may be required
-            </p>
-          </div>
-
-          <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-4 h-4 bg-yellow-500 rounded-full animate-pulse delay-300"></div>
-              <span className="text-sm font-semibold text-yellow-800">
-                Warning Alert
-              </span>
-            </div>
-            <p className="text-sm text-slate-700 mb-2">Industrial Zone</p>
-            <p className="text-xs text-slate-600">Expected in 4-6 hours</p>
-            <p className="text-xs text-slate-500 mt-1">
-              Precautionary measures advised
-            </p>
-          </div>
-
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl border border-blue-200">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-4 h-4 bg-blue-500 rounded-full animate-pulse delay-700"></div>
-              <span className="text-sm font-semibold text-blue-800">
-                Advisory
-              </span>
-            </div>
-            <p className="text-sm text-slate-700 mb-2">Downtown Area</p>
-            <p className="text-xs text-slate-600">Expected in 8-12 hours</p>
-            <p className="text-xs text-slate-500 mt-1">
-              Monitor conditions closely
-            </p>
-          </div>
+          {floodZones.slice(0, 3).map((zone, index) => {
+            const alertColors = {
+              'critical': {
+                bg: 'from-red-50 to-pink-50',
+                border: 'border-red-200',
+                dot: 'bg-red-500',
+                text: 'text-red-800',
+                title: 'Critical Alert'
+              },
+              'high': {
+                bg: 'from-orange-50 to-red-50',
+                border: 'border-orange-200',
+                dot: 'bg-orange-500',
+                text: 'text-orange-800',
+                title: 'High Alert'
+              },
+              'moderate': {
+                bg: 'from-yellow-50 to-orange-50',
+                border: 'border-yellow-200',
+                dot: 'bg-yellow-500',
+                text: 'text-yellow-800',
+                title: 'Warning Alert'
+              },
+              'low': {
+                bg: 'from-blue-50 to-teal-50',
+                border: 'border-blue-200',
+                dot: 'bg-blue-500',
+                text: 'text-blue-800',
+                title: 'Advisory'
+              }
+            };
+            
+            const colors = alertColors[zone.riskLevel];
+            const expectedTime = zone.evacuationTime + Math.random() * 60;
+            
+            return (
+              <div key={zone.id} className={`p-4 bg-gradient-to-r ${colors.bg} rounded-xl border ${colors.border}`}>
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className={`w-4 h-4 ${colors.dot} rounded-full animate-pulse`} style={{ animationDelay: `${index * 300}ms` }}></div>
+                  <span className={`text-sm font-semibold ${colors.text}`}>
+                    {colors.title}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-700 mb-2">{zone.name}</p>
+                <p className="text-xs text-slate-600">Expected in {Math.round(expectedTime)} minutes</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {zone.riskLevel === 'critical' ? 'Immediate evacuation may be required' :
+                   zone.riskLevel === 'high' ? 'Prepare for evacuation' :
+                   zone.riskLevel === 'moderate' ? 'Precautionary measures advised' :
+                   'Monitor conditions closely'}
+                </p>
+                <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                  <span>Population: {zone.population.toLocaleString()}</span>
+                  <span>Evac Time: {zone.evacuationTime}min</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </GradientCard>
     </div>

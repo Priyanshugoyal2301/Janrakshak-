@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import GradientCard from "@/components/GradientCard";
-import MapComponent from "@/components/Map";
+import EvacuationPlanner from "@/components/EvacuationPlanner";
 import Notch from "@/components/Notch";
 import ImageAnalysis from "@/components/ImageAnalysis";
 import {
@@ -68,6 +68,9 @@ const Planning = () => {
       occupied: 245,
       amenities: ["Food", "Medical", "WiFi"],
       status: "available",
+      contact: "+91-98765-43210",
+      lat: 30.7333,
+      lon: 76.7794,
     },
     {
       name: "High School Gymnasium",
@@ -76,6 +79,9 @@ const Planning = () => {
       occupied: 180,
       amenities: ["Food", "Restrooms"],
       status: "available",
+      contact: "+91-98765-43211",
+      lat: 30.7500,
+      lon: 76.8000,
     },
     {
       name: "Sports Complex",
@@ -84,6 +90,9 @@ const Planning = () => {
       occupied: 650,
       amenities: ["Food", "Medical", "WiFi", "Parking"],
       status: "near_capacity",
+      contact: "+91-98765-43212",
+      lat: 30.7200,
+      lon: 76.7500,
     },
     {
       name: "Church Hall",
@@ -92,6 +101,9 @@ const Planning = () => {
       occupied: 195,
       amenities: ["Food", "Restrooms"],
       status: "full",
+      contact: "+91-98765-43213",
+      lat: 30.7600,
+      lon: 76.7200,
     },
   ];
 
@@ -230,10 +242,10 @@ const Planning = () => {
                   </Badge>
                 </div>
 
-                {/* Google Map */}
+                {/* Evacuation Planner Map */}
                 <div className="relative bg-gradient-to-br from-slate-100 to-blue-100 rounded-xl h-96 overflow-hidden">
-                  <MapComponent />
-                  <Notch text="Live Weather Data" />
+                  <EvacuationPlanner />
+                  <Notch text="Flood-Aware Routing" />
                 </div>
 
                 {/* Route Legend */}
@@ -315,15 +327,24 @@ const Planning = () => {
                   Quick Actions
                 </h3>
                 <div className="space-y-3">
-                  <Button className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
+                    onClick={() => window.open('tel:108', '_self')}
+                  >
                     <AlertTriangle className="w-4 h-4 mr-2" />
                     Activate Emergency Protocol
                   </Button>
-                  <Button className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white"
+                    onClick={() => window.location.reload()}
+                  >
                     <Route className="w-4 h-4 mr-2" />
                     Update Route Status
                   </Button>
-                  <Button className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                    onClick={() => window.open('tel:+91-98765-43210', '_self')}
+                  >
                     <Phone className="w-4 h-4 mr-2" />
                     Contact Traffic Control
                   </Button>
@@ -386,11 +407,23 @@ const Planning = () => {
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => window.open(`tel:${shelter.contact || '+91-98765-43210'}`, '_self')}
+                      >
                         <Users className="w-3 h-3 mr-1" />
-                        Manage
+                        Contact
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => {
+                          window.open(`https://www.google.com/maps?q=${shelter.lat},${shelter.lon}`, '_blank');
+                        }}
+                      >
                         <MapPin className="w-3 h-3 mr-1" />
                         Directions
                       </Button>
