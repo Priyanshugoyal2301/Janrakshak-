@@ -1,6 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getFunctions, Functions, httpsCallable } from "firebase/functions";
+import { getAuth, Auth, GoogleAuthProvider } from "firebase/auth";
 
 export interface Shelter {
   shelter_id: string;
@@ -14,7 +15,7 @@ export interface Shelter {
 
 export interface RoadSegment {
   road_id: string;
-  geojson: GeoJSON.Feature<GeoJSON.LineString>;
+  geojson: any; // GeoJSON LineString feature
   status: "safe" | "blocked" | "risky";
   last_updated: number;
 }
@@ -39,16 +40,23 @@ export interface RouteResult {
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;
 let functions: Functions | undefined;
+let auth: Auth | undefined;
+
+// Google Auth Provider
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
 
 export const getFirebase = () => {
   if (!app) {
     const config = {
-      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-      appId: import.meta.env.VITE_FIREBASE_APP_ID,
+      apiKey: "AIzaSyBiqwcZgRvNBq3liSY7fHYnfEIgXLSkEys",
+      authDomain: "jalrakshak-f1d6a.firebaseapp.com",
+      projectId: "jalrakshak-f1d6a",
+      storageBucket: "jalrakshak-f1d6a.firebasestorage.app",
+      messagingSenderId: "170302508520",
+      appId: "1:170302508520:web:f6a229ce2c7e368bbd285d",
+      measurementId: "G-LY5SLJLZT4"
     } as const;
 
     if (!getApps().length) {
@@ -58,8 +66,9 @@ export const getFirebase = () => {
     }
     db = getFirestore(app);
     functions = getFunctions(app);
+    auth = getAuth(app);
   }
-  return { app: app!, db: db!, functions: functions! };
+  return { app: app!, db: db!, functions: functions!, auth: auth! };
 };
 
 // Cloud Functions

@@ -3,8 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import GradientCard from "@/components/GradientCard";
-import MapComponent from "@/components/Map"; // Import the new MapComponent
+import MapComponent from "@/components/Map";
 import Notch from "@/components/Notch";
+import { useAuth } from "@/contexts/AuthContext";
+import { getLocationData, getNearbyReports } from "@/lib/supabase";
+import { getLocationWithDetails, type LocationInfo } from "@/lib/locationService";
 import {
   Droplets,
   AlertTriangle,
@@ -23,16 +26,70 @@ import {
   ArrowUp,
   ArrowDown,
   BarChart3,
+  Navigation,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Dashboard = () => {
+  const { userProfile } = useAuth();
+  const navigate = useNavigate();
+  
+  // Location-based state
+  const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [localReports, setLocalReports] = useState(0);
+  const [localRiskLevel, setLocalRiskLevel] = useState<'safe' | 'warning' | 'critical'>('safe');
+  
+  // Existing state
   const [waterLevel, setWaterLevel] = useState(65);
   const [activeAlerts, setActiveAlerts] = useState(5);
   const [protectedAreas, setProtectedAreas] = useState(1247);
   const [watchZones, setWatchZones] = useState(23);
   const [communityMembers, setCommunityMembers] = useState(89456);
-  const navigate = useNavigate();
+
+  // Load user location and local data
+  useEffect(() => {
+    loadLocationData();
+  }, []);
+
+  const loadLocationData = async () => {
+    setLocationLoading(true);
+    try {
+      const location = await getLocationWithDetails();
+      setUserLocation(location);
+      
+      // Load location-based data
+      if (location.state) {
+        const locationData = await getLocationData(location.state, location.district);
+        if (locationData.length > 0) {
+          const currentData = locationData[0];
+          setWaterLevel(currentData.current_water_level || 65);
+          setLocalRiskLevel(currentData.risk_level || 'safe');
+        }
+        
+        // Load nearby reports
+        const reports = await getNearbyReports(location.coords.lat, location.coords.lng, 50);
+        setLocalReports(reports.length);
+        setActiveAlerts(reports.filter(r => r.severity === 'critical' || r.severity === 'high').length);
+      }
+      
+      toast.success(`Location detected: ${location.district}, ${location.state}`);
+    } catch (error) {
+      console.error('Error loading location data:', error);
+      // Use default Punjab location
+      setUserLocation({
+        coords: { lat: 30.9010, lng: 75.8573 },
+        address: "Punjab, India",
+        state: "Punjab",
+        district: "",
+        country: "India"
+      });
+    } finally {
+      setLocationLoading(false);
+    }
+  };
 
   // Simulate real-time data updates
   useEffect(() => {
@@ -77,7 +134,12 @@ const Dashboard = () => {
   ];
 
   const waterLevelGauges = [
-    { city: "Amritsar", level: 85, status: "Heavy", color: "bg-red-500" },
+    { 
+      city: userLocation?.district || "Amritsar", 
+      level: waterLevel, 
+      status: localRiskLevel === 'critical' ? "Critical" : localRiskLevel === 'warning' ? "Warning" : "Normal", 
+      color: localRiskLevel === 'critical' ? "bg-red-500" : localRiskLevel === 'warning' ? "bg-yellow-500" : "bg-green-500"
+    },
     { city: "Ludhiana", level: 62, status: "Moderate", color: "bg-yellow-500" },
     { city: "Jalandhar", level: 35, status: "Light", color: "bg-green-500" },
     { city: "Patiala", level: 15, status: "Minimal", color: "bg-green-400" },
@@ -88,10 +150,40 @@ const Dashboard = () => {
       {/* Hero Section */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-teal-500 to-green-400 p-8 text-white">
         <div className="relative z-10 text-center space-y-6">
-          <h1 className="text-5xl font-bold">Real-Time Flood Monitoring</h1>
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <h1 className="text-5xl font-bold">Real-Time Flood Monitoring</h1>
+            {locationLoading && <Loader2 className="w-6 h-6 animate-spin" />}
+          </div>
+          
+          {/* Location Banner */}
+          {userLocation && (
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-w-md mx-auto">
+              <div className="flex items-center justify-center space-x-2 text-sm">
+                <MapPin className="w-4 h-4" />
+                <span>Monitoring: {userLocation.district || userLocation.state}, {userLocation.state}</span>
+              </div>
+              <div className="flex items-center justify-center space-x-4 mt-2 text-xs">
+                <Badge className={`${localRiskLevel === 'critical' ? 'bg-red-500' : localRiskLevel === 'warning' ? 'bg-yellow-500' : 'bg-green-500'} text-white`}>
+                  {localRiskLevel.toUpperCase()} RISK
+                </Badge>
+                <span>{localReports} Local Reports</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={loadLocationData}
+                  className="text-white hover:bg-white/20 p-1"
+                >
+                  <Navigation className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+          
           <p className="text-xl opacity-90 max-w-3xl mx-auto">
-            Advanced AI-powered flood prediction and early warning system
-            protecting communities across India with precision and care
+            {userLocation 
+              ? `Advanced AI-powered flood prediction and early warning system protecting your community in ${userLocation.state} with precision and care`
+              : "Advanced AI-powered flood prediction and early warning system protecting communities across India with precision and care"
+            }
           </p>
 
           {/* Hero Stats */}
@@ -483,7 +575,16 @@ const Dashboard = () => {
               View Flood Predictions
             </Button>
             <Button
-              onClick={() => console.log('Calling emergency helpline...')}
+              onClick={() => {
+                // Check if device supports phone calls
+                if (navigator.userAgent.match(/iPhone|Android/i)) {
+                  window.open('tel:108', '_self');
+                } else {
+                  // Show emergency contact information for desktop
+                  window.open('https://www.dial108.com/', '_blank');
+                }
+                console.log('Emergency helpline activated');
+              }}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 h-12"
             >
               <Phone className="w-5 h-5 mr-3" />
