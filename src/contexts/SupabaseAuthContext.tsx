@@ -85,14 +85,14 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({ chil
       console.log('Admin status check result:', { data, error });
 
       if (error) {
-        console.error('Error checking admin status:', error);
+        console.error('Error checking admin status:', error?.message || JSON.stringify(error));
         // If table doesn't exist or user doesn't have profile, assume admin for Supabase users
         setIsAdmin(true);
       } else {
         setIsAdmin(data?.role === 'admin');
       }
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error('Error checking admin status:', error?.message || JSON.stringify(error));
       // If there's any error, assume admin for Supabase users
       setIsAdmin(true);
     }

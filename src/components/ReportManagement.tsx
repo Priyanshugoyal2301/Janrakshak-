@@ -46,7 +46,7 @@ const ReportManagement = () => {
     try {
       const { data, error } = await supabase
         .from('flood_reports')
-        .select('*, user_profiles(full_name)');
+        .select('*');
       if (error) throw error;
       setReports(data);
     } catch (error) {
@@ -132,7 +132,7 @@ const ReportManagement = () => {
                     {report.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{report.user_profiles.full_name}</TableCell>
+                <TableCell>{report.user_name}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -145,11 +145,11 @@ const ReportManagement = () => {
                       <DropdownMenuItem onClick={() => updateReportStatus(report.id, 'verified')}>
                         Verify
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateReportStatus(report.id, 'investigating')}>
-                        Investigate
-                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => updateReportStatus(report.id, 'resolved')}>
                         Resolve
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateReportStatus(report.id, 'false_alarm')}>
+                        Mark False Alarm
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => deleteReport(report.id)} className="text-red-500">
                         Delete

@@ -44,7 +44,9 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('user_profiles').select('*');
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email, role, last_sign_in_at, created_at');
       if (error) throw error;
       setUsers(data);
     } catch (error) {
@@ -111,9 +113,16 @@ const UserManagement = () => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={user.is_active ? 'success' : 'secondary'}>
-                    {user.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
+                  {(() => {
+                    const last = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
+                    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+                    const isActive = last && (Date.now() - last) <= THIRTY_DAYS_MS;
+                    return (
+                      <Badge variant={isActive ? 'success' : 'secondary'}>
+                        {isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
