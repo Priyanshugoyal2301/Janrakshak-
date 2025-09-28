@@ -9,6 +9,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { currentUser, loading } = useAuth();
   const location = useLocation();
+  console.log('ProtectedRoute currentUser:', currentUser);
 
   if (loading) {
     return (

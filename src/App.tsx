@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
+import { SupabaseAuthProviderMinimal } from "@/contexts/SupabaseAuthContextMinimal";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
@@ -11,6 +12,11 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import SupabaseAuth from "./pages/SupabaseAuth";
 import Admin from "./pages/Admin";
+import AdminTest from "./pages/AdminTest";
+import AdminDebug from "./pages/AdminDebug";
+import AdminSimple from "./pages/AdminSimple";
+import AdminBasic from "./pages/AdminBasic";
+import AdminMinimalTest from "./pages/AdminMinimalTest";
 import Index from "./pages/Index";
 import Predictions from "./pages/Predictions";
 import Alerts from "./pages/Alerts";
@@ -43,9 +49,35 @@ const App = () => (
               <Route
                 path="/admin"
                 element={
-                  <AdminProtectedRoute>
-                    <Admin />
-                  </AdminProtectedRoute>
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <Admin />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin-test"
+                element={<AdminTest />}
+              />
+              <Route
+                path="/admin-debug"
+                element={<AdminDebug />}
+              />
+              <Route
+                path="/admin-simple"
+                element={<AdminSimple />}
+              />
+              <Route
+                path="/admin-basic"
+                element={<AdminBasic />}
+              />
+              <Route
+                path="/admin-minimal-test"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminMinimalTest />
+                  </SupabaseAuthProviderMinimal>
                 }
               />
               

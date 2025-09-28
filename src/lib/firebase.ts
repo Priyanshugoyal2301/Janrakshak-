@@ -82,4 +82,13 @@ export const getNearestShelterFunction = () => {
   return httpsCallable(functions, 'getNearestShelter');
 };
 
+// Admin helper functions
+export const isAdmin = (userEmail?: string | null): boolean => {
+  const adminEmails = ["admin@jalrakshak.com"];
+  return userEmail ? adminEmails.includes(userEmail) : false;
+};
 
+export const getCurrentUserEmail = (): string | null => {
+  const { auth } = getFirebase();
+  return auth.currentUser?.email || null;
+};

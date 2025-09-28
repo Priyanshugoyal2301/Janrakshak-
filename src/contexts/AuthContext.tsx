@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { getFirebase, googleProvider } from '@/lib/firebase';
+import { syncFirebaseUserToSupabase, updateUserLastLogin } from '@/lib/userSync';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -116,6 +117,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       const result = await signInWithEmailAndPassword(auth, email, password);
       await createUserProfile(result.user);
+      
+      // Sync user to Supabase
+      try {
+        await syncFirebaseUserToSupabase(result.user, 'user');
+        await updateUserLastLogin(result.user.uid);
+      } catch (syncError) {
+        console.error('Error syncing user to Supabase:', syncError);
+        // Don't fail login if sync fails
+      }
+      
       toast.success('Welcome back!');
     } catch (error: any) {
       console.error('Login error:', error);
@@ -132,6 +143,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName });
       await createUserProfile(result.user, { displayName });
+      
+      // Sync user to Supabase
+      try {
+        await syncFirebaseUserToSupabase(result.user, 'user');
+      } catch (syncError) {
+        console.error('Error syncing user to Supabase:', syncError);
+        // Don't fail registration if sync fails
+      }
+      
       toast.success('Account created successfully!');
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -147,6 +167,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       const result = await signInWithPopup(auth, googleProvider);
       await createUserProfile(result.user);
+      
+      // Sync user to Supabase
+      try {
+        await syncFirebaseUserToSupabase(result.user, 'user');
+        await updateUserLastLogin(result.user.uid);
+      } catch (syncError) {
+        console.error('Error syncing user to Supabase:', syncError);
+        // Don't fail login if sync fails
+      }
+      
       toast.success('Successfully signed in with Google!');
     } catch (error: any) {
       console.error('Google login error:', error);

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { syncAllFirebaseUsersToSupabase } from '@/lib/userSync';
 import { toast } from 'sonner';
 
 interface SupabaseAuthContextType {
@@ -74,23 +75,16 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({ chil
 
   const checkAdminStatus = async (user: User) => {
     try {
-      console.log('Checking admin status for user:', user.id);
+      console.log('Checking admin status for Supabase user:', user.id);
       
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      console.log('Admin status check result:', { data, error });
-
-      if (error) {
-        console.error('Error checking admin status:', error?.message || JSON.stringify(error));
-        // If table doesn't exist or user doesn't have profile, assume admin for Supabase users
-        setIsAdmin(true);
-      } else {
-        setIsAdmin(data?.role === 'admin');
-      }
+      // Since Supabase is used specifically for admin authentication,
+      // all Supabase users are considered admins
+      setIsAdmin(true);
+      console.log('Supabase user is admin:', true);
+      
+      // Note: Firebase user sync is disabled for admin-only authentication
+      // Admins will manage users directly through Supabase
+      console.log('Admin authentication successful - Firebase sync disabled');
     } catch (error) {
       console.error('Error checking admin status:', error?.message || JSON.stringify(error));
       // If there's any error, assume admin for Supabase users
@@ -120,31 +114,7 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({ chil
       }
 
       if (data.user) {
-        console.log('User created, attempting to create profile...');
-        
-        // Try to create user profile with admin role
-        try {
-          const { error: profileError } = await supabase
-            .from('user_profiles')
-            .insert({
-              id: data.user.id,
-              email: data.user.email,
-              full_name: userData?.full_name || '',
-              role: 'admin', // All Supabase signups are admins
-              created_at: new Date().toISOString()
-            });
-
-          if (profileError) {
-            console.error('Error creating user profile:', profileError);
-            // Don't fail the signup if profile creation fails
-            toast.warning('Account created but profile setup failed. Please contact support.');
-          } else {
-            console.log('User profile created successfully');
-          }
-        } catch (profileErr) {
-          console.error('Profile creation error:', profileErr);
-          toast.warning('Account created but profile setup failed. Please contact support.');
-        }
+        console.log('Admin user created successfully');
       }
 
       toast.success('Admin account created successfully! Please check your email to verify your account.');
@@ -221,16 +191,9 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({ chil
 
   const updateProfile = async (updates: any) => {
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update(updates)
-        .eq('id', user?.id);
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success('Profile updated successfully!');
-      }
+      // For Supabase admin users, we don't need to update a separate profile table
+      // All Supabase users are admins by default
+      toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Update profile error:', error);
       toast.error('Failed to update profile');

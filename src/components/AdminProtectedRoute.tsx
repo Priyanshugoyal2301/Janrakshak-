@@ -1,28 +1,30 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseAuthMinimal } from '@/contexts/SupabaseAuthContextMinimal';
 import { Shield, Loader2, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) => {
-  const { user, loading, isAdmin } = useSupabaseAuth();
+  const { user, loading, isAdmin } = useSupabaseAuthMinimal();
   const location = useLocation();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl flex items-center justify-center mx-auto animate-pulse">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
-          <div className="space-y-2">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
-            <p className="text-slate-600">Loading Admin Panel...</p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
+            </div>
+            <CardTitle>Loading Admin Panel</CardTitle>
+            <CardDescription>Please wait while we verify your access...</CardDescription>
+          </CardHeader>
+        </Card>
       </div>
     );
   }
@@ -33,27 +35,27 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center">
-        <div className="text-center space-y-6 max-w-md mx-auto p-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-10 h-10 text-white" />
-          </div>
-          <div className="space-y-4">
-            <h1 className="text-2xl font-bold text-slate-900">Access Denied</h1>
-            <p className="text-slate-600">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-10 h-10 text-white" />
+            </div>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>
               You don't have permission to access the admin panel. 
               Please contact an administrator if you believe this is an error.
-            </p>
-            <div className="pt-4">
-              <button
-                onClick={() => window.history.back()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Go Back
-              </button>
-            </div>
-          </div>
-        </div>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button asChild className="w-full">
+              <a href="/admin/signin">
+                <Shield className="w-4 h-4 mr-2" />
+                Back to Admin Sign In
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

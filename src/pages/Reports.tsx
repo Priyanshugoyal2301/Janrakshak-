@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import GradientCard from "@/components/GradientCard";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase, submitFloodReport, uploadImage, getNearbyReports, type FloodReport } from "@/lib/supabase";
+import { supabase, submitFloodReport, uploadImage, getUserReports, type FloodReport } from "@/lib/supabase";
+import { getFirebase } from '@/lib/firebase';
 import { getCurrentLocation, getLocationWithDetails, searchLocation, type LocationInfo } from "@/lib/locationService";
 import {
   Camera,
@@ -61,10 +62,10 @@ const Reports = () => {
   }, []);
 
   useEffect(() => {
-    if (userLocation) {
-      loadNearbyReports();
+    if (currentUser) {
+      loadUserReports();
     }
-  }, [userLocation]);
+  }, [currentUser]);
 
   const loadUserLocation = async () => {
     try {
@@ -87,20 +88,25 @@ const Reports = () => {
     }
   };
 
-  const loadNearbyReports = async () => {
-    if (!userLocation) return;
+  const loadUserReports = async () => {
+    if (!currentUser) return;
     
     setLoading(true);
     try {
-      const nearbyReports = await getNearbyReports(
-        userLocation.coords.lat,
-        userLocation.coords.lng,
-        100 // 100km radius
-      );
-      setReports(nearbyReports);
+      console.log('Loading reports for user:', currentUser.uid);
+      const userReports = await getUserReports(currentUser.uid);
+      console.log('Loaded user reports:', userReports);
+      setReports(userReports);
+      
+      if (userReports.length === 0) {
+        toast.info('You haven\'t submitted any reports yet. Create your first report!');
+      } else {
+        toast.success(`Loaded ${userReports.length} of your reports`);
+      }
     } catch (error) {
-      console.error('Error loading reports:', error);
-      toast.error('Failed to load nearby reports');
+      console.error('Error loading user reports:', error);
+      toast.error('Failed to load your reports. Please try again.');
+      setReports([]); // Clear reports on error
     } finally {
       setLoading(false);
     }
@@ -202,11 +208,20 @@ const Reports = () => {
         status: 'pending',
       };
 
+      // Attach Firebase user info to the report
+      const { auth } = getFirebase();
+      const firebaseUser = auth.currentUser;
+      if (firebaseUser) {
+        report.user_id = firebaseUser.uid;
+        report.user_name = firebaseUser.displayName || firebaseUser.email || 'Unknown';
+        report.user_email = firebaseUser.email || '';
+      }
       const submittedReport = await submitFloodReport(report);
       
       if (submittedReport) {
         toast.success('Report submitted successfully!');
-        setReports(prev => [submittedReport, ...prev]);
+        // Refresh the user's reports list
+        await loadUserReports();
         
         // Reset form
         setFormData({
@@ -284,10 +299,10 @@ const Reports = () => {
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
-          Community Flood Reports
+          My Flood Reports
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-          Real-time flood monitoring powered by community reports and location-based intelligence
+          View and manage your personal flood reports. Each user sees only their own reports for privacy.
         </p>
         
         {userLocation && (
@@ -304,7 +319,7 @@ const Reports = () => {
           <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-teal-100 rounded-xl flex items-center justify-center mx-auto mb-3">
             <MessageSquare className="w-6 h-6 text-blue-600" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">Total Reports</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-1">My Reports</h3>
           <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
             {reports.length}
           </p>
@@ -332,11 +347,11 @@ const Reports = () => {
 
         <GradientCard className="p-6 text-center">
           <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Users className="w-6 h-6 text-purple-600" />
+            <Clock className="w-6 h-6 text-purple-600" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">Contributors</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-1">Pending</h3>
           <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            {new Set(reports.map(r => r.user_id)).size}
+            {reports.filter(r => r.status === 'pending').length}
           </p>
         </GradientCard>
       </div>
@@ -679,7 +694,7 @@ const Reports = () => {
 
       {/* Reports List */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-slate-900">Recent Reports</h2>
+        <h2 className="text-2xl font-bold text-slate-900">My Reports</h2>
         
         {loading ? (
           <div className="text-center py-12">
@@ -689,7 +704,7 @@ const Reports = () => {
         ) : reports.length === 0 ? (
           <div className="text-center py-12">
             <MessageSquare className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-slate-600">No reports in your area yet. Be the first to report!</p>
+            <p className="text-slate-600">You haven't submitted any reports yet. Create your first report!</p>
           </div>
         ) : (
           <div className="space-y-4">
