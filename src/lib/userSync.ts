@@ -311,6 +311,10 @@ export const getUserStatisticsFromSupabase = async () => {
 
       if (error) {
         console.error('RPC function error:', error);
+        // If it's a permission error, skip to manual calculation
+        if (error.code === 'P0001' || error.message?.includes('Unauthorized')) {
+          throw new Error('Permission denied');
+        }
         throw error;
       }
 
@@ -324,7 +328,7 @@ export const getUserStatisticsFromSupabase = async () => {
         recent_signups: 0
       };
     } catch (rpcError) {
-      console.log('RPC function not available, calculating manually...');
+      console.log('RPC function not available or permission denied, calculating manually...');
       
       // Fallback to manual calculation
       const { data: users, error } = await supabase

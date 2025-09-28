@@ -113,9 +113,23 @@ const AdminDashboard = () => {
     try {
       const allUsers = await getAllUsersFromSupabase(100, 0, searchTerm || undefined);
       console.log('Fetched users:', allUsers);
-      setUsers(allUsers);
+      
+      // Ensure all users have proper structure
+      const safeUsers = (allUsers || []).map(user => ({
+        ...user,
+        email: user.email || 'unknown@example.com',
+        display_name: user.display_name || 'Unknown User',
+        role: user.role || 'user',
+        disabled: user.disabled || false,
+        created_at: user.created_at || new Date().toISOString(),
+        last_login: user.last_login || null,
+        joined_at: user.joined_at || user.created_at || new Date().toISOString()
+      }));
+      
+      setUsers(safeUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
       toast.error('Failed to fetch users');
     } finally {
       setUsersLoading(false);
@@ -134,12 +148,26 @@ const AdminDashboard = () => {
       
       if (error) {
         console.error('Reports error:', error);
-        // Don't throw error, just use empty array
+        setReports([]);
+        return;
       }
-      console.log('Fetched reports:', reportsData);
-      setReports(reportsData || []);
+      
+      // Ensure all reports have proper structure
+      const safeReports = (reportsData || []).map(report => ({
+        ...report,
+        title: report.title || 'Untitled Report',
+        description: report.description || 'No description available',
+        location: report.location || 'Unknown Location',
+        status: report.status || 'pending',
+        severity: report.severity || 'low',
+        created_at: report.created_at || new Date().toISOString()
+      }));
+      
+      console.log('Fetched reports:', safeReports);
+      setReports(safeReports);
     } catch (error) {
       console.error('Error fetching reports:', error);
+      setReports([]);
       toast.error('Failed to fetch reports');
     } finally {
       setReportsLoading(false);
@@ -362,7 +390,12 @@ const AdminDashboard = () => {
                           </div>
                           <div className="flex-1 space-y-1">
                             <p className="text-sm font-medium leading-none">{report.title}</p>
-                            <p className="text-sm text-muted-foreground">{report.location}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {typeof report.location === 'string' 
+                                ? report.location 
+                                : report.location?.address || 'Unknown Location'
+                              }
+                            </p>
                           </div>
                           <Badge className={getStatusColor(report.status)}>
                             {report.status}
@@ -644,7 +677,12 @@ const AdminDashboard = () => {
                             <TableCell>
                               <div className="flex items-center space-x-2">
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm">{report.location}</span>
+                                <span className="text-sm">
+                                  {typeof report.location === 'string' 
+                                    ? report.location 
+                                    : report.location?.address || 'Unknown Location'
+                                  }
+                                </span>
                               </div>
                             </TableCell>
                             <TableCell>
