@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Shield, Zap, Users, Globe, TrendingUp, AlertTriangle, Phone, Eye, BarChart3 } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Users, Globe, TrendingUp, AlertTriangle, Phone, Eye, BarChart3, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
@@ -129,8 +129,35 @@ const LandingPage = () => {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => navigate('/auth?mode=demo')}
+                onClick={() => navigate('/auth?mode=login')}
                 className="border-blue-200 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg"
+              >
+                <Shield className="w-5 h-5 mr-2" />
+                Sign In
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate('/admin/signup')}
+                className="border-purple-200 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg"
+              >
+                <Crown className="w-5 h-5 mr-2" />
+                Admin Signup
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate('/admin/signin')}
+                className="border-purple-200 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg"
+              >
+                <Crown className="w-5 h-5 mr-2" />
+                Admin Sign In
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate('/auth?mode=demo')}
+                className="border-green-200 text-green-600 hover:bg-green-50 px-8 py-4 text-lg"
               >
                 <Eye className="w-5 h-5 mr-2" />
                 View Live Demo

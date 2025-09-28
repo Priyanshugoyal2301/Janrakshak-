@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import {
   Home,
   TrendingUp,
@@ -21,6 +22,7 @@ import {
   User,
   Bell,
   ChevronDown,
+  Crown,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -32,6 +34,7 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, userProfile, logout } = useAuth();
+  const { isAdmin } = useSupabaseAuth();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -40,6 +43,7 @@ const Layout = ({ children }: LayoutProps) => {
     { name: "Reports", href: "/reports", icon: Users },
     { name: "Assessment", href: "/assessment", icon: Camera },
     { name: "Planning", href: "/planning", icon: MapPin },
+    ...(isAdmin ? [{ name: "Admin Panel", href: "/admin", icon: Crown }] : []),
   ];
 
   const handleLogout = async () => {
@@ -252,6 +256,15 @@ const Layout = ({ children }: LayoutProps) => {
                 <Bell className="w-4 h-4 mr-2 text-blue-600" />
                 Notifications
               </DropdownMenuItem>
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/admin')} className="hover:bg-purple-50">
+                    <Crown className="w-4 h-4 mr-2 text-purple-600" />
+                    Admin Panel
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-600 hover:bg-red-50">
                 <LogOut className="w-4 h-4 mr-2" />
