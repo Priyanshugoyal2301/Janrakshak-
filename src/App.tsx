@@ -12,6 +12,13 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import SupabaseAuth from "./pages/SupabaseAuth";
 import Admin from "./pages/Admin";
+import AdminAlerts from "./pages/AdminAlerts";
+import AdminReports from "./pages/AdminReports";
+import AdminUsers from "./pages/AdminUsers";
+import AdminShelters from "./pages/AdminShelters";
+import AdminRoutes from "./pages/AdminRoutes";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSystem from "./pages/AdminSystem";
 import AdminTest from "./pages/AdminTest";
 import AdminDebug from "./pages/AdminDebug";
 import AdminSimple from "./pages/AdminSimple";
@@ -52,6 +59,76 @@ const App = () => (
                   <SupabaseAuthProviderMinimal>
                     <AdminProtectedRoute>
                       <Admin />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/alerts"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminAlerts />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/reports"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminReports />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminUsers />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/shelters"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminShelters />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/routes"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminRoutes />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminAnalytics />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/system"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminSystem />
                     </AdminProtectedRoute>
                   </SupabaseAuthProviderMinimal>
                 }
