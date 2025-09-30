@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
+import AdminRegionSelector from '@/components/AdminRegionSelector';
+import { getAllStates } from '@/lib/comprehensiveRegionData';
 import { 
   AlertTriangle,
   Bell,
@@ -24,6 +26,7 @@ import {
   Zap,
   Shield,
   Activity,
+  CloudRain,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,113 +43,27 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { 
+  getAdminAlerts, 
+  createAlert, 
+  updateAlertStatus,
+  deleteAlert,
+  resendAlert,
+  subscribeToAlerts,
+  createSampleAlerts,
+  AdminAlert 
+} from '@/lib/adminSupabase';
 
-// Mock data for development
-const mockData = {
-  activeAlerts: [
-    {
-      id: 1,
-      type: "Flood Warning",
-      severity: "critical",
-      message: "Heavy rainfall expected in next 2 hours. River levels rising rapidly.",
-      timestamp: "2024-01-15T11:00:00Z",
-      status: "active",
-      sentTo: "All Users",
-      region: "Chandigarh",
-      expiresAt: "2024-01-15T13:00:00Z",
-      createdBy: "Admin User"
-    },
-    {
-      id: 2,
-      type: "River Level Alert",
-      severity: "high",
-      message: "Sukhna Lake water level rising above normal. Evacuation recommended for low-lying areas.",
-      timestamp: "2024-01-15T10:30:00Z",
-      status: "active",
-      sentTo: "Sector 17, 22, 35",
-      region: "Chandigarh",
-      expiresAt: "2024-01-15T12:30:00Z",
-      createdBy: "Weather System"
-    },
-    {
-      id: 3,
-      type: "Weather Update",
-      severity: "medium",
-      message: "Rainfall intensity decreasing. Conditions improving gradually.",
-      timestamp: "2024-01-15T09:45:00Z",
-      status: "active",
-      sentTo: "All Users",
-      region: "Chandigarh",
-      expiresAt: "2024-01-15T11:45:00Z",
-      createdBy: "Weather System"
-    },
-    {
-      id: 4,
-      type: "Shelter Availability",
-      severity: "low",
-      message: "New shelter opened at Sector 8 Community Center. Capacity: 100 people.",
-      timestamp: "2024-01-15T08:20:00Z",
-      status: "active",
-      sentTo: "Emergency Responders",
-      region: "Chandigarh",
-      expiresAt: "2024-01-15T20:20:00Z",
-      createdBy: "Admin User"
-    }
-  ],
-  alertHistory: [
-    {
-      id: 5,
-      type: "Flood Warning",
-      severity: "critical",
-      message: "Heavy rainfall expected in next 2 hours",
-      timestamp: "2024-01-14T15:30:00Z",
-      status: "delivered",
-      sentTo: "All Users",
-      region: "Chandigarh",
-      expiresAt: "2024-01-14T17:30:00Z",
-      createdBy: "Admin User",
-      deliveryCount: 1247,
-      readCount: 892
-    },
-    {
-      id: 6,
-      type: "Evacuation Notice",
-      severity: "high",
-      message: "Immediate evacuation required for Sector 17 residents",
-      timestamp: "2024-01-14T12:15:00Z",
-      status: "delivered",
-      sentTo: "Sector 17 Residents",
-      region: "Chandigarh",
-      expiresAt: "2024-01-14T18:15:00Z",
-      createdBy: "Emergency Coordinator",
-      deliveryCount: 156,
-      readCount: 134
-    },
-    {
-      id: 7,
-      type: "Weather Update",
-      severity: "medium",
-      message: "Rainfall expected to continue for next 4 hours",
-      timestamp: "2024-01-14T10:00:00Z",
-      status: "delivered",
-      sentTo: "All Users",
-      region: "Chandigarh",
-      expiresAt: "2024-01-14T14:00:00Z",
-      createdBy: "Weather System",
-      deliveryCount: 1247,
-      readCount: 567
-    }
-  ],
+// Real data structure based on Supabase tables
+const initialData = {
+  activeAlerts: [],
+  alertHistory: [],
   regions: [
     "All Users",
-    "Sector 17",
-    "Sector 22", 
-    "Sector 35",
-    "Sector 8",
-    "Sector 11",
-    "Emergency Responders",
-    "Volunteers",
-    "Rescue Teams"
+    "All States",
+    "Regional Alert",
+    "City Wide Alert",
+    "All Areas"
   ]
 };
 
@@ -164,667 +81,717 @@ const AdminAlerts = () => {
     severity: 'medium',
     message: '',
     sentTo: [],
-    region: 'Chandigarh',
     expiresIn: '2'
   });
 
-  // Mock data state
-  const [data, setData] = useState(mockData);
+  // Real data state
+  const [data, setData] = useState(initialData);
+  const [alerts, setAlerts] = useState<AdminAlert[]>([]);
+  const [isLive, setIsLive] = useState(true);
 
-  const refreshData = async () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      toast.success('Alerts refreshed successfully');
-    }, 1000);
-  };
+  // Load initial data
+  useEffect(() => {
+    loadAlerts();
+  }, []);
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  // Real-time alert updates
+  useEffect(() => {
+    if (!isLive) return;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800 border-green-200';
-      case 'delivered': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'failed': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getAlertSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'bg-red-500 text-white';
-      case 'high': return 'bg-orange-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-white';
-      case 'low': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    const subscription = subscribeToAlerts((payload) => {
+      console.log('Alert update received:', payload);
+      
+      if (payload.eventType === 'UPDATE' && payload.new) {
+        setAlerts(prevAlerts => 
+          prevAlerts.map(alert => 
+            alert.id === payload.new.id ? { ...alert, ...payload.new } : alert
+          )
+        );
+      } else if (payload.eventType === 'INSERT' && payload.new) {
+        setAlerts(prevAlerts => [payload.new, ...prevAlerts]);
+      } else if (payload.eventType === 'DELETE' && payload.old) {
+        setAlerts(prevAlerts => 
+          prevAlerts.filter(alert => alert.id !== payload.old.id)
+        );
+      }
     });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isLive]);
+
+  const loadAlerts = async () => {
+    setLoading(true);
+    try {
+      console.log('Loading alerts from Supabase...');
+      const alertData = await getAdminAlerts();
+      console.log('Loaded alerts:', alertData);
+      setAlerts(alertData);
+    } catch (error) {
+      console.error('Error loading alerts:', error);
+      toast.error('Failed to load alerts');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleBroadcastSubmit = async () => {
+  const handleCreateAlert = async () => {
     if (!broadcastForm.message.trim()) {
       toast.error('Please enter a message');
       return;
     }
 
     if (broadcastForm.sentTo.length === 0) {
-      toast.error('Please select at least one recipient group');
+      toast.error('Please select at least one region');
       return;
     }
 
     setLoading(true);
-    // Simulate API call with real data updates
-    setTimeout(() => {
-      const newAlert = {
-        id: Date.now(),
+    try {
+      const newAlert = await createAlert({
         type: broadcastForm.type,
-        severity: broadcastForm.severity,
+        severity: broadcastForm.severity as 'low' | 'medium' | 'high' | 'critical',
         message: broadcastForm.message,
-        region: broadcastForm.region,
-        timestamp: new Date().toISOString(),
-        status: 'active',
-        sentTo: broadcastForm.sentTo,
-        expiresIn: broadcastForm.expiresIn
-      };
+        region: broadcastForm.sentTo.join(', '),
+        sent_to: broadcastForm.sentTo,
+        expires_at: new Date(Date.now() + parseInt(broadcastForm.expiresIn) * 60 * 60 * 1000).toISOString()
+      });
 
-      setData(prev => ({
-        ...prev,
-        activeAlerts: [newAlert, ...prev.activeAlerts],
-        alertHistory: [newAlert, ...prev.alertHistory]
-      }));
-
-      setLoading(false);
+      setAlerts(prev => [newAlert, ...prev]);
       setShowBroadcastDialog(false);
       setBroadcastForm({
         type: 'Flood Warning',
         severity: 'medium',
         message: '',
         sentTo: [],
-        region: 'Chandigarh',
         expiresIn: '2'
       });
-      toast.success('Alert broadcasted successfully');
-    }, 1000);
-  };
-
-  const handleRecipientToggle = (recipient: string) => {
-    setBroadcastForm(prev => ({
-      ...prev,
-      sentTo: prev.sentTo.includes(recipient)
-        ? prev.sentTo.filter(r => r !== recipient)
-        : [...prev.sentTo, recipient]
-    }));
-  };
-
-  const handleAcknowledgeAlert = async (alertId: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        activeAlerts: prev.activeAlerts.map(alert => 
-          alert.id === alertId 
-            ? { ...alert, status: 'acknowledged' }
-            : alert
-        ),
-        alertHistory: prev.alertHistory.map(alert => 
-          alert.id === alertId 
-            ? { ...alert, status: 'acknowledged' }
-            : alert
-        )
-      }));
+      toast.success('Alert sent successfully!');
+    } catch (error) {
+      console.error('Error creating alert:', error);
+      toast.error('Failed to send alert');
+    } finally {
       setLoading(false);
-      toast.success('Alert acknowledged successfully');
-    }, 1000);
+    }
   };
 
-  const handleDismissAlert = async (alertId: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        activeAlerts: prev.activeAlerts.filter(alert => alert.id !== alertId),
-        alertHistory: prev.alertHistory.map(alert => 
-          alert.id === alertId 
-            ? { ...alert, status: 'dismissed' }
-            : alert
-        )
-      }));
-      setLoading(false);
-      toast.success('Alert dismissed');
-    }, 1000);
+  const handleResendAlert = async (alertId: string) => {
+    try {
+      await resendAlert(alertId);
+      toast.success('Alert resent successfully!');
+    } catch (error) {
+      console.error('Error resending alert:', error);
+      toast.error('Failed to resend alert');
+    }
   };
 
   const handleDeleteAlert = async (alertId: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        alertHistory: prev.alertHistory.filter(alert => alert.id !== alertId)
-      }));
-      setLoading(false);
-      toast.success('Alert deleted');
-    }, 1000);
+    if (!confirm('Are you sure you want to delete this alert?')) return;
+    
+    try {
+      await deleteAlert(alertId);
+      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+      toast.success('Alert deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting alert:', error);
+      toast.error('Failed to delete alert');
+    }
   };
 
-  const filteredAlerts = (activeTab === 'active' ? data.activeAlerts : data.alertHistory).filter(alert => {
-    const matchesSearch = searchTerm === '' || 
-      alert.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alert.type.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSeverity = filterSeverity === 'all' || alert.severity === filterSeverity;
-    const matchesRegion = filterRegion === 'all' || alert.region === filterRegion;
-    
-    return matchesSearch && matchesSeverity && matchesRegion;
-  });
+  const handleUpdateStatus = async (alertId: string, status: 'active' | 'delivered' | 'dismissed') => {
+    try {
+      await updateAlertStatus(alertId, status);
+      setAlerts(prev => 
+        prev.map(alert => 
+          alert.id === alertId ? { ...alert, status } : alert
+        )
+      );
+      toast.success('Alert status updated!');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update alert status');
+    }
+  };
+
+  const getActiveAlerts = () => {
+    return alerts.filter(alert => alert.status === 'active');
+  };
+
+  const getFilteredAlerts = () => {
+    return alerts.filter(alert => {
+      const matchesSearch = alert.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           alert.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           alert.region.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSeverity = filterSeverity === 'all' || alert.severity === filterSeverity;
+      const matchesRegion = filterRegion === 'all' || alert.region === filterRegion;
+      
+      return matchesSearch && matchesSeverity && matchesRegion;
+    });
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-500';
+      case 'high': return 'bg-orange-500';
+      case 'medium': return 'bg-yellow-500';
+      case 'low': return 'bg-green-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertTriangle className="w-4 h-4" />;
+      case 'high': return <AlertTriangle className="w-4 h-4" />;
+      case 'medium': return <Bell className="w-4 h-4" />;
+      case 'low': return <Bell className="w-4 h-4" />;
+      default: return <Bell className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'delivered': return 'bg-blue-100 text-blue-800';
+      case 'dismissed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-      {/* Critical Alerts Banner */}
-      {data.activeAlerts.filter(alert => alert.severity === 'critical').length > 0 && (
-        <div className="bg-red-500 text-white p-4 rounded-lg flex items-center space-x-3">
-          <AlertTriangle className="h-5 w-5" />
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <p className="font-semibold">Critical Alerts Active</p>
-            <p className="text-sm opacity-90">
-              {data.activeAlerts.filter(alert => alert.severity === 'critical').length} critical alerts require immediate attention
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Alert Management</h1>
+            <p className="text-gray-600 mt-1">Manage emergency alerts and notifications</p>
           </div>
-          <Button variant="outline" size="sm" className="ml-auto bg-white/20 border-white/30 text-white hover:bg-white/30">
-            View Details
-          </Button>
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsLive(!isLive)}
+              className={isLive ? 'bg-green-50 text-green-700 border-green-200' : ''}
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              {isLive ? 'Live' : 'Offline'}
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await createSampleAlerts();
+                  await loadAlerts();
+                  toast.success('Sample alerts created successfully!');
+                } catch (error) {
+                  toast.error('Failed to create sample alerts');
+                }
+              }}
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Sample Data
+            </Button>
+            <Button onClick={() => setShowBroadcastDialog(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Alert
+            </Button>
+          </div>
         </div>
-      )}
 
-      {/* Header with Actions */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Alerts & Notifications</h1>
-          <p className="text-gray-600">Manage flood warnings and system alerts</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Dialog open={showBroadcastDialog} onOpenChange={setShowBroadcastDialog}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
-                <Send className="h-4 w-4 mr-2" />
-                Broadcast Alert
+        {/* Critical Alerts Banner */}
+        {getActiveAlerts().filter(alert => alert.severity === 'critical').length > 0 && (
+          <div className="bg-red-500 text-white p-4 rounded-lg flex items-center space-x-3">
+            <AlertTriangle className="h-5 w-5" />
+            <div>
+              <p className="font-semibold">Critical Alerts Active</p>
+              <p className="text-sm opacity-90">
+                {getActiveAlerts().filter(alert => alert.severity === 'critical').length} critical alerts require immediate attention
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Shield className="w-5 h-5 mr-2" />
+              Admin Quick Actions
+            </CardTitle>
+            <CardDescription>
+              Quick access to common admin alert operations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center space-y-2"
+                onClick={() => {
+                  setBroadcastForm(prev => ({
+                    ...prev,
+                    type: 'Flood Warning',
+                    severity: 'critical',
+                    message: 'URGENT: Flood warning issued for your area. Please evacuate immediately to higher ground.',
+                    sentTo: ['All Users']
+                  }));
+                  setShowBroadcastDialog(true);
+                }}
+              >
+                <AlertTriangle className="w-6 h-6 text-red-500" />
+                <span className="text-sm font-medium">Critical Flood Alert</span>
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Broadcast New Alert</DialogTitle>
-                <DialogDescription>
-                  Send an alert to selected user groups or regions
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="type">Alert Type</Label>
-                    <Select value={broadcastForm.type} onValueChange={(value) => setBroadcastForm(prev => ({ ...prev, type: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Flood Warning">Flood Warning</SelectItem>
-                        <SelectItem value="Evacuation Notice">Evacuation Notice</SelectItem>
-                        <SelectItem value="Weather Update">Weather Update</SelectItem>
-                        <SelectItem value="Shelter Availability">Shelter Availability</SelectItem>
-                        <SelectItem value="Road Closure">Road Closure</SelectItem>
-                        <SelectItem value="Rescue Request">Rescue Request</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="severity">Severity</Label>
-                    <Select value={broadcastForm.severity} onValueChange={(value) => setBroadcastForm(prev => ({ ...prev, severity: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="critical">Critical</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
-                    id="message"
-                    placeholder="Enter alert message..."
-                    value={broadcastForm.message}
-                    onChange={(e) => setBroadcastForm(prev => ({ ...prev, message: e.target.value }))}
-                    className="min-h-24"
-                  />
-                </div>
-                
-                <div>
-                  <Label>Send To</Label>
-                  <div className="grid grid-cols-3 gap-2 mt-2">
-                    {data.regions.map((region) => (
-                      <div key={region} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={region}
-                          checked={broadcastForm.sentTo.includes(region)}
-                          onCheckedChange={() => handleRecipientToggle(region)}
-                        />
-                        <Label htmlFor={region} className="text-sm">{region}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="region">Region</Label>
-                    <Select value={broadcastForm.region} onValueChange={(value) => setBroadcastForm(prev => ({ ...prev, region: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Chandigarh">Chandigarh</SelectItem>
-                        <SelectItem value="Punjab">Punjab</SelectItem>
-                        <SelectItem value="Haryana">Haryana</SelectItem>
-                        <SelectItem value="All Regions">All Regions</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="expires">Expires In (hours)</Label>
-                    <Select value={broadcastForm.expiresIn} onValueChange={(value) => setBroadcastForm(prev => ({ ...prev, expiresIn: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 hour</SelectItem>
-                        <SelectItem value="2">2 hours</SelectItem>
-                        <SelectItem value="4">4 hours</SelectItem>
-                        <SelectItem value="8">8 hours</SelectItem>
-                        <SelectItem value="24">24 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowBroadcastDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleBroadcastSubmit} disabled={loading}>
-                  {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                  Broadcast Alert
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+              
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center space-y-2"
+                onClick={() => {
+                  setBroadcastForm(prev => ({
+                    ...prev,
+                    type: 'Evacuation Notice',
+                    severity: 'high',
+                    message: 'EVACUATION NOTICE: Please evacuate your area immediately. Emergency shelters are available.',
+                    sentTo: ['All Users']
+                  }));
+                  setShowBroadcastDialog(true);
+                }}
+              >
+                <Users className="w-6 h-6 text-orange-500" />
+                <span className="text-sm font-medium">Evacuation Notice</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center space-y-2"
+                onClick={() => {
+                  setBroadcastForm(prev => ({
+                    ...prev,
+                    type: 'Weather Alert',
+                    severity: 'medium',
+                    message: 'WEATHER ALERT: Heavy rainfall expected in your area. Please stay indoors and avoid unnecessary travel.',
+                    sentTo: ['All Users']
+                  }));
+                  setShowBroadcastDialog(true);
+                }}
+              >
+                <CloudRain className="w-6 h-6 text-blue-500" />
+                <span className="text-sm font-medium">Weather Alert</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm">
-          <TabsTrigger value="active" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
-            <Bell className="h-4 w-4 mr-2" />
-            Active Alerts ({data.activeAlerts.length})
-          </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
-            <Clock className="h-4 w-4 mr-2" />
-            Alert History ({data.alertHistory.length})
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Active Alerts Tab */}
-        <TabsContent value="active" className="space-y-6">
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center">
-                    <AlertTriangle className="h-5 w-5 mr-2 text-red-600" />
-                    Active Alerts
-                  </CardTitle>
-                  <CardDescription>Currently active flood warnings and system alerts</CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      toast.success('Exporting alerts data...');
-                      // Simulate export functionality
-                      setTimeout(() => {
-                        toast.success('Alerts exported successfully');
-                      }, 2000);
-                    }}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-                </div>
-              </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
+              <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {/* Filters */}
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="text-2xl font-bold">{getActiveAlerts().length}</div>
+              <p className="text-xs text-muted-foreground">
+                Currently active
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Sent</CardTitle>
+              <Send className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{alerts.length}</div>
+              <p className="text-xs text-muted-foreground">
+                All time
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Critical</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {alerts.filter(alert => alert.severity === 'critical').length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Urgent alerts
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Delivered</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {alerts.filter(alert => alert.status === 'delivered').length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Successfully sent
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Filter className="w-5 h-5 mr-2" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="search">Search</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
+                    id="search"
                     placeholder="Search alerts..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white/50 border-gray-200"
+                    className="pl-10"
                   />
                 </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Severity</Label>
                 <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-                  <SelectTrigger className="w-32 bg-white/50 border-gray-200">
-                    <SelectValue placeholder="Severity" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="All severities" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Severity</SelectItem>
+                    <SelectItem value="all">All Severities</SelectItem>
                     <SelectItem value="critical">Critical</SelectItem>
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="low">Low</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Region</Label>
                 <Select value={filterRegion} onValueChange={setFilterRegion}>
-                  <SelectTrigger className="w-32 bg-white/50 border-gray-200">
-                    <SelectValue placeholder="Region" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="All regions" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Regions</SelectItem>
-                    <SelectItem value="Chandigarh">Chandigarh</SelectItem>
-                    <SelectItem value="Punjab">Punjab</SelectItem>
-                    <SelectItem value="Haryana">Haryana</SelectItem>
+                    {getAllStates().map((state) => (
+                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-4">
-                {filteredAlerts.map((alert) => (
-                  <div key={alert.id} className="flex items-start space-x-4 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                    <div className={`p-2 rounded-lg ${getAlertSeverityColor(alert.severity)}`}>
-                      <AlertTriangle className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-medium">{alert.type}</h4>
-                        <Badge className={getSeverityColor(alert.severity)}>
-                          {alert.severity}
-                        </Badge>
-                        <Badge className={getStatusColor(alert.status)}>
-                          {alert.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{alert.message}</p>
-                      <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="h-3 w-3" />
-                          <span>{alert.region}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Users className="h-3 w-3" />
-                          <span>{alert.sentTo}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-3 w-3" />
-                          <span>Expires: {formatDate(alert.expiresAt)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Shield className="h-3 w-3" />
-                          <span>By: {alert.createdBy}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          // Show alert details in a modal or navigate to details page
-                          toast.info(`Viewing details for alert: ${alert.type}`);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="hover:bg-gray-100">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => {
-                            // Edit alert functionality
-                            toast.info('Edit alert functionality coming soon');
-                          }}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Alert
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            // Resend alert
-                            toast.success('Alert resent successfully');
-                          }}>
-                            <Send className="h-4 w-4 mr-2" />
-                            Resend
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-red-600 focus:text-red-600"
-                            onClick={() => handleDismissAlert(alert.id)}
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Deactivate
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Alert History Tab */}
-        <TabsContent value="history" className="space-y-6">
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center">
-                    <Clock className="h-5 w-5 mr-2 text-blue-600" />
-                    Alert History
-                  </CardTitle>
-                  <CardDescription>Historical record of all sent alerts</CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              
+              <div className="space-y-2">
+                <Label>Actions</Label>
+                <div className="flex space-x-2">
+                  <Button variant="outline" size="sm" onClick={loadAlerts}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
                     Refresh
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      toast.success('Exporting alerts data...');
-                      // Simulate export functionality
-                      setTimeout(() => {
-                        toast.success('Alerts exported successfully');
-                      }, 2000);
-                    }}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setSearchTerm('');
+                    setFilterSeverity('all');
+                    setFilterRegion('all');
+                  }}>
+                    Clear
                   </Button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {/* Filters */}
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search alert history..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white/50 border-gray-200"
-                  />
-                </div>
-                <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-                  <SelectTrigger className="w-32 bg-white/50 border-gray-200">
-                    <SelectValue placeholder="Severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Severity</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={filterRegion} onValueChange={setFilterRegion}>
-                  <SelectTrigger className="w-32 bg-white/50 border-gray-200">
-                    <SelectValue placeholder="Region" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Regions</SelectItem>
-                    <SelectItem value="Chandigarh">Chandigarh</SelectItem>
-                    <SelectItem value="Punjab">Punjab</SelectItem>
-                    <SelectItem value="Haryana">Haryana</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              <div className="border rounded-lg overflow-hidden bg-white/50">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50/50">
-                      <TableHead>Alert</TableHead>
-                      <TableHead>Severity</TableHead>
-                      <TableHead>Sent To</TableHead>
-                      <TableHead>Region</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Delivery</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAlerts.map((alert) => (
-                      <TableRow key={alert.id} className="hover:bg-gray-50/50">
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{alert.type}</div>
-                            <div className="text-sm text-muted-foreground line-clamp-2">{alert.message}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getSeverityColor(alert.severity)}>
-                            {alert.severity}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{alert.sentTo}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{alert.region}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(alert.status)}>
-                            {alert.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>Delivered: {alert.deliveryCount || 0}</div>
-                            <div>Read: {alert.readCount || 0}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(alert.timestamp)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="hover:bg-gray-100">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => {
-                                toast.info(`Viewing details for alert: ${alert.type}`);
-                              }}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                toast.success('Alert resent successfully');
-                              }}>
-                                <Send className="h-4 w-4 mr-2" />
-                                Resend
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="text-red-600 focus:text-red-600"
-                                onClick={() => handleDeleteAlert(alert.id)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+        {/* Alerts Table */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Alerts</CardTitle>
+                <CardDescription>
+                  Manage and monitor all emergency alerts
+                </CardDescription>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const activeAlerts = getFilteredAlerts().filter(alert => alert.status === 'active');
+                    if (activeAlerts.length === 0) {
+                      toast.info('No active alerts to dismiss');
+                      return;
+                    }
+                    if (confirm(`Dismiss all ${activeAlerts.length} active alerts?`)) {
+                      activeAlerts.forEach(alert => handleUpdateStatus(alert.id, 'dismissed'));
+                      toast.success(`Dismissed ${activeAlerts.length} alerts`);
+                    }
+                  }}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Dismiss All Active
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const criticalAlerts = getFilteredAlerts().filter(alert => alert.severity === 'critical');
+                    if (criticalAlerts.length === 0) {
+                      toast.info('No critical alerts to resend');
+                      return;
+                    }
+                    if (confirm(`Resend all ${criticalAlerts.length} critical alerts?`)) {
+                      criticalAlerts.forEach(alert => handleResendAlert(alert.id));
+                      toast.success(`Resent ${criticalAlerts.length} critical alerts`);
+                    }
+                  }}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Resend Critical
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                Loading alerts...
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {getFilteredAlerts().length === 0 ? (
+                  <div className="text-center py-8">
+                    <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No alerts found</h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchTerm || filterSeverity !== 'all' || filterRegion !== 'all' 
+                        ? 'Try adjusting your filters' 
+                        : 'Create your first alert to get started'
+                      }
+                    </p>
+                    {!searchTerm && filterSeverity === 'all' && filterRegion === 'all' && (
+                      <Button onClick={() => setShowBroadcastDialog(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Alert
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Severity</TableHead>
+                        <TableHead>Message</TableHead>
+                        <TableHead>Region</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {getFilteredAlerts().map((alert) => (
+                        <TableRow key={alert.id}>
+                          <TableCell className="font-medium">{alert.type}</TableCell>
+                          <TableCell>
+                            <Badge className={`${getSeverityColor(alert.severity)} text-white`}>
+                              {getSeverityIcon(alert.severity)}
+                              <span className="ml-1 capitalize">{alert.severity}</span>
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">{alert.message}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                              {alert.region}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusColor(alert.status)}>
+                              {alert.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center text-sm text-gray-500">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {new Date(alert.created_at).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleResendAlert(alert.id)}>
+                                  <Send className="w-4 h-4 mr-2" />
+                                  Resend
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleUpdateStatus(alert.id, 'dismissed')}>
+                                  <XCircle className="w-4 h-4 mr-2" />
+                                  Dismiss
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeleteAlert(alert.id)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Create Alert Dialog */}
+        <Dialog open={showBroadcastDialog} onOpenChange={setShowBroadcastDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create New Alert</DialogTitle>
+              <DialogDescription>
+                Send an emergency alert to selected regions
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="alert-type">Alert Type</Label>
+                <Select 
+                  value={broadcastForm.type} 
+                  onValueChange={(value) => {
+                    setBroadcastForm(prev => ({ ...prev, type: value }));
+                    // Auto-fill message based on type
+                    const templates = {
+                      'Flood Warning': 'URGENT: Flood warning issued for your area. Please evacuate immediately to higher ground.',
+                      'Evacuation Notice': 'EVACUATION NOTICE: Please evacuate your area immediately. Emergency shelters are available.',
+                      'Weather Alert': 'WEATHER ALERT: Heavy rainfall expected in your area. Please stay indoors and avoid unnecessary travel.',
+                      'Emergency Notice': 'EMERGENCY NOTICE: Emergency situation in your area. Please follow official instructions.',
+                      'Safety Advisory': 'SAFETY ADVISORY: Please take necessary precautions for your safety.'
+                    };
+                    if (templates[value as keyof typeof templates]) {
+                      setBroadcastForm(prev => ({ ...prev, message: templates[value as keyof typeof templates] }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Flood Warning">Flood Warning</SelectItem>
+                    <SelectItem value="Evacuation Notice">Evacuation Notice</SelectItem>
+                    <SelectItem value="Weather Alert">Weather Alert</SelectItem>
+                    <SelectItem value="Emergency Notice">Emergency Notice</SelectItem>
+                    <SelectItem value="Safety Advisory">Safety Advisory</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="severity">Severity</Label>
+                  <Select 
+                    value={broadcastForm.severity} 
+                    onValueChange={(value) => setBroadcastForm(prev => ({ ...prev, severity: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="message">Message</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Enter alert message..."
+                  value={broadcastForm.message}
+                  onChange={(e) => setBroadcastForm(prev => ({ ...prev, message: e.target.value }))}
+                  rows={4}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Target Regions</Label>
+                <AdminRegionSelector
+                  selectedRegions={broadcastForm.sentTo}
+                  onRegionsChange={(regions) => setBroadcastForm(prev => ({ ...prev, sentTo: regions }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="expires">Expires In</Label>
+                <Select 
+                  value={broadcastForm.expiresIn} 
+                  onValueChange={(value) => setBroadcastForm(prev => ({ ...prev, expiresIn: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Hour</SelectItem>
+                    <SelectItem value="2">2 Hours</SelectItem>
+                    <SelectItem value="6">6 Hours</SelectItem>
+                    <SelectItem value="12">12 Hours</SelectItem>
+                    <SelectItem value="24">24 Hours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowBroadcastDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateAlert} disabled={loading}>
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Send Alert
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

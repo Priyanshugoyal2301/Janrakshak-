@@ -37,6 +37,21 @@ import {
   Award,
   Zap,
 } from 'lucide-react';
+import { 
+  getAdminUsers, 
+  updateUserRole, 
+  updateUserStatus, 
+  subscribeToUsers,
+  testSupabaseConnection,
+  checkCurrentUserAdminStatus,
+  syncFirebaseUsersToSupabase,
+  AdminUser,
+  getSupabaseAdminUsers,
+  createSupabaseAdminUser,
+  updateSupabaseAdminUser,
+  deleteSupabaseAdminUser,
+  SupabaseAdminUser
+} from '@/lib/adminSupabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,150 +69,8 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 
-// Mock data for development
-const mockData = {
-  users: [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      role: "user",
-      status: "active",
-      region: "Sector 17",
-      reportsSubmitted: 5,
-      lastActivity: "2024-01-15T10:30:00Z",
-      joinedAt: "2024-01-01T00:00:00Z",
-      phone: "+91 98765 43210",
-      avatar: null,
-      verified: true,
-      volunteer: false,
-      emergencyContact: "+91 98765 43211"
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane@example.com",
-      role: "volunteer",
-      status: "active",
-      region: "Sector 22",
-      reportsSubmitted: 12,
-      lastActivity: "2024-01-15T09:15:00Z",
-      joinedAt: "2023-12-15T00:00:00Z",
-      phone: "+91 98765 43212",
-      avatar: null,
-      verified: true,
-      volunteer: true,
-      emergencyContact: "+91 98765 43213",
-      specialization: "Water Rescue",
-      experience: "2 years"
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      role: "rescue_team",
-      status: "active",
-      region: "Sector 35",
-      reportsSubmitted: 8,
-      lastActivity: "2024-01-15T08:45:00Z",
-      joinedAt: "2023-11-20T00:00:00Z",
-      phone: "+91 98765 43214",
-      avatar: null,
-      verified: true,
-      volunteer: true,
-      emergencyContact: "+91 98765 43215",
-      specialization: "Medical Response",
-      experience: "5 years",
-      team: "Team Alpha"
-    },
-    {
-      id: 4,
-      name: "Sarah Wilson",
-      email: "sarah@example.com",
-      role: "admin",
-      status: "active",
-      region: "All Regions",
-      reportsSubmitted: 0,
-      lastActivity: "2024-01-15T11:00:00Z",
-      joinedAt: "2023-10-01T00:00:00Z",
-      phone: "+91 98765 43216",
-      avatar: null,
-      verified: true,
-      volunteer: false,
-      emergencyContact: "+91 98765 43217"
-    },
-    {
-      id: 5,
-      name: "David Brown",
-      email: "david@example.com",
-      role: "user",
-      status: "suspended",
-      region: "Sector 8",
-      reportsSubmitted: 2,
-      lastActivity: "2024-01-10T15:30:00Z",
-      joinedAt: "2024-01-05T00:00:00Z",
-      phone: "+91 98765 43218",
-      avatar: null,
-      verified: false,
-      volunteer: false,
-      emergencyContact: "+91 98765 43219",
-      suspensionReason: "Inappropriate content"
-    }
-  ],
-  volunteers: [
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane@example.com",
-      region: "Sector 22",
-      specialization: "Water Rescue",
-      experience: "2 years",
-      status: "active",
-      lastActivity: "2024-01-15T09:15:00Z",
-      missionsCompleted: 15,
-      rating: 4.8,
-      availability: "24/7"
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      region: "Sector 35",
-      specialization: "Medical Response",
-      experience: "5 years",
-      status: "active",
-      lastActivity: "2024-01-15T08:45:00Z",
-      missionsCompleted: 32,
-      rating: 4.9,
-      availability: "Weekdays"
-    },
-    {
-      id: 6,
-      name: "Lisa Chen",
-      email: "lisa@example.com",
-      region: "Sector 11",
-      specialization: "Search & Rescue",
-      experience: "3 years",
-      status: "active",
-      lastActivity: "2024-01-14T16:20:00Z",
-      missionsCompleted: 28,
-      rating: 4.7,
-      availability: "Weekends"
-    },
-    {
-      id: 7,
-      name: "Raj Patel",
-      email: "raj@example.com",
-      region: "Sector 8",
-      specialization: "Logistics",
-      experience: "1 year",
-      status: "standby",
-      lastActivity: "2024-01-13T12:00:00Z",
-      missionsCompleted: 8,
-      rating: 4.5,
-      availability: "Evenings"
-    }
-  ],
+// Static data for dropdowns
+const staticData = {
   roles: [
     { value: "user", label: "User" },
     { value: "volunteer", label: "Volunteer" },
@@ -222,7 +95,7 @@ const AdminUsers = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterRegion, setFilterRegion] = useState('all');
   const [showManageDialog, setShowManageDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   
@@ -234,50 +107,146 @@ const AdminUsers = () => {
     notes: ''
   });
 
-  // Mock data state
-  const [data, setData] = useState(mockData);
+  // Real data state
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [volunteers, setVolunteers] = useState<AdminUser[]>([]);
+  const [supabaseAdmins, setSupabaseAdmins] = useState<SupabaseAdminUser[]>([]);
 
-  // Real-time user status updates
+  // Load initial data
+  useEffect(() => {
+    loadUsers();
+    loadSupabaseAdmins();
+  }, []);
+
+  // Real-time user updates
   useEffect(() => {
     if (!isLive) return;
 
-    const interval = setInterval(() => {
-      setData(prev => ({
-        ...prev,
-        users: prev.users.map(user => ({
-          ...user,
-          isOnline: Math.random() > 0.3, // 70% chance of being online
-          lastActivity: new Date().toISOString(),
-          status: Math.random() > 0.1 ? user.status : (user.status === 'active' ? 'suspended' : 'active')
-        })),
-        volunteers: prev.volunteers.map(volunteer => ({
-          ...volunteer,
-          isOnline: Math.random() > 0.4, // 60% chance of being online
-          lastActivity: new Date().toISOString(),
-          availability: Math.random() > 0.2 ? volunteer.availability : (volunteer.availability === 'available' ? 'busy' : 'available')
-        }))
-      }));
+    const subscription = subscribeToUsers((payload) => {
+      console.log('User update received:', payload);
+      
+      // Handle Supabase real-time payload structure
+      if (payload.eventType === 'UPDATE' && payload.new) {
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === payload.new.id ? { ...user, ...payload.new } : user
+          )
+        );
+        setVolunteers(prevVolunteers => 
+          prevVolunteers.map(user => 
+            user.id === payload.new.id ? { ...user, ...payload.new } : user
+          )
+        );
+      } else if (payload.eventType === 'INSERT' && payload.new) {
+        setUsers(prevUsers => [payload.new, ...prevUsers]);
+        if (payload.new.role === 'volunteer' || payload.new.role === 'rescue_team') {
+          setVolunteers(prevVolunteers => [payload.new, ...prevVolunteers]);
+        }
+      } else if (payload.eventType === 'DELETE' && payload.old) {
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== payload.old.id));
+        setVolunteers(prevVolunteers => prevVolunteers.filter(user => user.id !== payload.old.id));
+      }
+      
       setLastUpdate(new Date());
-    }, 3000); // Update every 3 seconds
+    });
 
-    return () => clearInterval(interval);
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [isLive]);
 
-  const refreshData = async () => {
+  const loadUsers = async () => {
     setLoading(true);
-    // Simulate API call with real data updates
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        users: prev.users.map(user => ({
-          ...user,
-          lastActive: new Date().toISOString()
-        }))
-      }));
+    try {
+      console.log('Loading users from Supabase...');
+      const userData = await getAdminUsers();
+      console.log('Loaded users:', userData);
+      setUsers(userData);
+      setVolunteers(userData.filter(user => user.role === 'volunteer' || user.role === 'rescue_team'));
+      setLastUpdate(new Date());
+      console.log('Users state updated:', userData.length, 'users loaded');
+    } catch (error) {
+      console.error('Error loading users:', error);
+      toast.error('Failed to load users');
+    } finally {
       setLoading(false);
-      toast.success('User data refreshed successfully');
-    }, 1000);
+    }
   };
+
+  const loadSupabaseAdmins = async () => {
+    try {
+      console.log('Loading Supabase admin users...');
+      const adminData = await getSupabaseAdminUsers();
+      console.log('Loaded Supabase admins:', adminData);
+      setSupabaseAdmins(adminData);
+      console.log('Supabase admins state updated:', adminData.length, 'admins loaded');
+    } catch (error) {
+      console.error('Error loading Supabase admins:', error);
+      toast.error('Failed to load admin users');
+    }
+  };
+
+  const refreshData = async () => {
+    await loadUsers();
+    await loadSupabaseAdmins();
+    toast.success('User data refreshed successfully');
+  };
+
+  const testConnection = async () => {
+    setLoading(true);
+    try {
+      const isConnected = await testSupabaseConnection();
+      if (isConnected) {
+        toast.success('Supabase connection successful!');
+      } else {
+        toast.error('Supabase connection failed!');
+      }
+    } catch (error) {
+      console.error('Connection test error:', error);
+      toast.error('Connection test failed!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkAdminStatus = async () => {
+    setLoading(true);
+    try {
+      const { isAdmin, user } = await checkCurrentUserAdminStatus();
+      if (isAdmin) {
+        toast.success(`Admin access confirmed! Role: ${user?.role}`);
+      } else {
+        toast.error(`Not an admin! Current role: ${user?.role || 'Unknown'}`);
+      }
+    } catch (error) {
+      console.error('Admin status check error:', error);
+      toast.error('Admin status check failed!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const syncUsers = async () => {
+    setLoading(true);
+    try {
+      console.log('Syncing Firebase users to Supabase...');
+      const result = await syncFirebaseUsersToSupabase();
+      
+      if (result.success) {
+        toast.success(result.message);
+        // Reload users after sync
+        await loadUsers();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast.error('Failed to sync users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -334,71 +303,64 @@ const AdminUsers = () => {
     if (!selectedUser) return;
 
     setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        users: prev.users.map(user => 
-          user.id === selectedUser.id 
-            ? { 
-                ...user, 
-                role: manageForm.role,
-                status: manageForm.status,
-                region: manageForm.region,
-                notes: manageForm.notes,
-                updatedAt: new Date().toISOString()
-              }
-            : user
-        )
-      }));
+    try {
+      const success = await updateUserRole(selectedUser.id, manageForm.role);
+      if (success) {
+        await updateUserStatus(selectedUser.id, manageForm.status);
+        await loadUsers(); // Reload data
+        setShowManageDialog(false);
+        setSelectedUser(null);
+        toast.success('User updated successfully');
+      } else {
+        toast.error('Failed to update user');
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast.error('Failed to update user');
+    } finally {
       setLoading(false);
-      setShowManageDialog(false);
-      setSelectedUser(null);
-      toast.success('User updated successfully');
-    }, 1000);
+    }
   };
 
   const handleSuspendUser = async (userId: string) => {
     setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        users: prev.users.map(user => 
-          user.id === userId 
-            ? { ...user, status: 'suspended', updatedAt: new Date().toISOString() }
-            : user
-        )
-      }));
+    try {
+      const success = await updateUserStatus(userId, 'suspended');
+      if (success) {
+        await loadUsers();
+        toast.success('User suspended successfully');
+      } else {
+        toast.error('Failed to suspend user');
+      }
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      toast.error('Failed to suspend user');
+    } finally {
       setLoading(false);
-      toast.success('User suspended successfully');
-    }, 1000);
+    }
   };
 
   const handleActivateUser = async (userId: string) => {
     setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        users: prev.users.map(user => 
-          user.id === userId 
-            ? { ...user, status: 'active', updatedAt: new Date().toISOString() }
-            : user
-        )
-      }));
+    try {
+      const success = await updateUserStatus(userId, 'active');
+      if (success) {
+        await loadUsers();
+        toast.success('User activated successfully');
+      } else {
+        toast.error('Failed to activate user');
+      }
+    } catch (error) {
+      console.error('Error activating user:', error);
+      toast.error('Failed to activate user');
+    } finally {
       setLoading(false);
-      toast.success('User activated successfully');
-    }, 1000);
+    }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        users: prev.users.filter(user => user.id !== userId)
-      }));
-      setLoading(false);
-      toast.success('User deleted successfully');
-    }, 1000);
+    // Note: In a real app, you'd need a delete function in adminSupabase.ts
+    toast.error('User deletion not implemented yet');
   };
 
 
@@ -416,9 +378,9 @@ const AdminUsers = () => {
     setShowManageDialog(true);
   };
 
-  const filteredUsers = data.users.filter(user => {
+  const filteredUsers = users.filter(user => {
     const matchesSearch = searchTerm === '' || 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.display_name || user.email).toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesRole = filterRole === 'all' || user.role === filterRole;
@@ -428,10 +390,10 @@ const AdminUsers = () => {
     return matchesSearch && matchesRole && matchesStatus && matchesRegion;
   });
 
-  const totalUsers = data.users.length;
-  const activeUsers = data.users.filter(u => u.status === 'active').length;
-  const volunteers = data.users.filter(u => u.volunteer).length;
-  const admins = data.users.filter(u => u.role === 'admin').length;
+  const totalUsers = users.length;
+  const activeUsers = users.filter(u => u.status === 'active').length;
+  const volunteerCount = users.filter(u => u.role === 'volunteer' || u.role === 'rescue_team').length;
+  const admins = supabaseAdmins.length;
 
   return (
     <AdminLayout>
@@ -449,7 +411,7 @@ const AdminUsers = () => {
             Last updated: {lastUpdate.toLocaleTimeString()}
           </div>
           <div className="text-xs text-green-600">
-            Online: {data.users.filter(u => u.isOnline).length}/{data.users.length}
+            Online: {users.filter(u => u.is_online).length}/{users.length}
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -465,6 +427,36 @@ const AdminUsers = () => {
           <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={testConnection}
+            disabled={loading}
+            className="hover:bg-green-50"
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            Test Connection
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={checkAdminStatus}
+            disabled={loading}
+            className="hover:bg-blue-50"
+          >
+            <Shield className="h-4 w-4 mr-2" />
+            Check Admin
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={syncUsers}
+            disabled={loading}
+            className="hover:bg-purple-50"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Sync Users
           </Button>
           <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
             <UserPlus className="h-4 w-4 mr-2" />
@@ -511,7 +503,7 @@ const AdminUsers = () => {
             <Heart className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{volunteers}</div>
+            <div className="text-2xl font-bold">{volunteerCount}</div>
             <p className="text-xs text-muted-foreground">Active volunteers</p>
           </CardContent>
         </Card>
@@ -530,7 +522,7 @@ const AdminUsers = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
           <TabsTrigger value="users" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
             <Users className="h-4 w-4 mr-2" />
             All Users
@@ -538,6 +530,10 @@ const AdminUsers = () => {
           <TabsTrigger value="volunteers" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
             <Heart className="h-4 w-4 mr-2" />
             Volunteers
+          </TabsTrigger>
+          <TabsTrigger value="admins" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
+            <Crown className="h-4 w-4 mr-2" />
+            Admins
           </TabsTrigger>
           <TabsTrigger value="analytics" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
             <BarChart3 className="h-4 w-4 mr-2" />
@@ -610,147 +606,106 @@ const AdminUsers = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Regions</SelectItem>
-                    {data.regions.slice(1).map((region) => (
+                    {staticData.regions.slice(1).map((region) => (
                       <SelectItem key={region} value={region}>{region}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="border rounded-lg overflow-hidden bg-white/50">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50/50">
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Region</TableHead>
-                      <TableHead>Reports</TableHead>
-                      <TableHead>Last Activity</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id} className="hover:bg-gray-50/50">
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={user.avatar || ''} />
-                              <AvatarFallback className="bg-gradient-to-r from-teal-500 to-blue-500 text-white">
-                                {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{user.name}</div>
-                              <div className="text-sm text-muted-foreground">{user.email}</div>
-                            </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {loading ? (
+                  <div className="col-span-full flex items-center justify-center py-12">
+                    <div className="flex items-center space-x-2">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Loading users...</span>
+                    </div>
+                  </div>
+                ) : filteredUsers.length === 0 ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-12">
+                    <Users className="h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
+                    <p className="text-gray-600 text-center">
+                      {users.length === 0 ? 'No users in database' : 'No users match your filters'}
+                    </p>
+                  </div>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <Card key={user.id} className="bg-white/50 border-gray-200 hover:shadow-lg transition-shadow">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={user.avatar || ''} />
+                            <AvatarFallback className="bg-gradient-to-r from-teal-500 to-blue-500 text-white">
+                              {(user.display_name || user.email).split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <h4 className="font-medium">{user.display_name || user.email}</h4>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            {getRoleIcon(user.role)}
-                            <Badge className={getRoleColor(user.role)}>
-                              {user.role.replace('_', ' ')}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1">
                             <Badge className={getStatusColor(user.status)}>
                               {user.status}
                             </Badge>
-                            {user.isOnline && (
-                              <div className="flex items-center space-x-1">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-xs text-green-600">Online</span>
-                              </div>
+                            {user.is_online && (
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm">{user.region}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm font-medium">{user.reportsSubmitted}</span>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(user.lastActivity)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-1">
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          {getRoleIcon(user.role)}
+                          <Badge className={getRoleColor(user.role)}>
+                            {user.role.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{user.region}</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Reports: {user.reports_submitted}</span>
+                          <span className="text-xs text-muted-foreground">{formatDate(user.last_activity)}</span>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openManageDialog(user)}
+                            className="flex-1"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Manage
+                          </Button>
+                          {user.status === 'active' ? (
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              onClick={() => openManageDialog(user)}
-                              className="hover:bg-gray-100"
+                              onClick={() => handleSuspendUser(user.id)}
+                              className="text-red-600 border-red-200 hover:bg-red-50"
                             >
-                              <Edit className="h-4 w-4" />
+                              <UserX className="h-4 w-4" />
                             </Button>
-                            {user.status === 'active' ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSuspendUser(user.id)}
-                                className="hover:bg-red-100 text-red-600"
-                              >
-                                <UserX className="h-4 w-4" />
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleActivateUser(user.id)}
-                                className="hover:bg-green-100 text-green-600"
-                              >
-                                <UserCheck className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="hover:bg-gray-100">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => {
-                                  toast.info(`Viewing details for user: ${user.name}`);
-                                }}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  toast.success(`Email sent to ${user.email}`);
-                                }}>
-                                  <Mail className="h-4 w-4 mr-2" />
-                                  Send Email
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  toast.success(`Contacting ${user.name} at ${user.phone}`);
-                                }}>
-                                  <Phone className="h-4 w-4 mr-2" />
-                                  Contact
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="text-red-600 focus:text-red-600"
-                                  onClick={() => handleDeleteUser(user.id)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleActivateUser(user.id)}
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                            >
+                              <UserCheck className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -782,17 +737,33 @@ const AdminUsers = () => {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {data.volunteers.map((volunteer) => (
+                {loading ? (
+                  <div className="col-span-full flex items-center justify-center py-8">
+                    <div className="flex items-center space-x-2">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Loading volunteers...</span>
+                    </div>
+                  </div>
+                ) : volunteers.length === 0 ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-8">
+                    <Heart className="h-8 w-8 text-gray-400" />
+                    <span className="text-gray-500 mt-2">No volunteers found</span>
+                    <span className="text-sm text-gray-400">
+                      {users.length === 0 ? 'No users in database' : 'No volunteers available'}
+                    </span>
+                  </div>
+                ) : (
+                  volunteers.map((volunteer) => (
                   <Card key={volunteer.id} className="bg-white/50 border-gray-200">
                     <CardHeader className="pb-3">
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-12 w-12">
                           <AvatarFallback className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-                            {volunteer.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            {(volunteer.display_name || volunteer.email).split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <h4 className="font-medium">{volunteer.name}</h4>
+                          <h4 className="font-medium">{volunteer.display_name || volunteer.email}</h4>
                           <p className="text-sm text-muted-foreground">{volunteer.email}</p>
                         </div>
                         <Badge className={getStatusColor(volunteer.status)}>
@@ -815,7 +786,7 @@ const AdminUsers = () => {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Target className="h-4 w-4 text-orange-600" />
-                        <span className="text-sm">{volunteer.missionsCompleted} missions</span>
+                        <span className="text-sm">{volunteer.reports_submitted} reports</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Star className="h-4 w-4 text-yellow-600" />
@@ -823,12 +794,12 @@ const AdminUsers = () => {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Activity className="h-4 w-4 text-teal-600" />
-                        <span className="text-sm">{volunteer.availability}</span>
+                        <span className="text-sm">{volunteer.volunteer_status}</span>
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">
-                          Last active: {formatDate(volunteer.lastActivity)}
+                          Last active: {formatDate(volunteer.last_activity)}
                         </span>
                         <div className="flex items-center space-x-1">
                           <Button 
@@ -859,7 +830,148 @@ const AdminUsers = () => {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Admins Tab */}
+        <TabsContent value="admins" className="space-y-6">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center">
+                    <Crown className="h-5 w-5 mr-2 text-red-600" />
+                    Admin Directory
+                  </CardTitle>
+                  <CardDescription>Manage administrator accounts and permissions</CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  <Button size="sm" className="bg-red-600 hover:bg-red-700">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Admin
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {loading ? (
+                  <div className="col-span-full flex items-center justify-center py-8">
+                    <div className="flex items-center space-x-2">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Loading admins...</span>
+                    </div>
+                  </div>
+                ) : supabaseAdmins.length === 0 ? (
+                  <div className="col-span-full flex flex-col items-center justify-center py-8">
+                    <Crown className="h-8 w-8 text-gray-400" />
+                    <span className="text-gray-500 mt-2">No admins found</span>
+                    <span className="text-sm text-gray-400">
+                      No Supabase admin accounts available
+                    </span>
+                  </div>
+                ) : (
+                  supabaseAdmins.map((admin) => (
+                    <Card key={admin.id} className="bg-white/50 border-red-200">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-gradient-to-r from-red-500 to-orange-500 text-white">
+                              {(admin.user_metadata?.full_name || admin.email).split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <h4 className="font-medium">{admin.user_metadata?.full_name || admin.email}</h4>
+                            <p className="text-sm text-muted-foreground">{admin.email}</p>
+                          </div>
+                          <Badge className="bg-red-100 text-red-800 border-red-200">
+                            <Crown className="h-3 w-3 mr-1" />
+                            Admin
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Shield className="h-4 w-4 text-red-600" />
+                          <span className="text-sm font-medium">Supabase Administrator</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className={admin.email_confirmed_at ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'}>
+                            {admin.email_confirmed_at ? 'Verified' : 'Pending'}
+                          </Badge>
+                          {admin.last_sign_in_at && (
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-xs text-green-600">Active</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm">Created: {formatDate(admin.created_at)}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Activity className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm">
+                            Last sign-in: {admin.last_sign_in_at ? formatDate(admin.last_sign_in_at) : 'Never'}
+                          </span>
+                        </div>
+                        {admin.phone && (
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4 text-green-600" />
+                            <span className="text-sm">{admin.phone}</span>
+                          </div>
+                        )}
+                        <Separator />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            Supabase Admin ID: {admin.id.slice(0, 8)}...
+                          </span>
+                          <div className="flex items-center space-x-1">
+                            {admin.phone && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 px-2"
+                                onClick={() => toast.success(`Calling ${admin.user_metadata?.full_name || admin.email} at ${admin.phone}`)}
+                              >
+                                <Phone className="h-3 w-3" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 px-2"
+                              onClick={() => toast.success(`Email sent to ${admin.email}`)}
+                            >
+                              <Mail className="h-3 w-3" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 px-2"
+                              onClick={() => toast.info(`Supabase admin: ${admin.email}`)}
+                            >
+                              <MoreHorizontal className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -881,24 +993,24 @@ const AdminUsers = () => {
                   <div className="text-center">
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{data.users.filter(u => u.role === 'user').length}</div>
+                        <div className="text-2xl font-bold text-blue-600">{users.filter(u => u.role === 'user').length}</div>
                         <div className="text-sm text-gray-600">Regular Users</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{data.users.filter(u => u.role === 'volunteer').length}</div>
+                        <div className="text-2xl font-bold text-green-600">{users.filter(u => u.role === 'volunteer').length}</div>
                         <div className="text-sm text-gray-600">Volunteers</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">{data.users.filter(u => u.role === 'rescue_team').length}</div>
+                        <div className="text-2xl font-bold text-purple-600">{users.filter(u => u.role === 'rescue_team').length}</div>
                         <div className="text-sm text-gray-600">Rescue Teams</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">{data.users.filter(u => u.role === 'admin').length}</div>
+                        <div className="text-2xl font-bold text-orange-600">{users.filter(u => u.role === 'admin').length}</div>
                         <div className="text-sm text-gray-600">Admins</div>
                       </div>
                     </div>
                     <div className="text-xs text-gray-500">
-                      Total: {data.users.length} users
+                      Total: {users.length} users
                     </div>
                   </div>
                 </div>
@@ -918,15 +1030,15 @@ const AdminUsers = () => {
                   <div className="text-center w-full">
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{data.users.filter(u => u.status === 'active').length}</div>
+                        <div className="text-2xl font-bold text-green-600">{users.filter(u => u.status === 'active').length}</div>
                         <div className="text-sm text-gray-600">Active</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-yellow-600">{data.users.filter(u => u.status === 'pending').length}</div>
+                        <div className="text-2xl font-bold text-yellow-600">{users.filter(u => u.status === 'pending').length}</div>
                         <div className="text-sm text-gray-600">Pending</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-red-600">{data.users.filter(u => u.status === 'suspended').length}</div>
+                        <div className="text-2xl font-bold text-red-600">{users.filter(u => u.status === 'suspended').length}</div>
                         <div className="text-sm text-gray-600">Suspended</div>
                       </div>
                     </div>
@@ -936,12 +1048,12 @@ const AdminUsers = () => {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span>Active Users</span>
-                        <span className="font-medium">{Math.round((data.users.filter(u => u.status === 'active').length / data.users.length) * 100)}%</span>
+                        <span className="font-medium">{users.length > 0 ? Math.round((users.filter(u => u.status === 'active').length / users.length) * 100) : 0}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-green-600 h-2 rounded-full" 
-                          style={{ width: `${(data.users.filter(u => u.status === 'active').length / data.users.length) * 100}%` }}
+                          style={{ width: `${users.length > 0 ? (users.filter(u => u.status === 'active').length / users.length) * 100 : 0}%` }}
                         ></div>
                       </div>
                     </div>
@@ -967,11 +1079,11 @@ const AdminUsers = () => {
               <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-gradient-to-r from-teal-500 to-blue-500 text-white">
-                    {selectedUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    {(selectedUser.display_name || selectedUser.email).split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h4 className="font-medium">{selectedUser.name}</h4>
+                  <h4 className="font-medium">{selectedUser.display_name || selectedUser.email}</h4>
                   <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                 </div>
               </div>
@@ -984,7 +1096,7 @@ const AdminUsers = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {data.roles.map((role) => (
+                      {staticData.roles.map((role) => (
                         <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
                       ))}
                     </SelectContent>
@@ -1012,7 +1124,7 @@ const AdminUsers = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {data.regions.map((region) => (
+                    {staticData.regions.map((region) => (
                       <SelectItem key={region} value={region}>{region}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1034,7 +1146,7 @@ const AdminUsers = () => {
             <Button variant="outline" onClick={() => setShowManageDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleManageUser} disabled={loading}>
+            <Button onClick={handleUpdateUser} disabled={loading}>
               {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Edit className="h-4 w-4 mr-2" />}
               Update User
             </Button>

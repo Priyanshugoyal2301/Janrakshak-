@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import LoadingScreen from '@/components/LoadingScreen';
 import { 
   Shield, 
   Mail, 
@@ -37,9 +38,10 @@ const AuthPage = () => {
     displayName: '',
   });
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (only for Firebase users)
   useEffect(() => {
     if (currentUser) {
+      console.log('Firebase user authenticated, redirecting to dashboard');
       navigate('/dashboard');
     }
   }, [currentUser, navigate]);
@@ -145,6 +147,11 @@ const AuthPage = () => {
     return 'Strong';
   };
 
+  // Show loading screen during authentication
+  if (loading) {
+    return <LoadingScreen message="Signing you in..." />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
@@ -164,7 +171,7 @@ const AuthPage = () => {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-              JalRakshak
+              JanRakshak
             </span>
           </div>
           

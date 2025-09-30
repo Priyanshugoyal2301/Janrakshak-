@@ -50,321 +50,31 @@ import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { getDashboardStats, getAnalyticsData } from '@/lib/adminSupabase';
 
-// Mock data for development
-const mockData = {
+// Real data structure - will be populated from Supabase
+const initialData = {
   stats: {
-    totalUsers: 1247,
-    activeUsers: 892,
-    totalReports: 156,
-    pendingReports: 23,
-    criticalReports: 8,
-    verifiedReports: 125,
-    sheltersActivated: 12,
-    shelterCapacity: 85,
-    avgResponseTime: 2.3,
-    systemUptime: 99.9,
+    totalUsers: 0,
+    activeUsers: 0,
+    totalReports: 0,
+    pendingReports: 0,
+    criticalReports: 0,
+    verifiedReports: 0,
+    sheltersActivated: 0,
+    shelterCapacity: 0,
+    avgResponseTime: 0,
+    systemUptime: 100,
   },
-  recentReports: [
-    {
-      id: 1,
-      title: "Flooding in Sector 17",
-      location: "Chandigarh, Sector 17",
-      severity: "critical",
-      status: "pending",
-      user: "John Doe",
-      timestamp: "2024-01-15T10:30:00Z",
-      description: "Water level rising rapidly in residential area"
-    },
-    {
-      id: 2,
-      title: "Road Blockage Near Mall",
-      location: "Chandigarh, Sector 22",
-      severity: "high",
-      status: "verified",
-      user: "Jane Smith",
-      timestamp: "2024-01-15T09:15:00Z",
-      description: "Main road completely blocked due to waterlogging"
-    },
-    {
-      id: 3,
-      title: "Shelter Request - Family of 4",
-      location: "Chandigarh, Sector 35",
-      severity: "medium",
-      status: "pending",
-      user: "Mike Johnson",
-      timestamp: "2024-01-15T08:45:00Z",
-      description: "Need immediate shelter for elderly parents"
-    },
-    {
-      id: 4,
-      title: "Infrastructure Damage",
-      location: "Chandigarh, Sector 8",
-      severity: "low",
-      status: "verified",
-      user: "Sarah Wilson",
-      timestamp: "2024-01-15T07:20:00Z",
-      description: "Street lights not working in affected area"
-    },
-    {
-      id: 5,
-      title: "Rescue Request - Trapped Vehicle",
-      location: "Chandigarh, Sector 11",
-      severity: "critical",
-      status: "pending",
-      user: "David Brown",
-      timestamp: "2024-01-15T06:30:00Z",
-      description: "Car stuck in floodwater, need immediate rescue"
-    }
-  ],
-  alerts: [
-    {
-      id: 1,
-      type: "Flood Warning",
-      severity: "critical",
-      message: "Heavy rainfall expected in next 2 hours",
-      timestamp: "2024-01-15T11:00:00Z",
-      status: "active"
-    },
-    {
-      id: 2,
-      type: "River Level Alert",
-      severity: "high",
-      message: "Sukhna Lake water level rising",
-      timestamp: "2024-01-15T10:30:00Z",
-      status: "active"
-    },
-    {
-      id: 3,
-      type: "Weather Update",
-      severity: "medium",
-      message: "Rainfall intensity decreasing",
-      timestamp: "2024-01-15T09:45:00Z",
-      status: "active"
-    }
-  ],
-  shelters: [
-    {
-      id: 1,
-      name: "Sector 17 Community Center",
-      location: "Chandigarh, Sector 17",
-      capacity: 100,
-      currentOccupancy: 75,
-      status: "near_full",
-      coordinates: [30.7333, 76.7794],
-      contact: "+91-98765-43210",
-      facilities: ["Food", "Medical", "Water", "Electricity"]
-    },
-    {
-      id: 2,
-      name: "Government School Sector 22",
-      location: "Chandigarh, Sector 22",
-      capacity: 150,
-      currentOccupancy: 45,
-      status: "available",
-      coordinates: [30.7400, 76.7850],
-      contact: "+91-98765-43211",
-      facilities: ["Food", "Water", "Electricity"]
-    },
-    {
-      id: 3,
-      name: "Sports Complex Sector 35",
-      location: "Chandigarh, Sector 35",
-      capacity: 200,
-      currentOccupancy: 200,
-      status: "full",
-      coordinates: [30.7500, 76.7900],
-      contact: "+91-98765-43212",
-      facilities: ["Food", "Medical", "Water", "Electricity", "Sanitation"]
-    },
-    {
-      id: 4,
-      name: "Amritsar Relief Center",
-      location: "Amritsar, Punjab",
-      capacity: 300,
-      currentOccupancy: 180,
-      status: "available",
-      coordinates: [31.6340, 74.8723],
-      contact: "+91-98765-43213",
-      facilities: ["Food", "Medical", "Water", "Electricity", "Sanitation", "Transport"]
-    },
-    {
-      id: 5,
-      name: "Ludhiana Community Hall",
-      location: "Ludhiana, Punjab",
-      capacity: 250,
-      currentOccupancy: 200,
-      status: "near_full",
-      coordinates: [30.9010, 75.8573],
-      contact: "+91-98765-43214",
-      facilities: ["Food", "Water", "Electricity", "Sanitation"]
-    },
-    {
-      id: 6,
-      name: "Jalandhar Sports Complex",
-      location: "Jalandhar, Punjab",
-      capacity: 400,
-      currentOccupancy: 320,
-      status: "near_full",
-      coordinates: [31.3260, 75.5762],
-      contact: "+91-98765-43215",
-      facilities: ["Food", "Medical", "Water", "Electricity", "Sanitation", "Transport", "Communication"]
-    },
-    {
-      id: 7,
-      name: "Patiala Government School",
-      location: "Patiala, Punjab",
-      capacity: 180,
-      currentOccupancy: 120,
-      status: "available",
-      coordinates: [30.3398, 76.3869],
-      contact: "+91-98765-43216",
-      facilities: ["Food", "Water", "Electricity"]
-    },
-    {
-      id: 8,
-      name: "Bathinda Relief Camp",
-      location: "Bathinda, Punjab",
-      capacity: 220,
-      currentOccupancy: 220,
-      status: "full",
-      coordinates: [30.2110, 74.9455],
-      contact: "+91-98765-43217",
-      facilities: ["Food", "Medical", "Water", "Electricity", "Sanitation"]
-    },
-    {
-      id: 9,
-      name: "Mohali Community Center",
-      location: "Mohali, Punjab",
-      capacity: 160,
-      currentOccupancy: 80,
-      status: "available",
-      coordinates: [30.7046, 76.7179],
-      contact: "+91-98765-43218",
-      facilities: ["Food", "Water", "Electricity", "Sanitation"]
-    },
-    {
-      id: 10,
-      name: "Firozpur Emergency Shelter",
-      location: "Firozpur, Punjab",
-      capacity: 280,
-      currentOccupancy: 150,
-      status: "available",
-      coordinates: [30.9251, 74.6107],
-      contact: "+91-98765-43219",
-      facilities: ["Food", "Medical", "Water", "Electricity", "Transport"]
-    }
-  ],
+  recentReports: [],
+  alerts: [],
+  shelters: [],
   trends: {
-    userGrowth: [
-      { month: 'Jan', users: 120, active: 95 },
-      { month: 'Feb', users: 180, active: 142 },
-      { month: 'Mar', users: 250, active: 198 },
-      { month: 'Apr', users: 320, active: 256 },
-      { month: 'May', users: 400, active: 320 },
-      { month: 'Jun', users: 480, active: 384 }
-    ],
-    reportSubmissions: [
-      { day: 'Mon', count: 8 },
-      { day: 'Tue', count: 12 },
-      { day: 'Wed', count: 15 },
-      { day: 'Thu', count: 10 },
-      { day: 'Fri', count: 18 },
-      { day: 'Sat', count: 14 },
-      { day: 'Sun', count: 9 }
-    ]
+    userGrowth: [],
+    reportSubmissions: []
   },
-  floodRegions: [
-    {
-      id: 1,
-      name: "Sector 17 Flood Zone",
-      center: [30.7333, 76.7794],
-      radius: 500,
-      severity: "high",
-      population: 5000,
-      reports: 15
-    },
-    {
-      id: 2,
-      name: "Sector 22 Flood Zone",
-      center: [30.7400, 76.7850],
-      radius: 300,
-      severity: "medium",
-      population: 3500,
-      reports: 8
-    },
-    {
-      id: 3,
-      name: "Sector 35 Flood Zone",
-      center: [30.7500, 76.7900],
-      radius: 400,
-      severity: "low",
-      population: 6000,
-      reports: 5
-    }
-  ],
-  mapReports: [
-    {
-      id: 1,
-      title: "Flooding in Sector 17",
-      location: "Chandigarh, Sector 17",
-      coordinates: [30.7333, 76.7794],
-      severity: "critical",
-      status: "pending",
-      user: "John Doe",
-      timestamp: "2024-01-15T10:30:00Z",
-      description: "Water level rising rapidly in residential area",
-      emoji: "🚨"
-    },
-    {
-      id: 2,
-      title: "Road Blockage Near Mall",
-      location: "Chandigarh, Sector 22",
-      coordinates: [30.7400, 76.7850],
-      severity: "high",
-      status: "verified",
-      user: "Jane Smith",
-      timestamp: "2024-01-15T09:15:00Z",
-      description: "Main road completely blocked due to waterlogging",
-      emoji: "⚠️"
-    },
-    {
-      id: 3,
-      title: "Shelter Request - Family of 4",
-      location: "Chandigarh, Sector 35",
-      coordinates: [30.7500, 76.7900],
-      severity: "medium",
-      status: "pending",
-      user: "Mike Johnson",
-      timestamp: "2024-01-15T08:45:00Z",
-      description: "Need immediate shelter for elderly parents",
-      emoji: "🏠"
-    },
-    {
-      id: 4,
-      title: "Infrastructure Damage",
-      location: "Chandigarh, Sector 8",
-      coordinates: [30.7200, 76.7700],
-      severity: "low",
-      status: "verified",
-      user: "Sarah Wilson",
-      timestamp: "2024-01-15T07:20:00Z",
-      description: "Street lights not working in affected area",
-      emoji: "🔧"
-    },
-    {
-      id: 5,
-      title: "Rescue Request - Trapped Vehicle",
-      location: "Chandigarh, Sector 11",
-      coordinates: [30.7600, 76.8000],
-      severity: "critical",
-      status: "pending",
-      user: "David Brown",
-      timestamp: "2024-01-15T06:30:00Z",
-      description: "Car stuck in floodwater, need immediate rescue",
-      emoji: "🚗"
-    }
-  ]
+  floodRegions: [],
+  mapReports: []
 };
 
 const AdminDashboard = () => {
@@ -377,72 +87,87 @@ const AdminDashboard = () => {
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Mock data state
-  const [data, setData] = useState(mockData);
+  // Real data state
+  const [data, setData] = useState(initialData);
+
+  // Load real data from Supabase
+  useEffect(() => {
+    loadRealData();
+  }, []);
 
   // Real-time data updates
   useEffect(() => {
     if (!isLive) return;
 
     const interval = setInterval(() => {
-      setData(prev => ({
-        ...prev,
-        stats: {
-          ...prev.stats,
-          totalUsers: prev.stats.totalUsers + Math.floor(Math.random() * 3),
-          totalReports: prev.stats.totalReports + Math.floor(Math.random() * 2),
-          activeShelters: prev.stats.activeShelters + (Math.random() > 0.8 ? 1 : 0),
-          criticalAlerts: Math.max(0, prev.stats.criticalAlerts + (Math.random() > 0.9 ? 1 : -1))
-        },
-        recentReports: [
-          ...prev.recentReports.slice(0, 4),
-          {
-            id: Date.now(),
-            title: `New Report - ${['Flood', 'Damage', 'Rescue', 'Infrastructure'][Math.floor(Math.random() * 4)]}`,
-            location: `Sector ${Math.floor(Math.random() * 50) + 1}`,
-            severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)],
-            status: 'pending',
-            user: `User ${Math.floor(Math.random() * 1000)}`,
-            timestamp: new Date().toISOString(),
-            description: 'Real-time report submission'
-          }
-        ],
-        alerts: [
-          ...prev.alerts.slice(0, 2),
-          {
-            id: Date.now(),
-            type: "Real-time Alert",
-            severity: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
-            message: `Live update: ${new Date().toLocaleTimeString()}`,
-            timestamp: new Date().toISOString(),
-            status: 'active'
-          }
-        ]
-      }));
-      setLastUpdate(new Date());
-    }, 5000); // Update every 5 seconds
+      loadRealData();
+    }, 30000); // Update every 30 seconds
 
     return () => clearInterval(interval);
   }, [isLive]);
 
-  const refreshData = async () => {
+  const loadRealData = async () => {
     setLoading(true);
-    // Simulate API call with real data updates
-    setTimeout(() => {
+    try {
+      console.log('Loading real dashboard data from Supabase...');
+      
+      // Get dashboard stats and analytics data in parallel
+      const [statsData, analyticsData] = await Promise.all([
+        getDashboardStats(),
+        getAnalyticsData()
+      ]);
+
+      console.log('Dashboard stats loaded:', statsData);
+      console.log('Analytics data loaded:', analyticsData);
+
+      // Update the data state with real Supabase data
       setData(prev => ({
         ...prev,
         stats: {
-          ...prev.stats,
-          totalUsers: prev.stats.totalUsers + Math.floor(Math.random() * 5),
-          totalReports: prev.stats.totalReports + Math.floor(Math.random() * 3),
-          activeShelters: prev.stats.activeShelters + (Math.random() > 0.5 ? 1 : 0),
-          criticalAlerts: Math.max(0, prev.stats.criticalAlerts + (Math.random() > 0.7 ? 1 : -1))
-        }
+          totalUsers: statsData.totalUsers,
+          activeUsers: statsData.activeUsers,
+          totalReports: statsData.totalReports,
+          pendingReports: statsData.pendingReports,
+          criticalReports: statsData.criticalReports,
+          verifiedReports: statsData.verifiedReports,
+          sheltersActivated: statsData.activeShelters,
+          shelterCapacity: statsData.shelterCapacity,
+          avgResponseTime: statsData.avgResponseTime,
+          systemUptime: statsData.systemUptime,
+        },
+        trends: {
+          userGrowth: analyticsData.userGrowth,
+          reportSubmissions: analyticsData.reportSubmissions
+        },
+        shelters: analyticsData.shelterOccupancy.map(shelter => ({
+          id: shelter.shelter,
+          name: shelter.shelter,
+          location: shelter.shelter,
+          capacity: shelter.capacity,
+          currentOccupancy: shelter.occupancy,
+          status: shelter.status,
+          coordinates: [0, 0], // This would need to be fetched separately
+          contact: "N/A",
+          facilities: []
+        })),
+        alerts: [], // This would need to be fetched separately
+        recentReports: [], // This would need to be fetched separately
+        floodRegions: [], // This would need to be fetched separately
+        mapReports: [] // This would need to be fetched separately
       }));
+
       setLastUpdate(new Date());
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
       setLoading(false);
-      toast.success('Dashboard data refreshed successfully');
-    }, 1000);
+    }
+  };
+
+  const refreshData = async () => {
+    await loadRealData();
+    toast.success('Dashboard data refreshed successfully');
   };
 
   const getSeverityColor = (severity: string) => {

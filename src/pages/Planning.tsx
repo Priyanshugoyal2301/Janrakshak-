@@ -7,6 +7,7 @@ import GradientCard from "@/components/GradientCard";
 import EvacuationPlanner from "@/components/EvacuationPlanner";
 import Notch from "@/components/Notch";
 import ImageAnalysis from "@/components/ImageAnalysis";
+import UserLayout from "@/components/UserLayout";
 import {
   MapPin,
   Route,
@@ -178,7 +179,8 @@ const Planning = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <UserLayout title="Emergency Planning" description="Plan your evacuation routes and emergency response">
+      <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
@@ -545,7 +547,8 @@ const Planning = () => {
           <p className="text-sm text-slate-600 mt-1">Average deployment</p>
         </GradientCard>
       </div>
-    </div>
+      </div>
+    </UserLayout>
   );
 };
 

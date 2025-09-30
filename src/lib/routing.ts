@@ -1,6 +1,6 @@
 import polyline from "@mapbox/polyline";
 import type { RouteResult } from "./firebase";
-import { getSheltersWithinRadius, BLOCKED_ROADS } from "./punjabData";
+import { getSheltersWithinRadius } from "./indianShelterData";
 import { getSafeRouteFunction, getNearestShelterFunction } from "./firebase";
 
 export interface LatLng {
@@ -104,7 +104,7 @@ export async function getNearestShelter(
     console.warn("Cloud Functions not available, falling back to local data:", error);
   }
 
-  // Fallback to local Punjab data
+  // Fallback to local Indian shelter data
   const nearbyShelters = getSheltersWithinRadius(start.lat, start.lon, 20);
   
   if (nearbyShelters.length === 0) {
@@ -138,5 +138,3 @@ export async function getNearestShelter(
     },
   };
 }
-
-

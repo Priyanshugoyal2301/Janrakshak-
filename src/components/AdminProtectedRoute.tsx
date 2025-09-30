@@ -1,9 +1,10 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuthMinimal } from '@/contexts/SupabaseAuthContextMinimal';
-import { Shield, Loader2, AlertTriangle } from 'lucide-react';
+import { Shield, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import LoadingScreen from '@/components/LoadingScreen';
 
 interface AdminProtectedRouteProps {
   children: React.ReactNode;
@@ -14,19 +15,7 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Loader2 className="w-8 h-8 text-white animate-spin" />
-            </div>
-            <CardTitle>Loading Admin Panel</CardTitle>
-            <CardDescription>Please wait while we verify your access...</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
+    return <LoadingScreen message="Loading Admin Panel..." />;
   }
 
   if (!user) {

@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import {
   Home,
   TrendingUp,
@@ -34,16 +33,15 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, userProfile, logout } = useAuth();
-  const { isAdmin } = useSupabaseAuth();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Flood Prediction", href: "/flood-prediction", icon: Droplets },
     { name: "Predictions", href: "/predictions", icon: TrendingUp },
     { name: "Alerts", href: "/alerts", icon: AlertTriangle },
     { name: "Reports", href: "/reports", icon: Users },
     { name: "Assessment", href: "/assessment", icon: Camera },
     { name: "Planning", href: "/planning", icon: MapPin },
-    ...(isAdmin ? [{ name: "Admin Panel", href: "/admin", icon: Crown }] : []),
   ];
 
   const handleLogout = async () => {
@@ -65,10 +63,10 @@ const Layout = ({ children }: LayoutProps) => {
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-green-100 to-teal-200 text-gray-100 backdrop-blur-xl shadow-lg border-r border-blue-100 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between h-16 px-6 border-b border-blue-100 bg-gradient-to-r from-green-100 to-teal-200">
           <div className="flex items-center space-x-3">
-            <img src="/favicon.svg" alt="JalRakshak Logo" className="w-10 h-10" />
+            <img src="/favicon.svg" alt="JanRakshak Logo" className="w-10 h-10" />
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                JalRakshak
+                JanRakshak
               </h1>
               <p className="text-xs text-slate-500">Flood Warning System</p>
             </div>
@@ -223,7 +221,7 @@ const Layout = ({ children }: LayoutProps) => {
           </Button>
           <div className="flex items-center space-x-2">
             <Droplets className="w-6 h-6 text-blue-600" />
-            <span className="font-bold text-blue-600">JalRakshak</span>
+            <span className="font-bold text-blue-600">JanRakshak</span>
           </div>
           {/* Mobile User Menu */}
           <DropdownMenu>

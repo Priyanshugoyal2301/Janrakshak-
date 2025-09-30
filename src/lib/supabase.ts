@@ -121,6 +121,8 @@ export const submitFloodReport = async (report: Omit<FloodReport, 'id' | 'create
 
 export const getLocationData = async (state: string, district?: string): Promise<LocationData[]> => {
   try {
+    console.log('Fetching location data for:', { state, district });
+    
     let query = supabase
       .from('location_data')
       .select('*')
@@ -134,14 +136,101 @@ export const getLocationData = async (state: string, district?: string): Promise
 
     if (error) {
       console.error('Error fetching location data:', error);
+      
+      // If table doesn't exist, return sample data
+      if (error.code === 'PGRST116' || error.message.includes('relation "location_data" does not exist')) {
+        console.log('Location data table not found, returning sample data');
+        return getSampleLocationData(state, district);
+      }
+      
       return [];
     }
 
+    console.log('Location data fetched:', data);
     return data || [];
   } catch (error) {
     console.error('Error fetching location data:', error);
-    return [];
+    return getSampleLocationData(state, district);
   }
+};
+
+// Sample location data for when the table doesn't exist
+const getSampleLocationData = (state: string, district?: string): LocationData[] => {
+  const sampleData: LocationData[] = [
+    {
+      id: '1',
+      state: 'Tamil Nadu',
+      district: 'Chennai',
+      lat: 13.0827,
+      lng: 80.2707,
+      current_water_level: 2.5,
+      risk_level: 'warning',
+      weather_data: {
+        temperature: 28,
+        humidity: 85,
+        precipitation: 15,
+        wind_speed: 12
+      },
+      last_updated: new Date().toISOString()
+    },
+    {
+      id: '2',
+      state: 'Tamil Nadu',
+      district: 'Chennai Central',
+      lat: 13.0900,
+      lng: 80.2800,
+      current_water_level: 3.2,
+      risk_level: 'critical',
+      weather_data: {
+        temperature: 26,
+        humidity: 90,
+        precipitation: 25,
+        wind_speed: 18
+      },
+      last_updated: new Date().toISOString()
+    },
+    {
+      id: '3',
+      state: 'Tamil Nadu',
+      district: 'Chennai North',
+      lat: 13.1000,
+      lng: 80.2900,
+      current_water_level: 1.8,
+      risk_level: 'safe',
+      weather_data: {
+        temperature: 30,
+        humidity: 75,
+        precipitation: 8,
+        wind_speed: 10
+      },
+      last_updated: new Date().toISOString()
+    },
+    {
+      id: '4',
+      state: 'Tamil Nadu',
+      district: 'Chennai South',
+      lat: 13.0700,
+      lng: 80.2600,
+      current_water_level: 2.1,
+      risk_level: 'warning',
+      weather_data: {
+        temperature: 29,
+        humidity: 80,
+        precipitation: 12,
+        wind_speed: 14
+      },
+      last_updated: new Date().toISOString()
+    }
+  ];
+
+  // Filter by state and district if provided
+  let filteredData = sampleData.filter(location => location.state === state);
+  
+  if (district) {
+    filteredData = filteredData.filter(location => location.district === district);
+  }
+
+  return filteredData;
 };
 
 // Get user-specific reports (only reports created by the current user)
@@ -175,6 +264,36 @@ export const getUserReports = async (userId: string): Promise<FloodReport[]> => 
     return data || [];
   } catch (error) {
     console.error('Error fetching user reports:', error);
+    return [];
+  }
+};
+
+// Get community reports filtered by region
+export const getCommunityReports = async (state: string, district?: string): Promise<FloodReport[]> => {
+  try {
+    console.log('Fetching community reports for region:', { state, district });
+    
+    let query = supabase
+      .from('flood_reports')
+      .select('*')
+      .eq('location->>state', state)
+      .order('created_at', { ascending: false });
+
+    if (district) {
+      query = query.eq('location->>district', district);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching community reports:', error);
+      return [];
+    }
+
+    console.log('Community reports data:', data);
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching community reports:', error);
     return [];
   }
 };

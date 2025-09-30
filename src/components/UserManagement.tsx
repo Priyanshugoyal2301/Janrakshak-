@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseAuthMinimal } from '@/contexts/SupabaseAuthContextMinimal';
 import { 
   getAllUsersFromSupabase, 
   updateUserRoleInSupabase, 
@@ -47,7 +47,7 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const { user: supabaseUser, isAdmin } = useSupabaseAuth();
+  const { user: supabaseUser, isAdmin } = useSupabaseAuthMinimal();
 
   useEffect(() => {
     fetchUsers();

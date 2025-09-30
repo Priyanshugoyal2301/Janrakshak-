@@ -1,5 +1,5 @@
 /**
- * Weather API Integration for JalRakshak Flood Prediction System
+ * Weather API Integration for JanRakshak Flood Prediction System
  * Integrates with OpenWeatherMap, IMD (India Meteorological Department), and other sources
  */
 

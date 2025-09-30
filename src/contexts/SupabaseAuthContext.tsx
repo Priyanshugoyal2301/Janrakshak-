@@ -97,11 +97,30 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({ chil
       setLoading(true);
       console.log('Starting signup process...');
       
+      // Validate secret key if provided
+      if (userData?.secret_key) {
+        const validSecretKeys = [
+          'JANRAKSHAK_ADMIN_2024',
+          'FLOOD_PROTECTION_ADMIN',
+          'EMERGENCY_RESPONSE_KEY',
+          'DISASTER_MANAGEMENT_2024'
+        ];
+
+        if (!validSecretKeys.includes(userData.secret_key)) {
+          toast.error('Invalid admin secret key. Please contact system administrator.');
+          return { user: null, error: { message: 'Invalid secret key' } as AuthError };
+        }
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData
+          data: {
+            full_name: userData?.full_name,
+            role: 'admin',
+            secret_key_validated: !!userData?.secret_key
+          }
         }
       });
 
@@ -114,7 +133,7 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({ chil
       }
 
       if (data.user) {
-        console.log('Admin user created successfully');
+        console.log('Admin user created successfully with secret key validation');
       }
 
       toast.success('Admin account created successfully! Please check your email to verify your account.');

@@ -84,7 +84,7 @@ export const getNearestShelterFunction = () => {
 
 // Admin helper functions
 export const isAdmin = (userEmail?: string | null): boolean => {
-  const adminEmails = ["admin@jalrakshak.com"];
+  const adminEmails = ["admin@janrakshak.com"];
   return userEmail ? adminEmails.includes(userEmail) : false;
 };
 

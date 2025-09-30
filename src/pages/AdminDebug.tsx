@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseAuthMinimal } from '@/contexts/SupabaseAuthContextMinimal';
 import { initializeTestData } from '@/lib/testData';
 
 const AdminDebug = () => {
-  const { user, loading, isAdmin } = useSupabaseAuth();
+  const { user, loading, isAdmin } = useSupabaseAuthMinimal();
   const [supabaseStatus, setSupabaseStatus] = useState<string>('Checking...');
   const [testData, setTestData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);

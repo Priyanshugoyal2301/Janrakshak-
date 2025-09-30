@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useSupabaseAuthMinimal } from '@/contexts/SupabaseAuthContextMinimal';
+import { getRealTimeCounts } from '@/lib/adminSupabase';
 import {
   Menu,
   X,
@@ -14,8 +15,6 @@ import {
   User,
   Bell,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Home,
   AlertTriangle,
   FileText,
@@ -27,6 +26,8 @@ import {
   Search,
   Plus,
   RefreshCw,
+  CloudRain,
+  Shield,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -35,17 +36,44 @@ interface AdminLayoutProps {
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [realTimeCounts, setRealTimeCounts] = useState({
+    pendingReports: 0,
+    criticalReports: 0,
+    activeAlerts: 0,
+    pendingMissions: 0,
+    activeShelters: 0,
+    totalUsers: 0
+  });
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useSupabaseAuthMinimal();
 
+  // Load real-time counts
+  useEffect(() => {
+    loadRealTimeCounts();
+    
+    // Update counts every 30 seconds
+    const interval = setInterval(loadRealTimeCounts, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadRealTimeCounts = async () => {
+    try {
+      const counts = await getRealTimeCounts();
+      setRealTimeCounts(counts);
+    } catch (error) {
+      console.error('Error loading real-time counts:', error);
+    }
+  };
+
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: Home, badge: null },
-    { name: "Alerts", href: "/admin/alerts", icon: AlertTriangle, badge: "3" },
-    { name: "Reports", href: "/admin/reports", icon: FileText, badge: "12" },
+    { name: "Alerts", href: "/admin/alerts", icon: AlertTriangle, badge: realTimeCounts.activeAlerts > 0 ? realTimeCounts.activeAlerts.toString() : null },
+    { name: "Reports", href: "/admin/reports", icon: FileText, badge: realTimeCounts.pendingReports > 0 ? realTimeCounts.pendingReports.toString() : null },
     { name: "Users", href: "/admin/users", icon: Users, badge: null },
-    { name: "Shelters", href: "/admin/shelters", icon: MapPin, badge: "5" },
+    { name: "Shelters", href: "/admin/shelters", icon: MapPin, badge: realTimeCounts.activeShelters > 0 ? realTimeCounts.activeShelters.toString() : null },
+    { name: "Risk Assessment", href: "/admin/risk-assessment", icon: Shield, badge: null },
+    { name: "Flood Prediction", href: "/admin/flood-prediction", icon: CloudRain, badge: null },
     { name: "Route Planning", href: "/admin/routes", icon: Route, badge: null },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart3, badge: null },
     { name: "System Health", href: "/admin/system", icon: Activity, badge: null },
@@ -67,179 +95,139 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-teal-100 to-blue-200 text-gray-100 backdrop-blur-xl shadow-lg border-r border-teal-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-teal-100 to-blue-200 text-gray-700 backdrop-blur-xl shadow-lg border-r border-teal-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } ${sidebarCollapsed ? "w-16" : "w-64"}`}>
+      }`}>
         
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-teal-200 bg-gradient-to-r from-teal-100 to-blue-200">
-          {!sidebarCollapsed && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-teal-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
-                  Admin Panel
-                </h1>
-                <p className="text-xs text-teal-600">JalRakshak</p>
-              </div>
-            </div>
-          )}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-teal-200">
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="lg:hidden p-1"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden lg:flex p-1"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            >
-              {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </Button>
+            <img src="/favicon.svg" alt="JanRakshak Logo" className="w-8 h-8" />
+            <span className="text-xl font-bold text-teal-700">JanRakshak</span>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="lg:hidden text-teal-700 hover:bg-teal-200"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="w-5 h-5" />
+          </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="mt-6 px-2">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`
-                  flex items-center px-3 py-3 mb-2 rounded-xl transition-all duration-200 group relative
-                  ${
-                    isActive
-                      ? "bg-gradient-to-r from-teal-400 to-blue-400 text-white shadow-md shadow-teal-400/30"
-                      : "text-teal-700 hover:bg-gradient-to-r hover:from-teal-100 hover:to-blue-100 hover:text-teal-800"
-                  }
-                `}
-                onClick={() => setSidebarOpen(false)}
-                title={sidebarCollapsed ? item.name : undefined}
-              >
-                <item.icon className={`w-5 h-5 ${sidebarCollapsed ? "" : "mr-3"}`} />
-                {!sidebarCollapsed && (
-                  <>
-                    <span className="font-medium">{item.name}</span>
-                    {item.badge && (
-                      <Badge className="ml-auto bg-red-500 text-white text-xs">
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </>
-                )}
-                {sidebarCollapsed && item.badge && (
-                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center p-0">
-                    {item.badge}
-                  </Badge>
-                )}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          <div className="space-y-1">
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? 'default' : 'ghost'}
+                  className={`w-full justify-start text-teal-700 ${
+                    isActive ? 'bg-teal-600 text-white' : 'hover:bg-teal-200'
+                  }`}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.name}
+                  {item.badge && (
+                    <Badge className="ml-auto bg-red-500 text-white text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-teal-200 my-4"></div>
+
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-red-600 hover:bg-red-100"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4 mr-3" />
+            Sign Out
+          </Button>
         </nav>
-
-
       </div>
 
       {/* Main content */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"}`}>
+      <div className="lg:ml-64">
         {/* Top bar */}
-        <div className="h-16 bg-white/80 backdrop-blur-sm border-b border-teal-200 flex items-center justify-between px-6">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
+        <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden text-gray-600"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+                <p className="text-sm text-gray-600">
+                  Welcome back, Admin
+                </p>
+              </div>
+            </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">Welcome back, Admin</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {/* Search */}
-            <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white/50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              />
-            </div>
-            
-            {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="w-5 h-5" />
-              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center p-0">
-                3
+              <Badge variant="outline" className="text-xs">
+                <Shield className="w-3 h-3 mr-1" />
+                ADMIN
               </Badge>
-            </Button>
-            
-            {/* Refresh */}
-            <Button variant="outline" size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-            
-            {/* Admin Profile */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center space-x-2 bg-teal-50 border-2 border-teal-200 rounded-full p-1 cursor-pointer hover:bg-teal-100 transition-colors">
-                  <Avatar className="w-8 h-8 ring-2 ring-teal-300">
-                    <AvatarImage src={user?.user_metadata?.avatar_url || ''} />
-                    <AvatarFallback className="bg-gradient-to-br from-teal-500 to-blue-500 text-white text-sm font-bold">
-                      {user?.email?.charAt(0).toUpperCase() || 'A'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <ChevronDown className="w-3 h-3 text-teal-600 mr-1" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel className="text-teal-900 font-semibold">
-                  <div className="flex items-center space-x-2">
-                    <span>Admin Panel</span>
-                  </div>
-                  <div className="text-xs text-teal-600 font-normal truncate">
-                    {user?.user_metadata?.full_name || 'Admin User'}
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="hover:bg-teal-50">
-                  <User className="w-4 h-4 mr-2 text-teal-600" />
-                  Profile Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-teal-50">
-                  <Bell className="w-4 h-4 mr-2 text-teal-600" />
-                  Notifications
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-teal-50">
-                  <Settings className="w-4 h-4 mr-2 text-teal-600" />
-                  System Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 hover:bg-red-50">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadRealTimeCounts}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email} />
+                        <AvatarFallback>
+                          {user?.email?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">Admin</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Page content */}
-        <main className="p-6">{children}</main>
+        <div className="p-6">
+          {children}
+        </div>
       </div>
     </div>
   );

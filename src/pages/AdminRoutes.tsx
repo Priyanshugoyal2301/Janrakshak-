@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
+import InteractiveMap from '@/components/InteractiveMap';
+import { useInteractiveMap } from '@/hooks/useInteractiveMap';
+import L from 'leaflet';
 import { 
   Route,
   MapPin,
@@ -32,9 +35,14 @@ import {
   Globe,
   Zap,
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -192,11 +200,16 @@ const AdminRoutes = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showRouteDialog, setShowRouteDialog] = useState(false);
   const [selectedMission, setSelectedMission] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   
-  // Map layer toggles
-  const [showReports, setShowReports] = useState(true);
-  const [showShelters, setShowShelters] = useState(true);
-  const [showFloodZones, setShowFloodZones] = useState(true);
+  // Interactive map hook with error handling
+  let interactiveMap;
+  try {
+    interactiveMap = useInteractiveMap();
+  } catch (err) {
+    console.error('Error initializing interactive map:', err);
+    setError('Failed to initialize map. Please refresh the page.');
+  }
   
   // Create mission form state
   const [missionForm, setMissionForm] = useState({
@@ -372,6 +385,7 @@ const AdminRoutes = () => {
 
 
 
+
   const filteredMissions = data.missions.filter(mission => {
     const matchesSearch = searchTerm === '' || 
       mission.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -388,6 +402,40 @@ const AdminRoutes = () => {
   const activeMissions = filteredMissions.filter(m => m.status === 'active');
   const plannedMissions = filteredMissions.filter(m => m.status === 'planned');
   const completedMissions = filteredMissions.filter(m => m.status === 'completed');
+
+  // Show error if map initialization failed
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div className="text-center py-12">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Routes Page</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Page
+            </Button>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Show loading if interactiveMap is not ready
+  if (!interactiveMap) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div className="text-center py-12">
+            <RefreshCw className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Routes Page</h2>
+            <p className="text-gray-600">Initializing interactive map...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -583,173 +631,103 @@ const AdminRoutes = () => {
         </Card>
       </div>
 
+      {/* Interactive Route Planning */}
+      <InteractiveMap
+        points={interactiveMap.points}
+        routes={interactiveMap.routes}
+        isCalculating={interactiveMap.isCalculating}
+        showInstructions={interactiveMap.showInstructions}
+        onAddPoint={interactiveMap.addPoint}
+        onRemovePoint={interactiveMap.removePoint}
+        onCalculateRoute={interactiveMap.calculateRoute}
+        onOptimizeRoute={interactiveMap.optimizeRoute}
+        onToggleInstructions={interactiveMap.toggleInstructions}
+        onClearPoints={interactiveMap.clearPoints}
+      />
+
       {/* Main Content */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Map Widget */}
-        <div className="lg:col-span-2">
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center">
-                    <MapPin className="h-5 w-5 mr-2 text-teal-600" />
-                    Mission Map
-                  </CardTitle>
-                  <CardDescription>Interactive map with routes and mission locations</CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={showReports}
-                      onCheckedChange={setShowReports}
-                      id="reports"
-                    />
-                    <Label htmlFor="reports" className="text-sm">Reports</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={showShelters}
-                      onCheckedChange={setShowShelters}
-                      id="shelters"
-                    />
-                    <Label htmlFor="shelters" className="text-sm">Shelters</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={showFloodZones}
-                      onCheckedChange={setShowFloodZones}
-                      id="flood-zones"
-                    />
-                    <Label htmlFor="flood-zones" className="text-sm">Flood Zones</Label>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-96 rounded-lg overflow-hidden">
-                <MapContainer
-                  center={[30.7333, 76.7794] as [number, number]}
-                  zoom={12}
-                  style={{ height: '100%', width: '100%' }}
-                >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  />
-                  
-                  {/* Origin Marker */}
-                  <Marker position={[30.7333, 76.7794] as [number, number]}>
-                    <Popup>
-                      <div className="p-2">
-                        <h3 className="font-semibold text-sm">Origin Point</h3>
-                        <p className="text-xs">Rescue Base Station</p>
-                        <p className="text-xs">Lat: 30.7333, Lng: 76.7794</p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                  
-                  {/* Destination Markers */}
-                  <Marker position={[30.7400, 76.7850] as [number, number]}>
-                    <Popup>
-                      <div className="p-2">
-                        <h3 className="font-semibold text-sm">Destination 1</h3>
-                        <p className="text-xs">Flood Zone Alpha</p>
-                        <p className="text-xs">Distance: 2.3 km</p>
-                        <p className="text-xs">ETA: 8 minutes</p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                  
-                  <Marker position={[30.7500, 76.7900] as [number, number]}>
-                    <Popup>
-                      <div className="p-2">
-                        <h3 className="font-semibold text-sm">Destination 2</h3>
-                        <p className="text-xs">Emergency Shelter</p>
-                        <p className="text-xs">Distance: 4.1 km</p>
-                        <p className="text-xs">ETA: 12 minutes</p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                  
-                  {/* Route Line */}
-                  <Polyline
-                    positions={[
-                      [30.7333, 76.7794],
-                      [30.7400, 76.7850],
-                      [30.7500, 76.7900]
-                    ]}
-                    color="#0ea5e9"
-                    weight={4}
-                    opacity={0.8}
-                  />
-                </MapContainer>
-              </div>
-              <div className="mt-4 flex items-center justify-center space-x-4 text-xs">
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span>Origin</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span>Destinations</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-1 h-4 bg-blue-500"></div>
-                  <span>Route</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Route Suggestions */}
+        {/* Mission Planning Tools */}
         <div>
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Route className="h-5 w-5 mr-2 text-blue-600" />
-                Route Suggestions
+                <Target className="h-5 w-5 mr-2 text-blue-600" />
+                Mission Planning Tools
               </CardTitle>
-              <CardDescription>Optimal routes for selected mission</CardDescription>
+              <CardDescription>Quick actions for mission planning</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-96">
-                <div className="space-y-3">
-                  {selectedMission ? (
-                    <>
-                      <div className="p-3 border border-gray-200 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm">Primary Route</h4>
-                          <Badge className="bg-green-100 text-green-800">Recommended</Badge>
-                        </div>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <div>Distance: {selectedMission.distance}</div>
-                          <div>Time: {selectedMission.estimatedTime}</div>
-                          <div>Mode: {selectedMission.mode}</div>
-                        </div>
-                      </div>
-                      {selectedMission.alternateRoutes.map((route) => (
-                        <div key={route.id} className="p-3 border border-gray-200 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-sm">Alternate Route {route.id}</h4>
-                            <Badge className="bg-yellow-100 text-yellow-800">Alternative</Badge>
-                          </div>
-                          <div className="text-xs text-muted-foreground space-y-1">
-                            <div>Distance: {route.distance}</div>
-                            <div>Time: {route.estimatedTime}</div>
-                            <div>Reason: {route.reason}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                      <Route className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                      <p className="text-sm">Select a mission to view routes</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+              <div className="space-y-4">
+                <Button
+                  onClick={() => setShowCreateDialog(true)}
+                  className="w-full bg-teal-600 hover:bg-teal-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Mission
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // Load mission data into interactive map
+                    if (selectedMission) {
+                      interactiveMap.clearPoints();
+                      interactiveMap.addPoint(
+                        selectedMission.coordinates.origin.lat,
+                        selectedMission.coordinates.origin.lng,
+                        'origin',
+                        selectedMission.origin
+                      );
+                      interactiveMap.addPoint(
+                        selectedMission.coordinates.destination.lat,
+                        selectedMission.coordinates.destination.lng,
+                        'destination',
+                        selectedMission.destination
+                      );
+                      toast.success('Mission loaded into route planner');
+                    } else {
+                      toast.error('Please select a mission first');
+                    }
+                  }}
+                  className="w-full"
+                  disabled={!selectedMission}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Load Mission to Map
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // Export route data
+                    if (interactiveMap.routes.length > 0) {
+                      const routeData = {
+                        points: interactiveMap.points,
+                        routes: interactiveMap.routes,
+                        vehicle: 'car', // Default for rescue operations
+                        timestamp: new Date().toISOString()
+                      };
+                      const blob = new Blob([JSON.stringify(routeData, null, 2)], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `route-plan-${Date.now()}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success('Route data exported');
+                    } else {
+                      toast.error('No route data to export');
+                    }
+                  }}
+                  className="w-full"
+                  disabled={interactiveMap.routes.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Route Data
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

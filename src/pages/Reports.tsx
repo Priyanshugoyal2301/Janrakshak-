@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import GradientCard from "@/components/GradientCard";
+import UserLayout from "@/components/UserLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, submitFloodReport, uploadImage, getUserReports, type FloodReport } from "@/lib/supabase";
 import { getFirebase } from '@/lib/firebase';
@@ -295,9 +296,10 @@ const Reports = () => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
+    <UserLayout title="My Reports" description="View and manage your flood reports">
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
           My Flood Reports
         </h1>
@@ -311,6 +313,7 @@ const Reports = () => {
             <span>Your location: {userLocation.district}, {userLocation.state}</span>
           </div>
         )}
+        </div>
       </div>
 
       {/* Stats Row */}
@@ -784,7 +787,7 @@ const Reports = () => {
           </div>
         )}
       </div>
-    </div>
+    </UserLayout>
   );
 };
 

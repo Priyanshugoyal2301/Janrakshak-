@@ -1,8 +1,8 @@
 import React from 'react';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseAuthMinimal } from '@/contexts/SupabaseAuthContextMinimal';
 
 const AdminSimple = () => {
-  const { user, loading, isAdmin } = useSupabaseAuth();
+  const { user, loading, isAdmin } = useSupabaseAuthMinimal();
 
   if (loading) {
     return (

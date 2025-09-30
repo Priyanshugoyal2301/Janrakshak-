@@ -53,21 +53,22 @@ import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 // import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 // import L from 'leaflet';
 // import 'leaflet/dist/leaflet.css';
+import { getDashboardStats, getAnalyticsData } from '@/lib/adminSupabase';
 
-// Mock data for development
-const mockData = {
+// Real data structure - will be populated from Supabase
+const initialData = {
   kpis: {
-    avgReportsPerDay: 12.5,
-    avgResponseTime: 2.3,
-    shelterUtilizationRate: 78.5,
-    userSatisfactionScore: 4.2,
-    systemUptime: 99.9,
-    totalUsers: 1247,
-    totalReports: 3421,
-    totalShelters: 15,
-    criticalAlerts: 3,
-    activeUsers: 856,
-    pendingReports: 44
+    avgReportsPerDay: 0,
+    avgResponseTime: 0,
+    shelterUtilizationRate: 0,
+    userSatisfactionScore: 0,
+    systemUptime: 100,
+    totalUsers: 0,
+    totalReports: 0,
+    totalShelters: 0,
+    criticalAlerts: 0,
+    activeUsers: 0,
+    pendingReports: 0
   },
   trends: {
     userGrowth: [
@@ -125,68 +126,75 @@ const AdminAnalytics = () => {
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   
-  // Mock data state
-  const [data, setData] = useState(mockData);
+  // Real data state
+  const [data, setData] = useState(initialData);
+
+  // Load real data from Supabase
+  useEffect(() => {
+    loadRealData();
+  }, []);
 
   // Real-time analytics updates
   useEffect(() => {
     if (!isLive) return;
 
     const interval = setInterval(() => {
-      setData(prev => ({
-        ...prev,
-        kpis: {
-          ...prev.kpis,
-          totalUsers: prev.kpis.totalUsers + Math.floor(Math.random() * 3),
-          totalReports: prev.kpis.totalReports + Math.floor(Math.random() * 5),
-          activeUsers: prev.kpis.activeUsers + Math.floor(Math.random() * 2),
-          pendingReports: Math.max(0, prev.kpis.pendingReports + Math.floor(Math.random() * 3) - 1),
-          avgReportsPerDay: Math.max(0, prev.kpis.avgReportsPerDay + (Math.random() - 0.5) * 2),
-          avgResponseTime: Math.max(0, prev.kpis.avgResponseTime + (Math.random() - 0.5) * 0.5),
-          shelterUtilizationRate: Math.max(0, Math.min(100, prev.kpis.shelterUtilizationRate + (Math.random() - 0.5) * 5))
-        },
-        trends: {
-          ...prev.trends,
-          reportSubmissions: prev.trends.reportSubmissions.map(day => ({
-            ...day,
-            count: Math.max(0, day.count + Math.floor(Math.random() * 3) - 1),
-            critical: Math.max(0, day.critical + (Math.random() > 0.8 ? 1 : 0)),
-            high: Math.max(0, day.high + Math.floor(Math.random() * 2)),
-            medium: Math.max(0, day.medium + Math.floor(Math.random() * 2)),
-            low: Math.max(0, day.low + Math.floor(Math.random() * 2))
-          })),
-          shelterOccupancy: prev.trends.shelterOccupancy.map(shelter => ({
-            ...shelter,
-            occupancy: Math.max(0, Math.min(shelter.capacity, shelter.occupancy + Math.floor(Math.random() * 5) - 2)),
-            status: shelter.occupancy >= shelter.capacity * 0.9 ? 'full' : 
-                   shelter.occupancy >= shelter.capacity * 0.7 ? 'busy' : 'available'
-          }))
-        }
-      }));
-      setLastUpdate(new Date());
-    }, 5000); // Update every 5 seconds
+      loadRealData();
+    }, 30000); // Update every 30 seconds
 
     return () => clearInterval(interval);
   }, [isLive]);
 
-  const refreshData = async () => {
+  const loadRealData = async () => {
     setLoading(true);
-    // Simulate API call with real data updates
-    setTimeout(() => {
+    try {
+      console.log('Loading real analytics data from Supabase...');
+      
+      // Get dashboard stats and analytics data in parallel
+      const [statsData, analyticsData] = await Promise.all([
+        getDashboardStats(),
+        getAnalyticsData()
+      ]);
+
+      console.log('Analytics stats loaded:', statsData);
+      console.log('Analytics trends loaded:', analyticsData);
+
+      // Update the data state with real Supabase data
       setData(prev => ({
         ...prev,
         kpis: {
-          ...prev.kpis,
-          totalUsers: prev.kpis.totalUsers + Math.floor(Math.random() * 10),
-          totalReports: prev.kpis.totalReports + Math.floor(Math.random() * 15),
-          activeUsers: prev.kpis.activeUsers + Math.floor(Math.random() * 5),
-          pendingReports: Math.max(0, prev.kpis.pendingReports + Math.floor(Math.random() * 5) - 2)
+          totalUsers: statsData.totalUsers,
+          activeUsers: statsData.activeUsers,
+          totalReports: statsData.totalReports,
+          pendingReports: statsData.pendingReports,
+          totalShelters: statsData.totalShelters,
+          criticalAlerts: statsData.activeAlerts,
+          avgReportsPerDay: analyticsData.avgReportsPerDay,
+          avgResponseTime: statsData.avgResponseTime,
+          shelterUtilizationRate: analyticsData.shelterUtilizationRate,
+          userSatisfactionScore: analyticsData.userSatisfactionScore,
+          systemUptime: statsData.systemUptime
+        },
+        trends: {
+          userGrowth: analyticsData.userGrowth,
+          reportSubmissions: analyticsData.reportSubmissions,
+          shelterOccupancy: analyticsData.shelterOccupancy,
+          floodAlerts: analyticsData.floodAlerts
         }
       }));
+
       setLastUpdate(new Date());
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+      toast.error('Failed to load analytics data');
+    } finally {
       setLoading(false);
-      toast.success('Analytics data refreshed successfully');
-    }, 1000);
+    }
+  };
+
+  const refreshData = async () => {
+    await loadRealData();
+    toast.success('Analytics data refreshed successfully');
   };
 
   const downloadReport = (type: string) => {

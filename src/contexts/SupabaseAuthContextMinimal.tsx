@@ -37,28 +37,50 @@ export const SupabaseAuthProviderMinimal: React.FC<SupabaseAuthProviderMinimalPr
   useEffect(() => {
     console.log('SupabaseAuthProviderMinimal: Initializing...');
     
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      console.log('SupabaseAuthProviderMinimal: Initial session:', session);
-      if (error) {
-        console.error('SupabaseAuthProviderMinimal: Session error:', error);
-      }
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsAdmin(true); // All Supabase users are admins
-      setLoading(false);
-    });
+    // Get initial session with error handling
+    supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
+        console.log('SupabaseAuthProviderMinimal: Initial session:', session);
+        if (error) {
+          console.error('SupabaseAuthProviderMinimal: Session error:', error);
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsAdmin(true); // All Supabase users are admins
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('SupabaseAuthProviderMinimal: Failed to get session:', error);
+        setSession(null);
+        setUser(null);
+        setIsAdmin(false);
+        setLoading(false);
+      });
 
-    // Listen for auth changes
+    // Listen for auth changes with error handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('SupabaseAuthProviderMinimal: Auth state changed:', _event, session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsAdmin(true); // All Supabase users are admins
-      setLoading(false);
+      try {
+        console.log('SupabaseAuthProviderMinimal: Auth state changed:', _event, session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsAdmin(true); // All Supabase users are admins
+        setLoading(false);
+      } catch (error) {
+        console.error('SupabaseAuthProviderMinimal: Error handling auth state change:', error);
+        setSession(null);
+        setUser(null);
+        setIsAdmin(false);
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      try {
+        subscription.unsubscribe();
+      } catch (error) {
+        console.error('SupabaseAuthProviderMinimal: Error unsubscribing:', error);
+      }
+    };
   }, []);
 
   const signUp = async (email: string, password: string, userData?: any) => {

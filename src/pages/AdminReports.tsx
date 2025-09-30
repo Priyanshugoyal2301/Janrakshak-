@@ -45,121 +45,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import { 
+  getFloodReports, 
+  updateFloodReportStatus,
+  subscribeToFloodReports
+} from '@/lib/adminSupabase';
 
-// Mock data for development
-const mockData = {
-  reports: [
-    {
-      id: 1,
-      title: "Flooding in Sector 17",
-      description: "Water level rising rapidly in residential area. Multiple houses affected. Need immediate assistance.",
-      location: "Chandigarh, Sector 17",
-      category: "Flood severity",
-      severity: "critical",
-      status: "pending",
-      user: {
-        id: "user1",
-        name: "John Doe",
-        email: "john@example.com",
-        avatar: null
-      },
-      timestamp: "2024-01-15T10:30:00Z",
-      images: [
-        { id: 1, url: "/api/placeholder/300/200", alt: "Flooded street" },
-        { id: 2, url: "/api/placeholder/300/200", alt: "Water level" }
-      ],
-      coordinates: { lat: 30.7333, lng: 76.7794 },
-      verified: false,
-      priority: "high"
-    },
-    {
-      id: 2,
-      title: "Road Blockage Near Mall",
-      description: "Main road completely blocked due to waterlogging. Traffic diverted to alternative routes.",
-      location: "Chandigarh, Sector 22",
-      category: "Infrastructure issue",
-      severity: "high",
-      status: "verified",
-      user: {
-        id: "user2",
-        name: "Jane Smith",
-        email: "jane@example.com",
-        avatar: null
-      },
-      timestamp: "2024-01-15T09:15:00Z",
-      images: [
-        { id: 3, url: "/api/placeholder/300/200", alt: "Blocked road" }
-      ],
-      coordinates: { lat: 30.7333, lng: 76.7794 },
-      verified: true,
-      priority: "medium"
-    },
-    {
-      id: 3,
-      title: "Shelter Request - Family of 4",
-      description: "Need immediate shelter for elderly parents. Current location is becoming unsafe.",
-      location: "Chandigarh, Sector 35",
-      category: "Rescue request",
-      severity: "medium",
-      status: "pending",
-      user: {
-        id: "user3",
-        name: "Mike Johnson",
-        email: "mike@example.com",
-        avatar: null
-      },
-      timestamp: "2024-01-15T08:45:00Z",
-      images: [],
-      coordinates: { lat: 30.7333, lng: 76.7794 },
-      verified: false,
-      priority: "high"
-    },
-    {
-      id: 4,
-      title: "Infrastructure Damage",
-      description: "Street lights not working in affected area. Power lines damaged by floodwater.",
-      location: "Chandigarh, Sector 8",
-      category: "Infrastructure issue",
-      severity: "low",
-      status: "verified",
-      user: {
-        id: "user4",
-        name: "Sarah Wilson",
-        email: "sarah@example.com",
-        avatar: null
-      },
-      timestamp: "2024-01-15T07:20:00Z",
-      images: [
-        { id: 4, url: "/api/placeholder/300/200", alt: "Damaged street light" }
-      ],
-      coordinates: { lat: 30.7333, lng: 76.7794 },
-      verified: true,
-      priority: "low"
-    },
-    {
-      id: 5,
-      title: "Rescue Request - Trapped Vehicle",
-      description: "Car stuck in floodwater, need immediate rescue. Driver and passenger safe but trapped.",
-      location: "Chandigarh, Sector 11",
-      category: "Rescue request",
-      severity: "critical",
-      status: "pending",
-      user: {
-        id: "user5",
-        name: "David Brown",
-        email: "david@example.com",
-        avatar: null
-      },
-      timestamp: "2024-01-15T06:30:00Z",
-      images: [
-        { id: 5, url: "/api/placeholder/300/200", alt: "Trapped vehicle" },
-        { id: 6, url: "/api/placeholder/300/200", alt: "Floodwater level" }
-      ],
-      coordinates: { lat: 30.7333, lng: 76.7794 },
-      verified: false,
-      priority: "critical"
-    }
-  ],
+// Real data structure based on Supabase tables
+const initialData = {
+  reports: [],
   categories: [
     "Flood severity",
     "Damage",
@@ -192,47 +86,89 @@ const AdminReports = () => {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   
   // Mock data state
-  const [data, setData] = useState(mockData);
+  const [data, setData] = useState(initialData);
+  const [reports, setReports] = useState([]);
 
-  // Real-time report submissions
+  // Load initial data
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  // Real-time report updates
   useEffect(() => {
     if (!isLive) return;
 
-    const interval = setInterval(() => {
-      const newReport = {
-        id: Date.now(),
-        title: `Live Report - ${['Flood', 'Damage', 'Rescue', 'Infrastructure'][Math.floor(Math.random() * 4)]}`,
-        category: ['flood', 'damage', 'rescue', 'infrastructure'][Math.floor(Math.random() * 4)],
-        location: `Sector ${Math.floor(Math.random() * 50) + 1}`,
-        severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)],
-        status: 'pending',
-        user: `User ${Math.floor(Math.random() * 1000)}`,
-        timestamp: new Date().toISOString(),
-        description: 'Real-time report submission',
-        images: [],
-        coordinates: {
-          lat: 30.7333 + (Math.random() - 0.5) * 0.1,
-          lng: 76.7794 + (Math.random() - 0.5) * 0.1
-        }
-      };
+    const subscription = subscribeToFloodReports((payload) => {
+      console.log('Report update received:', payload);
+      
+      if (payload.eventType === 'UPDATE' && payload.new) {
+        setReports(prevReports => 
+          prevReports.map(report => 
+            report.id === payload.new.id ? { ...report, ...payload.new } : report
+          )
+        );
+      } else if (payload.eventType === 'INSERT' && payload.new) {
+        setReports(prevReports => [payload.new, ...prevReports]);
+      } else if (payload.eventType === 'DELETE' && payload.old) {
+        setReports(prevReports => prevReports.filter(report => report.id !== payload.old.id));
+      }
+    });
 
-      setData(prev => ({
-        ...prev,
-        reports: [newReport, ...prev.reports.slice(0, 9)] // Keep only latest 10 reports
-      }));
-      setLastUpdate(new Date());
-    }, 8000); // New report every 8 seconds
-
-    return () => clearInterval(interval);
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [isLive]);
 
-  const refreshData = async () => {
+  const loadReports = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      console.log('Loading flood reports from Supabase...');
+      const reportData = await getFloodReports();
+      console.log('Loaded reports:', reportData);
+      setReports(reportData);
+      
+      // Update the data structure for the UI using real Supabase data
+      setData({
+        ...initialData,
+        reports: reportData.map(report => ({
+          id: report.id || '',
+          title: report.title || 'Untitled Report',
+          description: report.description || 'No description',
+          location: report.location?.address || 'Unknown Location',
+          category: report.category || 'General',
+          severity: report.severity || 'medium',
+          status: report.status || 'pending',
+          user: {
+            id: report.user_id || '',
+            name: report.user_name || 'Unknown User',
+            email: report.user_email || 'unknown@example.com',
+            avatar: null
+          },
+          timestamp: report.created_at || new Date().toISOString(),
+          images: Array.isArray(report.images) ? report.images.map((img, index) => ({
+            id: index + 1,
+            url: img,
+            alt: `Report image ${index + 1}`
+          })) : [],
+          coordinates: report.location || { lat: 0, lng: 0 },
+          verified: report.status === 'verified',
+          priority: report.severity === 'critical' ? 'high' : 
+                   report.severity === 'high' ? 'medium' : 'low'
+        }))
+      });
+      
+      console.log('Reports state updated:', reportData.length, 'reports loaded');
+    } catch (error) {
+      console.error('Error loading reports:', error);
+      toast.error('Failed to load reports');
+    } finally {
       setLoading(false);
-      toast.success('Reports refreshed successfully');
-    }, 1000);
+    }
+  };
+
+  const refreshData = async () => {
+    await loadReports();
+    toast.success('Reports refreshed successfully');
   };
 
   const getSeverityColor = (severity: string) => {
@@ -586,197 +522,80 @@ const AdminReports = () => {
         </div>
       </div>
 
-      {/* Reports Table */}
-      <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-teal-600" />
-                All Reports
-              </CardTitle>
-              <CardDescription>Complete list of flood reports</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search reports..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/50 border-gray-200"
-              />
-            </div>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-40 bg-white/50 border-gray-200">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {data.categories.map((category) => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-32 bg-white/50 border-gray-200">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="verified">Verified</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-              <SelectTrigger className="w-32 bg-white/50 border-gray-200">
-                <SelectValue placeholder="Severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Severity</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="border rounded-lg overflow-hidden bg-white/50">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50/50">
-                  <TableHead>Report</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredReports.map((report) => (
-                  <TableRow key={report.id} className="hover:bg-gray-50/50">
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{report.title}</div>
-                        <div className="text-sm text-muted-foreground line-clamp-2">{report.description}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getCategoryColor(report.category)}>
-                        {report.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{report.location}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getSeverityColor(report.severity)}>
-                        {report.severity}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(report.status)}>
-                        {report.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarFallback className="bg-gradient-to-r from-teal-500 to-blue-500 text-white text-xs">
-                            {report.user.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">{report.user.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(report.timestamp)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewReport(report)}
-                          className="hover:bg-gray-100"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {report.status === 'pending' && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleApproveReport(report.id)}
-                              className="hover:bg-green-100 text-green-600"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRejectReport(report.id)}
-                              className="hover:bg-red-100 text-red-600"
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="hover:bg-gray-100">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleViewReport(report)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                              toast.info('Edit report functionality coming soon');
-                            }}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Report
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                              toast.success('Rescue team assigned successfully');
-                            }}>
-                              <Route className="h-4 w-4 mr-2" />
-                              Assign Rescue
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-red-600 focus:text-red-600"
-                              onClick={() => handleDeleteReport(report.id)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Reports Overview Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filteredReports.slice(0, 6).map((report) => (
+          <Card key={report.id} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-lg font-semibold line-clamp-1">{report.title}</CardTitle>
+                  <CardDescription className="line-clamp-2 mt-1">{report.description}</CardDescription>
+                </div>
+                <Badge className={getSeverityColor(report.severity)}>
+                  {report.severity}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">{report.location}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <Badge className={getStatusColor(report.status)}>
+                  {report.status}
+                </Badge>
+                <span className="text-xs text-muted-foreground">{formatDate(report.timestamp)}</span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="bg-gradient-to-r from-teal-500 to-blue-500 text-white text-xs">
+                    {report.user.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-muted-foreground">{report.user.name}</span>
+              </div>
+              
+              <div className="flex items-center space-x-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewReport(report)}
+                  className="flex-1"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Details
+                </Button>
+                {report.status === 'pending' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleApproveReport(report.id)}
+                    className="text-green-600 border-green-200 hover:bg-green-50"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      {filteredReports.length === 0 && (
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+          <CardContent className="text-center py-12">
+            <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Reports Found</h3>
+            <p className="text-gray-600">
+              {data.reports.length === 0 ? 'No reports have been submitted yet.' : 'No reports match your current filters.'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Report Details Dialog */}
       <Dialog open={showReportDetails} onOpenChange={setShowReportDetails}>

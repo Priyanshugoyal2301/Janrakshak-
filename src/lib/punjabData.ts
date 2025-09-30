@@ -1,4 +1,4 @@
-// Punjab-specific data for JalRakshak Flood Warning System
+// Punjab-specific data for JanRakshak Flood Warning System
 export interface PunjabShelter {
   shelter_id: string;
   name: string;

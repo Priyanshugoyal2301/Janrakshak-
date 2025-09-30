@@ -52,96 +52,18 @@ import { toast } from 'sonner';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { 
+  getAdminShelters, 
+  createShelter, 
+  updateShelterOccupancy,
+  deleteShelter,
+  subscribeToShelters,
+  AdminShelter 
+} from '@/lib/adminSupabase';
 
-// Mock data for development
-const mockData = {
-  shelters: [
-    {
-      id: 1,
-      name: "Sector 17 Community Center",
-      location: "Chandigarh, Sector 17",
-      address: "123 Community Center Road, Sector 17, Chandigarh",
-      capacity: 100,
-      currentOccupancy: 75,
-      status: "near_full",
-      contactPerson: "Rajesh Kumar",
-      contactPhone: "+91 98765 43210",
-      contactEmail: "rajesh@communitycenter.com",
-      facilities: ["Food", "Water", "Medical", "WiFi", "Parking"],
-      coordinates: { lat: 30.7333, lng: 76.7794 },
-      isActive: true,
-      lastUpdated: "2024-01-15T10:30:00Z",
-      notes: "Well-equipped facility with medical staff on standby"
-    },
-    {
-      id: 2,
-      name: "Government School Sector 22",
-      location: "Chandigarh, Sector 22",
-      address: "456 School Street, Sector 22, Chandigarh",
-      capacity: 150,
-      currentOccupancy: 45,
-      status: "available",
-      contactPerson: "Priya Sharma",
-      contactPhone: "+91 98765 43211",
-      contactEmail: "priya@school.edu",
-      facilities: ["Food", "Water", "Medical", "WiFi", "Parking", "Beds"],
-      coordinates: { lat: 30.7400, lng: 76.7850 },
-      isActive: true,
-      lastUpdated: "2024-01-15T09:15:00Z",
-      notes: "Large capacity with separate areas for families"
-    },
-    {
-      id: 3,
-      name: "Sports Complex Sector 35",
-      location: "Chandigarh, Sector 35",
-      address: "789 Sports Avenue, Sector 35, Chandigarh",
-      capacity: 200,
-      currentOccupancy: 200,
-      status: "full",
-      contactPerson: "Amit Singh",
-      contactPhone: "+91 98765 43212",
-      contactEmail: "amit@sportscomplex.com",
-      facilities: ["Food", "Water", "Medical", "WiFi", "Parking", "Beds", "Shower"],
-      coordinates: { lat: 30.7500, lng: 76.7900 },
-      isActive: true,
-      lastUpdated: "2024-01-15T08:45:00Z",
-      notes: "At full capacity, no more admissions"
-    },
-    {
-      id: 4,
-      name: "Temple Hall Sector 8",
-      location: "Chandigarh, Sector 8",
-      address: "321 Temple Road, Sector 8, Chandigarh",
-      capacity: 80,
-      currentOccupancy: 30,
-      status: "available",
-      contactPerson: "Suresh Patel",
-      contactPhone: "+91 98765 43213",
-      contactEmail: "suresh@temple.org",
-      facilities: ["Food", "Water", "Medical"],
-      coordinates: { lat: 30.7333, lng: 76.7794 },
-      isActive: true,
-      lastUpdated: "2024-01-15T07:20:00Z",
-      notes: "Basic facilities, suitable for short-term stay"
-    },
-    {
-      id: 5,
-      name: "Community Hall Sector 11",
-      location: "Chandigarh, Sector 11",
-      address: "654 Community Street, Sector 11, Chandigarh",
-      capacity: 120,
-      currentOccupancy: 0,
-      status: "available",
-      contactPerson: "Meera Devi",
-      contactPhone: "+91 98765 43214",
-      contactEmail: "meera@communityhall.com",
-      facilities: ["Food", "Water", "Medical", "WiFi"],
-      coordinates: { lat: 30.7333, lng: 76.7794 },
-      isActive: false,
-      lastUpdated: "2024-01-15T06:30:00Z",
-      notes: "Currently closed for maintenance"
-    }
-  ],
+// Real data structure based on Supabase tables
+const initialData = {
+  shelters: [],
   facilities: [
     "Food",
     "Water", 
@@ -182,40 +104,82 @@ const AdminShelters = () => {
     isActive: true
   });
 
-  // Mock data state
-  const [data, setData] = useState(mockData);
+  // Real data state
+  const [data, setData] = useState(initialData);
+  const [shelters, setShelters] = useState<AdminShelter[]>([]);
 
-  // Real-time shelter occupancy updates
+  // Load initial data
+  useEffect(() => {
+    loadShelters();
+  }, []);
+
+  // Real-time shelter updates
   useEffect(() => {
     if (!isLive) return;
 
-    const interval = setInterval(() => {
-      setData(prev => ({
-        ...prev,
-        shelters: prev.shelters.map(shelter => ({
-          ...shelter,
-          currentOccupancy: Math.max(0, Math.min(
-            shelter.capacity,
-            shelter.currentOccupancy + Math.floor((Math.random() - 0.5) * 5)
-          )),
-          lastUpdated: new Date().toISOString(),
-          status: shelter.currentOccupancy >= shelter.capacity * 0.9 ? 'full' : 
-                 shelter.currentOccupancy >= shelter.capacity * 0.7 ? 'busy' : 'available'
-        }))
-      }));
-      setLastUpdate(new Date());
-    }, 4000); // Update every 4 seconds
+    const subscription = subscribeToShelters((payload) => {
+      console.log('Shelter update received:', payload);
+      
+      if (payload.eventType === 'UPDATE' && payload.new) {
+        setShelters(prevShelters => 
+          prevShelters.map(shelter => 
+            shelter.id === payload.new.id ? { ...shelter, ...payload.new } : shelter
+          )
+        );
+      } else if (payload.eventType === 'INSERT' && payload.new) {
+        setShelters(prevShelters => [payload.new, ...prevShelters]);
+      } else if (payload.eventType === 'DELETE' && payload.old) {
+        setShelters(prevShelters => prevShelters.filter(shelter => shelter.id !== payload.old.id));
+      }
+    });
 
-    return () => clearInterval(interval);
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [isLive]);
 
-  const refreshData = async () => {
+  const loadShelters = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      console.log('Loading shelters from Supabase...');
+      const shelterData = await getAdminShelters();
+      console.log('Loaded shelters:', shelterData);
+      setShelters(shelterData);
+      
+      // Update the data structure for the UI using real Supabase data
+      setData({
+        ...initialData,
+        shelters: shelterData.map(shelter => ({
+          id: shelter.id || '',
+          name: shelter.name || 'Unknown Shelter',
+          location: shelter.location || 'Unknown Location',
+          address: shelter.address || 'Unknown Address',
+          capacity: shelter.capacity || 0,
+          currentOccupancy: shelter.current_occupancy || 0,
+          status: shelter.status || 'available',
+          contactPerson: shelter.contact_person || 'Unknown Contact',
+          contactPhone: shelter.contact_phone || 'Unknown Phone',
+          contactEmail: shelter.contact_email || 'Unknown Email',
+          facilities: Array.isArray(shelter.facilities) ? shelter.facilities : [],
+          coordinates: shelter.coordinates || { lat: 0, lng: 0 },
+          isActive: shelter.is_active !== undefined ? shelter.is_active : true,
+          notes: shelter.notes || '',
+          lastUpdated: shelter.updated_at || new Date().toISOString()
+        }))
+      });
+      
+      console.log('Shelters state updated:', shelterData.length, 'shelters loaded');
+    } catch (error) {
+      console.error('Error loading shelters:', error);
+      toast.error('Failed to load shelters');
+    } finally {
       setLoading(false);
-      toast.success('Shelter data refreshed successfully');
-    }, 1000);
+    }
+  };
+
+  const refreshData = async () => {
+    await loadShelters();
+    toast.success('Shelter data refreshed successfully');
   };
 
   const getStatusColor = (status: string) => {
@@ -266,23 +230,57 @@ const AdminShelters = () => {
     }
 
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      const newShelter = {
-        id: Date.now(),
-        ...shelterForm,
-        capacity: parseInt(shelterForm.capacity),
-        currentOccupancy: 0,
-        status: 'available',
-        coordinates: { lat: 30.7333, lng: 76.7794 },
-        lastUpdated: new Date().toISOString()
-      };
+    try {
+      console.log('Creating shelter with data:', shelterForm);
       
+      const shelterData = {
+        name: shelterForm.name.trim(),
+        location: shelterForm.location.trim(),
+        address: shelterForm.address.trim(),
+        capacity: parseInt(shelterForm.capacity),
+        current_occupancy: 0,
+        status: 'available',
+        contact_person: shelterForm.contactPerson.trim(),
+        contact_phone: shelterForm.contactPhone.trim(),
+        contact_email: shelterForm.contactEmail.trim(),
+        facilities: shelterForm.facilities,
+        coordinates: { lat: 12.9716, lng: 80.2206 }, // Default to Chennai coordinates
+        is_active: shelterForm.isActive,
+        notes: shelterForm.notes.trim()
+      };
+
+      const newShelter = await createShelter(shelterData);
+      console.log('Shelter created successfully:', newShelter);
+      
+      // Update local state
+      setShelters(prevShelters => [newShelter, ...prevShelters]);
+      
+      // Update data structure for UI
       setData(prev => ({
         ...prev,
-        shelters: [...prev.shelters, newShelter]
+        shelters: [
+          ...prev.shelters,
+          {
+            id: newShelter.id,
+            name: newShelter.name,
+            location: newShelter.location,
+            address: newShelter.address,
+            capacity: newShelter.capacity,
+            currentOccupancy: newShelter.current_occupancy,
+            status: newShelter.status,
+            contactPerson: newShelter.contact_person,
+            contactPhone: newShelter.contact_phone,
+            contactEmail: newShelter.contact_email,
+            facilities: newShelter.facilities,
+            coordinates: newShelter.coordinates,
+            isActive: newShelter.is_active,
+            lastUpdated: newShelter.created_at,
+            notes: newShelter.notes
+          }
+        ]
       }));
       
+      // Reset form
       setShelterForm({
         name: '',
         location: '',
@@ -297,9 +295,13 @@ const AdminShelters = () => {
       });
       
       setShowAddDialog(false);
-      setLoading(false);
       toast.success('Shelter added successfully');
-    }, 1000);
+    } catch (error) {
+      console.error('Error creating shelter:', error);
+      toast.error('Failed to add shelter');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditShelter = async () => {
@@ -334,14 +336,30 @@ const AdminShelters = () => {
 
   const handleDeleteShelter = async (shelterId: string) => {
     setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        shelters: prev.shelters.filter(shelter => shelter.id !== shelterId)
-      }));
+    try {
+      console.log('Deleting shelter:', shelterId);
+      const success = await deleteShelter(shelterId);
+      
+      if (success) {
+        // Update local state
+        setShelters(prevShelters => prevShelters.filter(shelter => shelter.id !== shelterId));
+        
+        // Update data structure for UI
+        setData(prev => ({
+          ...prev,
+          shelters: prev.shelters.filter(shelter => shelter.id !== shelterId)
+        }));
+        
+        toast.success('Shelter deleted successfully');
+      } else {
+        toast.error('Failed to delete shelter');
+      }
+    } catch (error) {
+      console.error('Error deleting shelter:', error);
+      toast.error('Failed to delete shelter');
+    } finally {
       setLoading(false);
-      toast.success('Shelter deleted successfully');
-    }, 1000);
+    }
   };
 
   const handleActivateShelter = async (shelterId: string) => {
@@ -420,7 +438,7 @@ const AdminShelters = () => {
     setShowEditDialog(true);
   };
 
-  const filteredShelters = data.shelters.filter(shelter => {
+  const filteredShelters = (data.shelters || []).filter(shelter => {
     const matchesSearch = searchTerm === '' || 
       shelter.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shelter.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -435,10 +453,13 @@ const AdminShelters = () => {
     return matchesSearch && matchesStatus && matchesCapacity;
   });
 
-  const totalCapacity = data.shelters.reduce((sum, shelter) => sum + shelter.capacity, 0);
-  const totalOccupancy = data.shelters.reduce((sum, shelter) => sum + shelter.currentOccupancy, 0);
-  const activeShelters = data.shelters.filter(shelter => shelter.isActive).length;
-  const fullShelters = data.shelters.filter(shelter => shelter.status === 'full').length;
+  // Helper function to safely access shelters data
+  const getShelters = () => data.shelters || [];
+  
+  const totalCapacity = getShelters().reduce((sum, shelter) => sum + shelter.capacity, 0);
+  const totalOccupancy = getShelters().reduce((sum, shelter) => sum + shelter.currentOccupancy, 0);
+  const activeShelters = getShelters().filter(shelter => shelter.isActive).length;
+  const fullShelters = getShelters().filter(shelter => shelter.status === 'full').length;
 
   return (
     <AdminLayout>
@@ -456,7 +477,7 @@ const AdminShelters = () => {
             Last updated: {lastUpdate.toLocaleTimeString()}
           </div>
           <div className="text-xs text-orange-600">
-            Full: {data.shelters.filter(s => s.status === 'full').length}
+            Full: {getShelters().filter(s => s.status === 'full').length}
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -574,7 +595,7 @@ const AdminShelters = () => {
                 <div>
                   <Label>Facilities</Label>
                   <div className="grid grid-cols-5 gap-2 mt-2">
-                    {data.facilities.map((facility) => (
+                    {(data.facilities || []).map((facility) => (
                       <div key={facility} className="flex items-center space-x-2">
                         <Checkbox
                           id={facility}
@@ -619,7 +640,7 @@ const AdminShelters = () => {
             <Home className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.shelters.length}</div>
+            <div className="text-2xl font-bold">{getShelters().length}</div>
             <p className="text-xs text-muted-foreground">Registered shelters</p>
           </CardContent>
         </Card>
@@ -700,7 +721,7 @@ const AdminShelters = () => {
                     />
                     
                     {/* Shelters */}
-                    {data.shelters.map((shelter) => {
+                    {getShelters().map((shelter) => {
                       const getShelterIcon = (status: string) => {
                         switch (status) {
                           case 'available': return '🟢';
@@ -769,15 +790,15 @@ const AdminShelters = () => {
                 <div className="mt-4 flex items-center justify-center space-x-4 text-xs">
                   <div className="flex items-center space-x-1">
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span>Available ({data.shelters.filter(s => s.status === 'available').length})</span>
+                    <span>Available ({getShelters().filter(s => s.status === 'available').length})</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <span>Near Full ({data.shelters.filter(s => s.status === 'near_full').length})</span>
+                    <span>Near Full ({getShelters().filter(s => s.status === 'near_full').length})</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span>Full ({data.shelters.filter(s => s.status === 'full').length})</span>
+                    <span>Full ({getShelters().filter(s => s.status === 'full').length})</span>
                   </div>
                 </div>
               </CardContent>
@@ -794,7 +815,7 @@ const AdminShelters = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {data.shelters.slice(0, 5).map((shelter) => (
+                  {getShelters().slice(0, 5).map((shelter) => (
                     <div key={shelter.id} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{shelter.name}</span>
@@ -1032,30 +1053,30 @@ const AdminShelters = () => {
                   <div className="text-center w-full">
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{data.shelters.filter(s => s.status === 'available').length}</div>
+                        <div className="text-2xl font-bold text-green-600">{getShelters().filter(s => s.status === 'available').length}</div>
                         <div className="text-sm text-gray-600">Available</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-yellow-600">{data.shelters.filter(s => s.status === 'busy').length}</div>
+                        <div className="text-2xl font-bold text-yellow-600">{getShelters().filter(s => s.status === 'busy').length}</div>
                         <div className="text-sm text-gray-600">Busy</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-red-600">{data.shelters.filter(s => s.status === 'full').length}</div>
+                        <div className="text-2xl font-bold text-red-600">{getShelters().filter(s => s.status === 'full').length}</div>
                         <div className="text-sm text-gray-600">Full</div>
                       </div>
                     </div>
                     <div className="text-xs text-gray-500 mb-4">
-                      Total Capacity: {data.shelters.reduce((sum, s) => sum + s.capacity, 0)} people
+                      Total Capacity: {getShelters().reduce((sum, s) => sum + s.capacity, 0)} people
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span>Available Shelters</span>
-                        <span className="font-medium">{Math.round((data.shelters.filter(s => s.status === 'available').length / data.shelters.length) * 100)}%</span>
+                        <span className="font-medium">{Math.round((getShelters().filter(s => s.status === 'available').length / getShelters().length) * 100)}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-green-600 h-2 rounded-full" 
-                          style={{ width: `${(data.shelters.filter(s => s.status === 'available').length / data.shelters.length) * 100}%` }}
+                          style={{ width: `${(getShelters().filter(s => s.status === 'available').length / getShelters().length) * 100}%` }}
                         ></div>
                       </div>
                     </div>
@@ -1076,11 +1097,11 @@ const AdminShelters = () => {
                 <div className="h-64 flex items-center justify-center">
                   <div className="text-center w-full">
                     <div className="text-2xl font-bold text-blue-600 mb-4">
-                      {Math.round(data.shelters.reduce((sum, s) => sum + s.currentOccupancy, 0) / data.shelters.reduce((sum, s) => sum + s.capacity, 0) * 100)}%
+                      {Math.round(getShelters().reduce((sum, s) => sum + s.currentOccupancy, 0) / getShelters().reduce((sum, s) => sum + s.capacity, 0) * 100)}%
                     </div>
                     <div className="text-sm text-gray-600 mb-4">Overall Occupancy Rate</div>
                     <div className="space-y-3">
-                      {data.shelters.slice(0, 3).map((shelter) => (
+                      {getShelters().slice(0, 3).map((shelter) => (
                         <div key={shelter.id} className="text-left">
                           <div className="flex justify-between text-sm mb-1">
                             <span>{shelter.name}</span>
@@ -1192,7 +1213,7 @@ const AdminShelters = () => {
             <div>
               <Label>Facilities</Label>
               <div className="grid grid-cols-5 gap-2 mt-2">
-                {data.facilities.map((facility) => (
+                {(data.facilities || []).map((facility) => (
                   <div key={facility} className="flex items-center space-x-2">
                     <Checkbox
                       id={`edit-${facility}`}

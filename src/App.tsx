@@ -19,17 +19,22 @@ import AdminShelters from "./pages/AdminShelters";
 import AdminRoutes from "./pages/AdminRoutes";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSystem from "./pages/AdminSystem";
+import AdminFloodPrediction from "./pages/AdminFloodPrediction";
+import AdminRiskAssessment from "./pages/AdminRiskAssessment";
 import AdminTest from "./pages/AdminTest";
 import AdminDebug from "./pages/AdminDebug";
 import AdminSimple from "./pages/AdminSimple";
 import AdminBasic from "./pages/AdminBasic";
 import AdminMinimalTest from "./pages/AdminMinimalTest";
 import Index from "./pages/Index";
+import UserDashboard from "./pages/UserDashboard";
+import Community from "./pages/Community";
+import FloodPredictionPage from "./pages/FloodPredictionPage";
+import ShelterFinder from "./pages/ShelterFinder";
+import EmergencyContacts from "./pages/EmergencyContacts";
 import Predictions from "./pages/Predictions";
 import Alerts from "./pages/Alerts";
 import Reports from "./pages/Reports";
-import Assessment from "./pages/Assessment";
-import Planning from "./pages/Planning";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -38,16 +43,23 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <SupabaseAuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/admin/signup" element={<SupabaseAuth />} />
-              <Route path="/admin/signin" element={<SupabaseAuth />} />
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/admin/signup" element={
+              <SupabaseAuthProvider>
+                <SupabaseAuth />
+              </SupabaseAuthProvider>
+            } />
+            <Route path="/admin/signin" element={
+              <SupabaseAuthProvider>
+                <SupabaseAuth />
+              </SupabaseAuthProvider>
+            } />
               
               {/* Redirect old admin URLs */}
               <Route path="/supabase-auth" element={<Navigate to="/admin/signin" replace />} />
@@ -114,6 +126,26 @@ const App = () => (
                 }
               />
               <Route
+                path="/admin/risk-assessment"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminRiskAssessment />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/flood-prediction"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminFloodPrediction />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
                 path="/admin/analytics"
                 element={
                   <SupabaseAuthProviderMinimal>
@@ -163,9 +195,49 @@ const App = () => (
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
+                    <UserDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/community"
+                element={
+                  <ProtectedRoute>
+                    <Community />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/flood-prediction"
+                element={
+                  <ProtectedRoute>
+                    <FloodPredictionPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/old-dashboard"
+                element={
+                  <ProtectedRoute>
                     <Layout>
                       <Index />
                     </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/shelters"
+                element={
+                  <ProtectedRoute>
+                    <ShelterFinder />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/emergency-contacts"
+                element={
+                  <ProtectedRoute>
+                    <EmergencyContacts />
                   </ProtectedRoute>
                 }
               />
@@ -183,9 +255,7 @@ const App = () => (
                 path="/alerts"
                 element={
                   <ProtectedRoute>
-                    <Layout>
-                      <Alerts />
-                    </Layout>
+                    <Alerts />
                   </ProtectedRoute>
                 }
               />
@@ -193,29 +263,7 @@ const App = () => (
                 path="/reports"
                 element={
                   <ProtectedRoute>
-                    <Layout>
-                      <Reports />
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/assessment"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Assessment />
-                    </Layout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/planning"
-                element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Planning />
-                    </Layout>
+                    <Reports />
                   </ProtectedRoute>
                 }
               />
@@ -223,9 +271,7 @@ const App = () => (
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <Layout>
-                      <Profile />
-                    </Layout>
+                    <Profile />
                   </ProtectedRoute>
                 }
               />
@@ -236,9 +282,8 @@ const App = () => (
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </SupabaseAuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
