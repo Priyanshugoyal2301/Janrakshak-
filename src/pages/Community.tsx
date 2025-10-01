@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Heart, 
   MessageCircle, 
@@ -79,7 +79,7 @@ const Community = () => {
     setLoading(true);
     try {
       // Get user's region
-      const userState = userProfile?.location?.state || 'Chandigarh';
+      const userState = userProfile?.location?.state || 'India';
       const userDistrict = userProfile?.location?.district;
       
       console.log('Loading community reports for region:', { userState, userDistrict });
@@ -518,8 +518,9 @@ const Community = () => {
                         onClick={() => {
                           setSelectedReport(report);
                           setShowDetailDialog(true);
+                          toast.success('Opening report details');
                         }}
-                        className="h-8 px-2"
+                        className="h-8 px-2 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         View Details
@@ -548,20 +549,20 @@ const Community = () => {
       {/* Report Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          {selectedReport && (
+          {selectedReport ? (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center space-x-2">
-                  <span>{selectedReport.title}</span>
+                  <span>{selectedReport.title || 'Untitled Report'}</span>
                   <Badge className={getSeverityColor(selectedReport.severity)}>
-                    {selectedReport.severity.toUpperCase()}
+                    {(selectedReport.severity || 'unknown').toUpperCase()}
                   </Badge>
                   <Badge className={getStatusColor(selectedReport.status)}>
-                    {selectedReport.status.replace('_', ' ').toUpperCase()}
+                    {(selectedReport.status || 'unknown').replace('_', ' ').toUpperCase()}
                   </Badge>
                 </DialogTitle>
                 <DialogDescription>
-                  Report submitted by {selectedReport.user_name} • {formatTimeAgo(selectedReport.created_at || new Date().toISOString())}
+                  Report submitted by {selectedReport.user_name || 'Unknown User'} • {formatTimeAgo(selectedReport.created_at || new Date().toISOString())}
                 </DialogDescription>
               </DialogHeader>
               
@@ -575,19 +576,24 @@ const Community = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-blue-700 font-medium">Address:</p>
-                      <p className="text-blue-800">{selectedReport.location.address}</p>
+                      <p className="text-blue-800">{selectedReport.location?.address || 'Address not available'}</p>
                     </div>
                     <div>
                       <p className="text-blue-700 font-medium">District:</p>
-                      <p className="text-blue-800">{selectedReport.location.district}</p>
+                      <p className="text-blue-800">{selectedReport.location?.district || 'District not available'}</p>
                     </div>
                     <div>
                       <p className="text-blue-700 font-medium">State:</p>
-                      <p className="text-blue-800">{selectedReport.location.state}</p>
+                      <p className="text-blue-800">{selectedReport.location?.state || 'State not available'}</p>
                     </div>
                     <div>
                       <p className="text-blue-700 font-medium">Coordinates:</p>
-                      <p className="text-blue-800">{selectedReport.coordinates.lat.toFixed(6)}, {selectedReport.coordinates.lng.toFixed(6)}</p>
+                      <p className="text-blue-800">
+                        {selectedReport.coordinates?.lat && selectedReport.coordinates?.lng 
+                          ? `${selectedReport.coordinates.lat.toFixed(6)}, ${selectedReport.coordinates.lng.toFixed(6)}`
+                          : 'Coordinates not available'
+                        }
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -596,7 +602,7 @@ const Community = () => {
                 <div>
                   <h3 className="font-semibold text-slate-900 mb-2">Description</h3>
                   <div className="bg-slate-50 rounded-lg p-4">
-                    <p className="text-slate-700 leading-relaxed">{selectedReport.description}</p>
+                    <p className="text-slate-700 leading-relaxed">{selectedReport.description || 'No description available'}</p>
                   </div>
                 </div>
 
@@ -700,6 +706,17 @@ const Community = () => {
                 </div>
               </div>
             </>
+          ) : (
+            <div className="text-center py-12">
+              <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Report Selected</h3>
+              <p className="text-gray-600 mb-4">
+                Please select a report to view its details.
+              </p>
+              <Button onClick={() => setShowDetailDialog(false)}>
+                Close
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

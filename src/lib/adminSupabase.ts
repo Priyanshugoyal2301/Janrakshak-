@@ -456,6 +456,28 @@ export const updateUserStatus = async (userId: string, status: string): Promise<
   }
 };
 
+export const deleteUser = async (userId: string): Promise<boolean> => {
+  try {
+    console.log('Deleting user:', userId);
+    
+    const { error } = await supabase
+      .from('user_profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
+
+    console.log('User deleted successfully');
+    return true;
+  } catch (error) {
+    console.error('Exception deleting user:', error);
+    return false;
+  }
+};
+
 // Alert Management Functions
 export const getAdminAlerts = async (): Promise<AdminAlert[]> => {
   try {

@@ -2,7 +2,7 @@ import React from 'react';
 
 const AdminBasic = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Admin Panel</h1>
         <p className="text-gray-600 mb-8">This is a basic admin page to test routing.</p>

@@ -53,6 +53,50 @@ import {
   subscribeToFloodReports
 } from '@/lib/adminSupabase';
 
+// Component to handle map view updates
+const MapViewUpdater: React.FC<{
+  center: [number, number];
+  zoom: number;
+  reports: any[];
+}> = ({ center, zoom, reports }) => {
+  const map = useMap();
+  const [hasInitialized, setHasInitialized] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (map && !hasInitialized) {
+      map.setView(center, zoom, { animate: false });
+      setHasInitialized(true);
+    }
+  }, [map, center, zoom, hasInitialized]);
+  
+  // Update view when reports change significantly
+  React.useEffect(() => {
+    if (map && hasInitialized && reports.length > 0) {
+      const validReports = reports.filter(report => {
+        const coords = report.location || report.coordinates;
+        return coords && coords.lat && coords.lng && !isNaN(coords.lat) && !isNaN(coords.lng);
+      });
+      
+      if (validReports.length > 1) {
+        const lats = validReports.map(r => (r.location || r.coordinates).lat);
+        const lngs = validReports.map(r => (r.location || r.coordinates).lng);
+        const bounds = [
+          [Math.min(...lats), Math.min(...lngs)],
+          [Math.max(...lats), Math.max(...lngs)]
+        ];
+        
+        map.fitBounds(bounds as [[number, number], [number, number]], { 
+          padding: [20, 20],
+          animate: true,
+          duration: 1
+        });
+      }
+    }
+  }, [map, reports.length, hasInitialized]);
+  
+  return null;
+};
+
 // Real data structure based on Supabase tables
 const initialData = {
   reports: [],
@@ -211,36 +255,70 @@ const AdminReports = () => {
 
   const handleApproveReport = async (reportId: string) => {
     setLoading(true);
-    // Simulate API call with real data updates
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        reports: prev.reports.map(report => 
-          report.id === reportId 
-            ? { ...report, status: 'verified', verified: true, verifiedAt: new Date().toISOString() }
-            : report
-        )
-      }));
+    try {
+      const success = await updateFloodReportStatus(reportId, 'verified');
+      if (success) {
+        // Update local state
+        setData(prev => ({
+          ...prev,
+          reports: prev.reports.map(report => 
+            report.id === reportId 
+              ? { ...report, status: 'verified', verified: true, verifiedAt: new Date().toISOString() }
+              : report
+          )
+        }));
+        // Also update the reports state
+        setReports(prevReports => 
+          prevReports.map(report => 
+            report.id === reportId 
+              ? { ...report, status: 'verified' }
+              : report
+          )
+        );
+        toast.success('Report approved successfully');
+      } else {
+        toast.error('Failed to approve report');
+      }
+    } catch (error) {
+      console.error('Error approving report:', error);
+      toast.error('Failed to approve report');
+    } finally {
       setLoading(false);
-      toast.success('Report approved successfully');
-    }, 1000);
+    }
   };
 
   const handleRejectReport = async (reportId: string) => {
     setLoading(true);
-    // Simulate API call with real data updates
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        reports: prev.reports.map(report => 
-          report.id === reportId 
-            ? { ...report, status: 'rejected', rejectedAt: new Date().toISOString() }
-            : report
-        )
-      }));
+    try {
+      const success = await updateFloodReportStatus(reportId, 'rejected');
+      if (success) {
+        // Update local state
+        setData(prev => ({
+          ...prev,
+          reports: prev.reports.map(report => 
+            report.id === reportId 
+              ? { ...report, status: 'rejected', rejectedAt: new Date().toISOString() }
+              : report
+          )
+        }));
+        // Also update the reports state
+        setReports(prevReports => 
+          prevReports.map(report => 
+            report.id === reportId 
+              ? { ...report, status: 'rejected' }
+              : report
+          )
+        );
+        toast.success('Report rejected');
+      } else {
+        toast.error('Failed to reject report');
+      }
+    } catch (error) {
+      console.error('Error rejecting report:', error);
+      toast.error('Failed to reject report');
+    } finally {
       setLoading(false);
-      toast.success('Report rejected');
-    }, 1000);
+    }
   };
 
   const handleDeleteReport = async (reportId: string) => {
@@ -297,27 +375,39 @@ const AdminReports = () => {
   const verifiedReports = filteredReports.filter(r => r.status === 'verified');
   const rejectedReports = filteredReports.filter(r => r.status === 'rejected');
 
-  // Calculate map center and bounds based on report locations
+  // Calculate map center and bounds based on report locations with real-time updates
   const calculateMapCenter = () => {
-    if (data.reports.length === 0) {
+    // Use the real reports data instead of data.reports
+    const currentReports = reports.length > 0 ? reports : data.reports;
+    
+    if (currentReports.length === 0) {
       return { center: [30.7333, 76.7794], zoom: 12 }; // Default to Chandigarh
     }
 
-    const validReports = data.reports.filter(report => 
-      report.coordinates && 
-      report.coordinates.lat && 
-      report.coordinates.lng &&
-      report.coordinates.lat !== 0 && 
-      report.coordinates.lng !== 0
-    );
+    const validReports = currentReports.filter(report => {
+      const coords = report.location || report.coordinates;
+      return coords && 
+             coords.lat && 
+             coords.lng &&
+             coords.lat !== 0 && 
+             coords.lng !== 0 &&
+             !isNaN(coords.lat) &&
+             !isNaN(coords.lng);
+    });
 
     if (validReports.length === 0) {
       return { center: [30.7333, 76.7794], zoom: 12 }; // Default to Chandigarh
     }
 
     // Calculate bounds
-    const lats = validReports.map(r => r.coordinates.lat);
-    const lngs = validReports.map(r => r.coordinates.lng);
+    const lats = validReports.map(r => {
+      const coords = r.location || r.coordinates;
+      return coords.lat;
+    });
+    const lngs = validReports.map(r => {
+      const coords = r.location || r.coordinates;
+      return coords.lng;
+    });
     
     const minLat = Math.min(...lats);
     const maxLat = Math.max(...lats);
@@ -345,21 +435,47 @@ const AdminReports = () => {
 
   const mapConfig = calculateMapCenter();
 
-  // Calculate report density by location
+  // Calculate report density by location to highlight areas with more reports
   const calculateReportDensity = () => {
-    const locationCounts = new Map();
+    const currentReports = reports.length > 0 ? reports : data.reports;
     
-    data.reports.forEach(report => {
-      if (report.coordinates && report.coordinates.lat && report.coordinates.lng) {
-        const key = `${report.coordinates.lat.toFixed(4)},${report.coordinates.lng.toFixed(4)}`;
-        locationCounts.set(key, (locationCounts.get(key) || 0) + 1);
-      }
+    const validReports = currentReports.filter(report => {
+      const coords = report.location || report.coordinates;
+      return coords && 
+             coords.lat && 
+             coords.lng &&
+             coords.lat !== 0 && 
+             coords.lng !== 0 &&
+             !isNaN(coords.lat) &&
+             !isNaN(coords.lng);
     });
 
-    return Array.from(locationCounts.entries()).map(([location, count]) => {
-      const [lat, lng] = location.split(',').map(Number);
-      return { lat, lng, count, location };
-    }).sort((a, b) => b.count - a.count);
+    if (validReports.length === 0) return [];
+
+    // Group reports by location (rounded to 3 decimal places for clustering)
+    const locationGroups = new Map();
+    
+    validReports.forEach(report => {
+      const coords = report.location || report.coordinates;
+      const key = `${coords.lat.toFixed(3)},${coords.lng.toFixed(3)}`;
+      
+      if (!locationGroups.has(key)) {
+        locationGroups.set(key, {
+          lat: coords.lat,
+          lng: coords.lng,
+          reports: [],
+          count: 0
+        });
+      }
+      
+      locationGroups.get(key).reports.push(report);
+      locationGroups.get(key).count++;
+    });
+
+    // Convert to array and sort by count (highest first)
+    return Array.from(locationGroups.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20); // Top 20 locations
   };
 
   const reportDensity = calculateReportDensity();
@@ -482,10 +598,15 @@ const AdminReports = () => {
                 </div>
               </CardTitle>
               <CardDescription>
-                Geographic distribution of flood reports
-                {data.reports.length > 0 && (
+                Real-time geographic distribution of flood reports
+                {(reports.length > 0 || data.reports.length > 0) && (
                   <span className="ml-2 text-blue-600">
-                    ({data.reports.length} reports across {new Set(data.reports.map(r => r.location)).size} locations)
+                    ({reports.length || data.reports.length} reports across {reportDensity.length} locations)
+                  </span>
+                )}
+                {isLive && (
+                  <span className="ml-2 text-green-600 text-xs">
+                    🔴 Live Updates
                   </span>
                 )}
               </CardDescription>
@@ -501,12 +622,19 @@ const AdminReports = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   />
+                  <MapViewUpdater 
+                    center={mapConfig.center} 
+                    zoom={mapConfig.zoom} 
+                    reports={reports.length > 0 ? reports : data.reports} 
+                  />
                   {reportDensity.map((densityPoint) => {
-                    const reportsAtLocation = data.reports.filter(report => 
-                      report.coordinates && 
-                      report.coordinates.lat.toFixed(4) === densityPoint.lat.toFixed(4) &&
-                      report.coordinates.lng.toFixed(4) === densityPoint.lng.toFixed(4)
-                    );
+                    const currentReports = reports.length > 0 ? reports : data.reports;
+                    const reportsAtLocation = densityPoint.reports || currentReports.filter(report => {
+                      const coords = report.location || report.coordinates;
+                      return coords && 
+                             coords.lat.toFixed(3) === densityPoint.lat.toFixed(3) &&
+                             coords.lng.toFixed(3) === densityPoint.lng.toFixed(3);
+                    });
 
                     const getMarkerColor = (severity: string) => {
                       switch (severity) {
@@ -543,10 +671,10 @@ const AdminReports = () => {
                             <h3 className="font-semibold text-sm">{densityPoint.count} Report{densityPoint.count > 1 ? 's' : ''} at this location</h3>
                             <div className="space-y-1 mt-2">
                               {reportsAtLocation.slice(0, 3).map((report, index) => (
-                                <div key={report.id} className="text-xs border-b border-gray-100 pb-1">
-                                  <p className="font-medium">{report.title}</p>
-                                  <p className="text-gray-600">Severity: <span className={`font-medium ${report.severity === 'critical' ? 'text-red-600' : report.severity === 'high' ? 'text-orange-600' : report.severity === 'medium' ? 'text-yellow-600' : 'text-green-600'}`}>{report.severity}</span></p>
-                                  <p className="text-gray-500">{new Date(report.timestamp).toLocaleString()}</p>
+                                <div key={report.id || index} className="text-xs border-b border-gray-100 pb-1">
+                                  <p className="font-medium">{report.title || 'Untitled Report'}</p>
+                                  <p className="text-gray-600">Severity: <span className={`font-medium ${report.severity === 'critical' ? 'text-red-600' : report.severity === 'high' ? 'text-orange-600' : report.severity === 'medium' ? 'text-yellow-600' : 'text-green-600'}`}>{report.severity || 'medium'}</span></p>
+                                  <p className="text-gray-500">{new Date(report.created_at || report.timestamp || new Date()).toLocaleString()}</p>
                                 </div>
                               ))}
                               {reportsAtLocation.length > 3 && (
@@ -561,22 +689,44 @@ const AdminReports = () => {
                 </MapContainer>
               </div>
               <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-center space-x-4 text-xs">
-                  <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span>Critical</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4 text-xs">
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span>Critical</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                      <span>High</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <span>Medium</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span>Low</span>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                    <span>High</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <span>Medium</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span>Low</span>
+                  <div className="flex items-center space-x-2">
+                    {isLive && (
+                      <div className="flex items-center space-x-1 text-green-600 text-xs">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>Live Updates</span>
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        loadReports();
+                        toast.success('Map data refreshed');
+                      }}
+                      disabled={loading}
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                      Refresh Map
+                    </Button>
                   </div>
                 </div>
                 <div className="flex items-center justify-center space-x-4 text-xs">
@@ -592,6 +742,9 @@ const AdminReports = () => {
                     <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">5+</div>
                     <span>High density</span>
                   </div>
+                </div>
+                <div className="text-center text-xs text-gray-500">
+                  Map automatically centers on areas with the most reports • Updates in real-time
                 </div>
                 {reportDensity.length > 0 && (
                   <div className="text-center text-xs text-gray-500">

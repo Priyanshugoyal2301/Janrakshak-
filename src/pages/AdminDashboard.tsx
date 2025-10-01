@@ -812,7 +812,7 @@ const AdminDashboard = () => {
                 <CardDescription>Distribution of report types</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
+                <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
@@ -820,14 +820,12 @@ const AdminDashboard = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ day, count, percent }) => 
-                          `${day}: ${count} (${(percent * 100).toFixed(0)}%)`
-                        }
-                        outerRadius={60}
-                        innerRadius={20}
+                        label={false}
+                        outerRadius={80}
+                        innerRadius={30}
                         fill="#8884d8"
                         dataKey="count"
-                        paddingAngle={2}
+                        paddingAngle={3}
                       >
                         {data.trends.reportSubmissions.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#ec4899'][index % 7]} />
@@ -836,11 +834,21 @@ const AdminDashboard = () => {
                       <Tooltip 
                         formatter={(value, name) => [value, 'Reports']}
                         labelFormatter={(label) => `Category: ${label}`}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
                       />
                       <Legend 
                         verticalAlign="bottom" 
-                        height={36}
-                        wrapperStyle={{ fontSize: '12px' }}
+                        height={60}
+                        wrapperStyle={{ 
+                          fontSize: '12px',
+                          paddingTop: '10px'
+                        }}
+                        iconType="circle"
                       />
                     </RechartsPieChart>
                   </ResponsiveContainer>

@@ -53,7 +53,7 @@ const AdminDebug = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold">Admin Debug Page</h1>
         

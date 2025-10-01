@@ -7,7 +7,7 @@ const AdminTest = () => {
   console.log('AdminTest - user:', user, 'loading:', loading, 'isAdmin:', isAdmin);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Admin Test Page</h1>
         

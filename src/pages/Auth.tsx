@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import LoadingScreen from '@/components/LoadingScreen';
+import { motion } from 'framer-motion';
 import { 
   Shield, 
   Mail, 
@@ -19,7 +20,9 @@ import {
   Chrome,
   AlertTriangle,
   CheckCircle,
-  Loader2
+  Loader2,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -153,48 +156,184 @@ const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="mb-4 text-slate-600 hover:text-blue-600"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Button>
-          
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-teal-600 rounded-xl flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-              JanRakshak
-            </span>
-          </div>
-          
-          <p className="text-slate-600">
-            Join the community protecting lives from floods
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        {/* Floating Orbs */}
+        <motion.div
+          className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-xl"
+          animate={{
+            y: [0, -20, 0],
+            x: [0, 10, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
 
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="text-center space-y-2">
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700 w-fit mx-auto">
-              🛡️ Secure Authentication
-            </Badge>
-            <CardTitle className="text-2xl text-slate-900">
-              {activeTab === 'login' ? 'Welcome Back' : 'Create Account'}
-            </CardTitle>
-            <CardDescription>
-              {activeTab === 'login' 
-                ? 'Sign in to access your flood monitoring dashboard'
-                : 'Join thousands protecting their communities'
-              }
-            </CardDescription>
-          </CardHeader>
+        <motion.div
+          className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-xl"
+          animate={{
+            y: [0, 15, 0],
+            x: [0, -15, 0],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+
+        <motion.div
+          className="absolute bottom-32 left-40 w-40 h-40 bg-gradient-to-r from-teal-400/20 to-green-400/20 rounded-full blur-xl"
+          animate={{
+            y: [0, -25, 0],
+            x: [0, 20, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        {/* Subtle Grid */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="grid grid-cols-12 grid-rows-12 h-full w-full">
+            {Array.from({ length: 144 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="border border-blue-200"
+                animate={{
+                  opacity: [0.1, 0.3, 0.1],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  delay: i * 0.01,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center min-h-screen p-4">
+        <div className="w-full max-w-lg">
+        {/* Header */}
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        >
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/')}
+              className="mb-6 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 px-6 py-2 rounded-full"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+          </motion.div>
+          
+          <motion.div 
+            className="flex items-center justify-center space-x-4 mb-6"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <motion.div 
+              className="relative"
+              whileHover={{
+                scale: 1.1,
+                rotate: [0, -5, 5, 0]
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                duration: 0.6
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full blur-lg opacity-30"></div>
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl flex items-center justify-center relative">
+                <img src="/favicon.svg" alt="JanRakshak Logo" className="w-10 h-10" />
+              </div>
+            </motion.div>
+            <div className="flex flex-col">
+              <motion.h1 
+                className="text-3xl font-black bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent"
+                animate={{
+                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              >
+                JanRakshak
+              </motion.h1>
+              <span className="text-sm text-blue-600 font-semibold -mt-1">Flood Protection System</span>
+            </div>
+          </motion.div>
+          
+          <motion.p 
+            className="text-slate-600 text-lg leading-relaxed"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Join the community protecting lives from floods
+          </motion.p>
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          whileHover={{ y: -5 }}
+        >
+          <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-xl">
+            <CardHeader className="text-center space-y-4">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="inline-block"
+              >
+                <Badge className="bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-3 text-base font-semibold shadow-xl border border-white/20 rounded-full">
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                  </motion.div>
+                  Secure Authentication
+                </Badge>
+              </motion.div>
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <CardTitle className="text-2xl font-bold text-slate-900">
+                  {activeTab === 'login' ? 'Welcome Back' : 'Create Account'}
+                </CardTitle>
+                <CardDescription className="text-slate-600 text-lg">
+                  {activeTab === 'login' 
+                    ? 'Sign in to access your personalized flood monitoring dashboard'
+                    : 'Join thousands protecting their communities from floods'
+                  }
+                </CardDescription>
+              </motion.div>
+            </CardHeader>
 
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -431,10 +570,16 @@ const AuthPage = () => {
               Your data is encrypted and secure.
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </motion.div>
 
         {/* Emergency Access */}
-        <div className="mt-6 text-center">
+        <motion.div 
+          className="mt-6 text-center"
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <AlertTriangle className="w-4 h-4 text-red-600" />
@@ -449,9 +594,10 @@ const AuthPage = () => {
               onClick={() => window.open('tel:108', '_self')}
               className="border-red-300 text-red-700 hover:bg-red-50"
             >
-              📞 Call Emergency Services
+              Call Emergency Services
             </Button>
           </div>
+        </motion.div>
         </div>
       </div>
     </div>

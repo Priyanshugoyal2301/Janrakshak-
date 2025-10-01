@@ -116,7 +116,6 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
   ];
 
   const quickActions = [
-    { name: "New Report", href: "/reports", icon: Plus },
     { name: "Find Shelters", href: "/shelters", icon: Building },
     { name: "Emergency Contacts", href: "/emergency-contacts", icon: Phone },
     { name: "View Alerts", href: "/alerts", icon: Bell },

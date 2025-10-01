@@ -396,7 +396,7 @@ const FloodPredictionSimple: React.FC = () => {
                               cx="50%"
                               cy="50%"
                               labelLine={false}
-                              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                              label={false}
                               outerRadius={80}
                               fill="#8884d8"
                               dataKey="value"
@@ -411,8 +411,25 @@ const FloodPredictionSimple: React.FC = () => {
                                 } />
                               ))}
                             </Pie>
-                            <Tooltip />
-                            <Legend />
+                            <Tooltip 
+                              formatter={(value, name) => [value, 'Days']}
+                              labelFormatter={(label) => `Risk Level: ${label}`}
+                              contentStyle={{
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                              }}
+                            />
+                            <Legend 
+                              verticalAlign="bottom" 
+                              height={60}
+                              wrapperStyle={{ 
+                                fontSize: '12px',
+                                paddingTop: '10px'
+                              }}
+                              iconType="circle"
+                            />
                           </RechartsPieChart>
                         </ResponsiveContainer>
                       </div>

@@ -49,7 +49,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, AreaChart as RechartsAreaChart, Area, ComposedChart, Scatter, ScatterChart, ZAxis } from 'recharts';
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, AreaChart as RechartsAreaChart, Area, ComposedChart, Scatter, ScatterChart, ZAxis, Legend } from 'recharts';
 // import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 // import L from 'leaflet';
 // import 'leaflet/dist/leaflet.css';
@@ -467,7 +467,7 @@ const AdminAnalytics = () => {
                 <CardDescription>Distribution of report types</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
+                <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
@@ -475,16 +475,36 @@ const AdminAnalytics = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ day, count }) => `${day}: ${count}`}
+                        label={false}
                         outerRadius={80}
+                        innerRadius={30}
                         fill="#8884d8"
                         dataKey="count"
+                        paddingAngle={3}
                       >
                         {data.trends.reportSubmissions.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#ec4899'][index % 7]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip 
+                        formatter={(value, name) => [value, 'Reports']}
+                        labelFormatter={(label) => `Category: ${label}`}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        height={60}
+                        wrapperStyle={{ 
+                          fontSize: '12px',
+                          paddingTop: '10px'
+                        }}
+                        iconType="circle"
+                      />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>

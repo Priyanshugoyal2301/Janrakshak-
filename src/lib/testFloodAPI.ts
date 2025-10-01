@@ -2,13 +2,13 @@
 export const testFloodAPI = async () => {
   console.log('🧪 Testing Flood Prediction API...');
   
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://janrakshak-pre-alert-model.onrender.com';
+  const apiUrl = import.meta.env.VITE_BACKEND_URL || 'https://janrakshak-pre-alert-model.onrender.com';
   console.log('API URL:', apiUrl);
   
   try {
     // Test 1: Health check
     console.log('1. Testing health endpoint...');
-    const healthResponse = await fetch(`${apiUrl}/health`, {
+    const healthResponse = await fetch(`${apiUrl}/`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -20,12 +20,8 @@ export const testFloodAPI = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        location: 'Chandigarh',
-        coordinates: {
-          lat: 30.7333,
-          lon: 76.7794
-        },
-        state: 'Punjab'
+        lat: 13.0827,
+        lon: 80.2707
       })
     });
     

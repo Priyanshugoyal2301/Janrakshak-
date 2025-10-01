@@ -58,7 +58,8 @@ import {
   type FloodReport 
 } from '@/lib/supabase';
 import { type LocationInfo } from '@/lib/locationService';
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, AreaChart as RechartsAreaChart, Area } from 'recharts';
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, AreaChart as RechartsAreaChart, Area, Legend } from 'recharts';
+import NearbySheltersMap from '@/components/NearbySheltersMap';
 
 const UserDashboard = () => {
   const { currentUser, userProfile, loading: authLoading } = useAuth();
@@ -313,6 +314,7 @@ const UserDashboard = () => {
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="reports">My Reports</TabsTrigger>
+              <TabsTrigger value="shelters">Nearby Shelters</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
@@ -585,6 +587,15 @@ const UserDashboard = () => {
               </Card>
             </TabsContent>
 
+            {/* Nearby Shelters Tab */}
+            <TabsContent value="shelters" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Map */}
+                <div className="lg:col-span-2">
+                  <NearbySheltersMap userLocation={userLocation} maxDistance={50} />
+                </div>
+              </div>
+            </TabsContent>
 
             {/* Analytics Tab */}
             <TabsContent value="analytics" className="space-y-6">
@@ -626,14 +637,34 @@ const UserDashboard = () => {
                             cx="50%"
                             cy="50%"
                             outerRadius={80}
+                            innerRadius={30}
                             dataKey="value"
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            label={false}
+                            paddingAngle={3}
                           >
                             {severityData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip />
+                          <Tooltip 
+                            formatter={(value, name) => [value, 'Reports']}
+                            labelFormatter={(label) => `Severity: ${label}`}
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }}
+                          />
+                          <Legend 
+                            verticalAlign="bottom" 
+                            height={60}
+                            wrapperStyle={{ 
+                              fontSize: '12px',
+                              paddingTop: '10px'
+                            }}
+                            iconType="circle"
+                          />
                         </RechartsPieChart>
                       </ResponsiveContainer>
                     </div>

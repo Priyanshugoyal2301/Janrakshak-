@@ -3,6 +3,7 @@ import AdminLayout from '@/components/AdminLayout';
 import InteractiveMap from '@/components/InteractiveMap';
 import { useInteractiveMap } from '@/hooks/useInteractiveMap';
 import L from 'leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import { 
   Route,
   MapPin,
@@ -34,6 +35,10 @@ import {
   Map,
   Globe,
   Zap,
+  Maximize,
+  Minimize,
+  Layers,
+  Compass,
 } from 'lucide-react';
 
 // Fix for default markers in Leaflet
@@ -43,6 +48,35 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+// MapClickHandler component for the fullscreen dialog
+const MapClickHandler: React.FC<{
+  onAddPoint: (lat: number, lng: number, type: 'origin' | 'destination' | 'waypoint', label?: string) => void;
+  points: any[];
+  onShowClickFeedback: (lat: number, lng: number) => void;
+}> = ({ onAddPoint, points, onShowClickFeedback }) => {
+  useMapEvents({
+    click: (e) => {
+      const { lat, lng } = e.latlng;
+      
+      // Show visual feedback
+      onShowClickFeedback(lat, lng);
+      
+      // Determine point type based on existing points
+      let type: 'origin' | 'destination' | 'waypoint' = 'waypoint';
+      if (points.length === 0) {
+        type = 'origin';
+      } else if (points.length === 1) {
+        type = 'destination';
+      }
+      
+      // Add point
+      onAddPoint(lat, lng, type);
+    }
+  });
+  
+  return null;
+};
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -201,6 +235,7 @@ const AdminRoutes = () => {
   const [showRouteDialog, setShowRouteDialog] = useState(false);
   const [selectedMission, setSelectedMission] = useState(null);
   const [error, setError] = useState<string | null>(null);
+  const [showRoutePlanningDialog, setShowRoutePlanningDialog] = useState(false);
   
   // Interactive map hook with error handling
   let interactiveMap;
@@ -347,6 +382,11 @@ const AdminRoutes = () => {
     }, 1000);
   };
 
+  const openRoutePlanningDialog = () => {
+    setShowRoutePlanningDialog(true);
+    toast.success('Opening enhanced route planning');
+  };
+
   const handlePlanRoute = async () => {
     if (!routeForm.origin.trim() || !routeForm.destination.trim()) {
       toast.error('Please enter origin and destination');
@@ -439,12 +479,12 @@ const AdminRoutes = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Route & Rescue Planning</h1>
-          <p className="text-gray-600">Plan and manage rescue missions with optimal routing</p>
+          <h1 className="text-xl font-bold text-gray-900">Route & Rescue Planning</h1>
+          <p className="text-sm text-gray-600">Plan and manage rescue missions with optimal routing</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
@@ -585,87 +625,89 @@ const AdminRoutes = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-4">
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Missions</CardTitle>
-            <Activity className="h-4 w-4 text-green-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Active Missions</CardTitle>
+            <Activity className="h-3 w-3 text-green-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeMissions.length}</div>
-            <p className="text-xs text-muted-foreground">Currently in progress</p>
+          <CardContent className="pt-1">
+            <div className="text-xl font-bold">{activeMissions.length}</div>
+            <p className="text-xs text-muted-foreground">In progress</p>
           </CardContent>
         </Card>
         
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Planned Missions</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Planned Missions</CardTitle>
+            <Calendar className="h-3 w-3 text-blue-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{plannedMissions.length}</div>
-            <p className="text-xs text-muted-foreground">Scheduled for execution</p>
+          <CardContent className="pt-1">
+            <div className="text-xl font-bold">{plannedMissions.length}</div>
+            <p className="text-xs text-muted-foreground">Scheduled</p>
           </CardContent>
         </Card>
         
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-gray-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Completed</CardTitle>
+            <CheckCircle className="h-3 w-3 text-gray-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completedMissions.length}</div>
-            <p className="text-xs text-muted-foreground">Successfully completed</p>
+          <CardContent className="pt-1">
+            <div className="text-xl font-bold">{completedMissions.length}</div>
+            <p className="text-xs text-muted-foreground">Done</p>
           </CardContent>
         </Card>
         
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Available Teams</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Available Teams</CardTitle>
+            <Users className="h-3 w-3 text-purple-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.rescueTeams.filter(t => t.status === 'active').length}</div>
-            <p className="text-xs text-muted-foreground">Ready for deployment</p>
+          <CardContent className="pt-1">
+            <div className="text-xl font-bold">{data.rescueTeams.filter(t => t.status === 'active').length}</div>
+            <p className="text-xs text-muted-foreground">Ready</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Interactive Route Planning */}
-      <InteractiveMap
-        points={interactiveMap.points}
-        routes={interactiveMap.routes}
-        isCalculating={interactiveMap.isCalculating}
-        showInstructions={interactiveMap.showInstructions}
-        onAddPoint={interactiveMap.addPoint}
-        onRemovePoint={interactiveMap.removePoint}
-        onCalculateRoute={interactiveMap.calculateRoute}
-        onOptimizeRoute={interactiveMap.optimizeRoute}
-        onToggleInstructions={interactiveMap.toggleInstructions}
-        onClearPoints={interactiveMap.clearPoints}
-      />
-
-      {/* Main Content */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/* Interactive Route Planning with Mission Tools */}
+      <div className="grid gap-4 lg:grid-cols-4">
+        {/* Map Section */}
+        <div className="lg:col-span-3">
+          <InteractiveMap
+            points={interactiveMap.points}
+            routes={interactiveMap.routes}
+            isCalculating={interactiveMap.isCalculating}
+            showInstructions={interactiveMap.showInstructions}
+            onAddPoint={interactiveMap.addPoint}
+            onRemovePoint={interactiveMap.removePoint}
+            onCalculateRoute={interactiveMap.calculateRoute}
+            onOptimizeRoute={interactiveMap.optimizeRoute}
+            onToggleInstructions={interactiveMap.toggleInstructions}
+            onClearPoints={interactiveMap.clearPoints}
+            onOpenFullscreen={openRoutePlanningDialog}
+          />
+        </div>
 
         {/* Mission Planning Tools */}
-        <div>
+        <div className="lg:col-span-1">
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Target className="h-5 w-5 mr-2 text-blue-600" />
-                Mission Planning Tools
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-sm">
+                <Target className="h-4 w-4 mr-2 text-blue-600" />
+                Mission Tools
               </CardTitle>
-              <CardDescription>Quick actions for mission planning</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <Button
                   onClick={() => setShowCreateDialog(true)}
                   className="w-full bg-teal-600 hover:bg-teal-700"
+                  size="sm"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create New Mission
+                  Create Mission
                 </Button>
                 
                 <Button
@@ -692,10 +734,11 @@ const AdminRoutes = () => {
                     }
                   }}
                   className="w-full"
+                  size="sm"
                   disabled={!selectedMission}
                 >
                   <MapPin className="h-4 w-4 mr-2" />
-                  Load Mission to Map
+                  Load Mission
                 </Button>
                 
                 <Button
@@ -722,10 +765,11 @@ const AdminRoutes = () => {
                     }
                   }}
                   className="w-full"
+                  size="sm"
                   disabled={interactiveMap.routes.length === 0}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Export Route Data
+                  Export Route
                 </Button>
               </div>
             </CardContent>
@@ -735,14 +779,13 @@ const AdminRoutes = () => {
 
       {/* Missions Table */}
       <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center">
-                <Navigation className="h-5 w-5 mr-2 text-teal-600" />
+              <CardTitle className="flex items-center text-sm">
+                <Navigation className="h-4 w-4 mr-2 text-teal-600" />
                 Rescue Missions
               </CardTitle>
-              <CardDescription>Manage all rescue missions and their status</CardDescription>
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
@@ -765,9 +808,9 @@ const AdminRoutes = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {/* Filters */}
-          <div className="flex items-center space-x-4 mb-6">
+          <div className="flex items-center space-x-3 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -962,6 +1005,296 @@ const AdminRoutes = () => {
         </CardContent>
       </Card>
       </div>
+
+      {/* Enhanced Route Planning Dialog */}
+      <Dialog open={showRoutePlanningDialog} onOpenChange={setShowRoutePlanningDialog}>
+        <DialogContent className="max-w-[98vw] max-h-[95vh] w-[98vw] p-0">
+          <div className="flex flex-col h-[90vh]">
+            {/* Dialog Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-teal-50 border-b px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <MapPin className="h-6 w-6 text-blue-600" />
+                  <h2 className="text-xl font-semibold text-gray-900">Enhanced Route Planning</h2>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge className="bg-blue-100 text-blue-800">
+                    <Layers className="h-3 w-3 mr-1" />
+                    Fullscreen Map
+                  </Badge>
+                  <Badge className="bg-green-100 text-green-800">
+                    <Compass className="h-3 w-3 mr-1" />
+                    Interactive Planning
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const routeData = {
+                      points: interactiveMap.points,
+                      routes: interactiveMap.routes,
+                      timestamp: new Date().toISOString(),
+                      mode: 'enhanced_planning'
+                    };
+                    const blob = new Blob([JSON.stringify(routeData, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `route-plan-${Date.now()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success('Route data exported');
+                  }}
+                  disabled={interactiveMap.points.length === 0}
+                  className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Route
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    interactiveMap.clearPoints();
+                    toast.success('All points cleared');
+                  }}
+                  disabled={interactiveMap.points.length === 0}
+                  className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Clear All
+                </Button>
+              </div>
+            </div>
+            
+            {/* Dialog Content - 16:9 Map Layout */}
+            <div className="flex-1 flex">
+              {/* Map Container - 16:9 aspect ratio */}
+              <div className="flex-1 relative">
+                <div className="absolute inset-0 p-4">
+                  <div className="h-full w-full rounded-lg overflow-hidden shadow-lg">
+                    {/* Direct Map Implementation for Fullscreen */}
+                    <div className="h-full w-full">
+                      <MapContainer
+                        center={[20.5937, 78.9629]}
+                        zoom={12}
+                        style={{ height: '100%', width: '100%', cursor: 'crosshair' }}
+                        zoomControl={true}
+                        scrollWheelZoom={true}
+                        doubleClickZoom={false}
+                        dragging={true}
+                        tap={true}
+                        touchZoom={true}
+                        boxZoom={false}
+                        keyboard={true}
+                        closePopupOnClick={false}
+                        zoomSnap={0.25}
+                        zoomDelta={0.5}
+                      >
+                        <TileLayer
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          maxZoom={19}
+                          minZoom={3}
+                        />
+                        
+                        {/* Map Click Handler */}
+                        <MapClickHandler 
+                          onAddPoint={interactiveMap.addPoint} 
+                          points={interactiveMap.points} 
+                          onShowClickFeedback={() => {}} 
+                        />
+                        
+                        {/* Render points */}
+                        {interactiveMap.points.map((point, index) => (
+                          <Marker
+                            key={point.id}
+                            position={[point.lat, point.lng] as [number, number]}
+                            icon={L.divIcon({
+                              className: 'custom-div-icon',
+                              html: `<div style="background-color: ${
+                                point.type === 'origin' ? '#3b82f6' : 
+                                point.type === 'destination' ? '#ef4444' : '#10b981'
+                              }; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${
+                                point.type === 'origin' ? '🏠' : 
+                                point.type === 'destination' ? '🎯' : '📍'
+                              }</div>`,
+                              iconSize: [30, 30],
+                              iconAnchor: [15, 15],
+                            })}
+                          >
+                            <Popup>
+                              <div className="p-3 min-w-[200px]">
+                                <h3 className="font-semibold text-sm mb-2">
+                                  {point.type === 'origin' ? '🏠 Origin Point' : 
+                                   point.type === 'destination' ? '🎯 Destination' : 
+                                   `📍 Waypoint ${index}`}
+                                </h3>
+                                <div className="space-y-1 text-xs text-muted-foreground mb-3">
+                                  <p><strong>Latitude:</strong> {point.lat.toFixed(6)}</p>
+                                  <p><strong>Longitude:</strong> {point.lng.toFixed(6)}</p>
+                                  {point.label && <p><strong>Label:</strong> {point.label}</p>}
+                                  <p><strong>Order:</strong> {index + 1} of {interactiveMap.points.length}</p>
+                                </div>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => interactiveMap.removePoint(point.id)}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Remove Point
+                                </Button>
+                              </div>
+                            </Popup>
+                          </Marker>
+                        ))}
+                        
+                        {/* Render routes */}
+                        {interactiveMap.routes.map((route, routeIndex) => (
+                          <Polyline
+                            key={routeIndex}
+                            positions={route.points}
+                            color="#3b82f6"
+                            weight={4}
+                            opacity={0.8}
+                          />
+                        ))}
+                      </MapContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Control Panel - Right side */}
+              <div className="w-80 bg-gray-50 border-l p-4 overflow-y-auto">
+                <div className="space-y-4">
+                  {/* Route Controls */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center">
+                        <Route className="h-4 w-4 mr-2 text-blue-600" />
+                        Route Controls
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button
+                        onClick={interactiveMap.calculateRoute}
+                        disabled={interactiveMap.points.length < 2 || interactiveMap.isCalculating}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        size="sm"
+                      >
+                        <Route className="h-4 w-4 mr-2" />
+                        {interactiveMap.isCalculating ? 'Calculating...' : 'Calculate Route'}
+                      </Button>
+                      <Button
+                        onClick={interactiveMap.optimizeRoute}
+                        disabled={interactiveMap.points.length < 3 || interactiveMap.isCalculating}
+                        variant="outline"
+                        className="w-full"
+                        size="sm"
+                      >
+                        <Zap className="h-4 w-4 mr-2" />
+                        Optimize Route
+                      </Button>
+                      <Button
+                        onClick={interactiveMap.toggleInstructions}
+                        variant="outline"
+                        className="w-full"
+                        size="sm"
+                      >
+                        <Navigation className="h-4 w-4 mr-2" />
+                        {interactiveMap.showInstructions ? 'Hide' : 'Show'} Instructions
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Route Statistics */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center">
+                        <BarChart3 className="h-4 w-4 mr-2 text-green-600" />
+                        Route Statistics
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Total Points:</span>
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                            {interactiveMap.points.length}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Routes Calculated:</span>
+                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                            {interactiveMap.routes.length}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* External Tools */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center">
+                        <Globe className="h-4 w-4 mr-2 text-purple-600" />
+                        External Tools
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          // Generate Google Maps URL
+                          if (interactiveMap.points.length >= 2) {
+                            const points = interactiveMap.points.map(p => ({ lat: p.lat, lng: p.lng }));
+                            const url = `https://www.google.com/maps/dir/${points.map(p => `${p.lat},${p.lng}`).join('/')}`;
+                            window.open(url, '_blank');
+                            toast.success('Opened in Google Maps');
+                          } else {
+                            toast.error('Need at least 2 points to open in Google Maps');
+                          }
+                        }}
+                        className="w-full bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                        size="sm"
+                        disabled={interactiveMap.points.length < 2}
+                      >
+                        <Globe className="h-4 w-4 mr-2" />
+                        Open in Google Maps
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Instructions */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center">
+                        <Settings className="h-4 w-4 mr-2 text-orange-600" />
+                        Instructions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-xs text-gray-600 space-y-2">
+                        <p>• Click on the map to add waypoints</p>
+                        <p>• First click = Origin point</p>
+                        <p>• Second click = Destination</p>
+                        <p>• Additional clicks = Waypoints</p>
+                        <p>• Use Calculate Route to find the best path</p>
+                        <p>• Use Optimize Route for multiple waypoints</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

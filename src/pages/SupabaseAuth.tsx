@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/lib/supabase";
 import LoadingScreen from "@/components/LoadingScreen";
+import { motion } from "framer-motion";
 import {
   Shield,
   Mail,
@@ -29,6 +30,8 @@ import {
   Loader2,
   ArrowRight,
   Crown,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -127,13 +130,25 @@ const SupabaseAuthPage = () => {
 
     // Validate secret key
     const validSecretKeys = [
-      "janrakshak25",
+      "Janrakshak25",
       "admin2025",
       "EMERGENCY_RESPONSE_KEY",
       "JANRAKSHAK_ADMIN_2025",
     ];
 
-    if (!validSecretKeys.includes(formData.secretKey)) {
+    // Trim whitespace and normalize the entered key
+    const trimmedKey = formData.secretKey?.trim();
+    
+    console.log('Secret key validation:', {
+      enteredKey: formData.secretKey,
+      trimmedKey: trimmedKey,
+      validKeys: validSecretKeys,
+      keyLength: trimmedKey?.length,
+      isValid: validSecretKeys.includes(trimmedKey),
+      exactMatch: validSecretKeys.some(key => key === trimmedKey)
+    });
+
+    if (!validSecretKeys.includes(trimmedKey)) {
       toast.error(
         "Invalid admin secret key. Please contact system administrator."
       );
@@ -204,17 +219,122 @@ const SupabaseAuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        {/* Floating Orbs */}
+        <motion.div
+          className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-xl"
+          animate={{
+            y: [0, -20, 0],
+            x: [0, 10, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        <motion.div
+          className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-xl"
+          animate={{
+            y: [0, 15, 0],
+            x: [0, -15, 0],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+
+        <motion.div
+          className="absolute bottom-32 left-40 w-40 h-40 bg-gradient-to-r from-teal-400/20 to-green-400/20 rounded-full blur-xl"
+          animate={{
+            y: [0, -25, 0],
+            x: [0, 20, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+
+        {/* Subtle Grid */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="grid grid-cols-12 grid-rows-12 h-full w-full">
+            {Array.from({ length: 144 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="border border-blue-200"
+                animate={{
+                  opacity: [0.1, 0.3, 0.1],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  delay: i * 0.01,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center min-h-screen p-4">
+        <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Side - Features */}
-        <div className="space-y-8">
+        <motion.div 
+          className="space-y-8"
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        >
           <div className="text-center lg:text-left">
-            <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
+            <motion.div 
+              className="flex items-center justify-center lg:justify-start gap-4 mb-6"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <motion.div 
+                className="relative"
+                whileHover={{
+                  scale: 1.1,
+                  rotate: [0, -5, 5, 0]
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  duration: 0.6
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full blur-lg opacity-30"></div>
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl flex items-center justify-center relative">
+                  <img src="/favicon.svg" alt="JanRakshak Logo" className="w-10 h-10" />
+                </div>
+              </motion.div>
+              <div className="flex flex-col">
+                <motion.h1 
+                  className="text-4xl font-black bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent"
+                  animate={{
+                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                >
+                  JanRakshak
+                </motion.h1>
+                <span className="text-sm text-blue-600 font-semibold -mt-1">Flood Protection System</span>
               </div>
-              <h1 className="text-3xl font-bold text-slate-900">JanRakshak</h1>
-            </div>
+            </motion.div>
 
             <h2 className="text-2xl font-bold text-slate-900 mb-4">
               Secure Access to Your Account
@@ -227,21 +347,30 @@ const SupabaseAuthPage = () => {
 
           <div className="space-y-6">
             {features.map((feature, index) => (
-              <div key={index} className="flex items-start gap-4">
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${feature.color}`}
+              <motion.div 
+                key={index} 
+                className="flex items-start gap-4"
+                initial={{ x: -30, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                whileHover={{ x: 5 }}
+              >
+                <motion.div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${feature.color}`}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <feature.icon className="w-5 h-5" />
-                </div>
+                  <feature.icon className="w-6 h-6" />
+                </motion.div>
                 <div>
-                  <h3 className="font-semibold text-slate-900">
+                  <h3 className="font-semibold text-slate-900 text-lg">
                     {feature.title}
                   </h3>
-                  <p className="text-slate-600 text-sm">
+                  <p className="text-slate-600 text-sm leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -255,11 +384,20 @@ const SupabaseAuthPage = () => {
               Back to Home
             </Button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right Side - Auth Form */}
-        <div className="flex items-center justify-center">
-          <Card className="w-full max-w-md shadow-xl">
+        <motion.div 
+          className="flex items-center justify-center"
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          <motion.div
+            whileHover={{ y: -5 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <Card className="w-full max-w-md shadow-2xl border-0 bg-white/90 backdrop-blur-xl">
             <CardHeader className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Crown className="w-6 h-6 text-purple-600 animate-pulse" />
@@ -449,6 +587,31 @@ const SupabaseAuthPage = () => {
                       </div>
                     </div>
 
+                    {/* Demo Secret Key Message */}
+                    <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <AlertTriangle className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-blue-900 mb-1">
+                            Demo Secret Key Available
+                          </h4>
+                          <p className="text-xs text-blue-700 mb-2">
+                            For deployment testing and demo purposes, you can use the following secret key:
+                          </p>
+                          <div className="bg-white border border-blue-200 rounded-md p-2 mb-2">
+                            <code className="text-sm font-mono text-blue-800 font-semibold">
+                              Janrakshak25
+                            </code>
+                          </div>
+                          <p className="text-xs text-blue-600">
+                            This key is displayed for testing purposes only. In production, secret keys are kept confidential.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="secretKey">Admin Secret Key</Label>
                       <div className="relative">
@@ -551,6 +714,8 @@ const SupabaseAuthPage = () => {
               </Tabs>
             </CardContent>
           </Card>
+          </motion.div>
+        </motion.div>
         </div>
       </div>
     </div>

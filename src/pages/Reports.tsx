@@ -402,7 +402,7 @@ const Reports = () => {
     <UserLayout title="My Reports" description="View and manage your flood reports">
       <div className="space-y-8">
         {/* Header */}
-        <div className="text-center space-y-6">
+        <div className="text-center space-y-8 mb-12">
           <div className="space-y-4">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
               My Flood Reports
@@ -419,10 +419,10 @@ const Reports = () => {
             </div>
           )}
           
-          <div className="flex justify-center">
+          <div className="flex justify-center pt-4">
             <Button 
               onClick={() => setShowSubmitDialog(true)}
-              className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white px-10 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-lg"
+              className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white px-10 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-lg z-10 relative"
             >
               <Plus className="w-6 h-6 mr-2" />
               Submit New Report
@@ -432,7 +432,7 @@ const Reports = () => {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
         <GradientCard className="p-6 text-center">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-teal-100 rounded-xl flex items-center justify-center mx-auto mb-3">
             <MessageSquare className="w-6 h-6 text-blue-600" />
@@ -679,18 +679,19 @@ const Reports = () => {
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowSubmitDialog(false)}
+                  className="px-8 py-2 min-w-[100px]"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSubmitReport}
                   disabled={submitting}
-                  className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                  className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 px-8 py-2 min-w-[140px] font-semibold"
                 >
                   {submitting ? (
                     <>

@@ -100,13 +100,25 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({ chil
       // Validate secret key if provided
       if (userData?.secret_key) {
         const validSecretKeys = [
-          'JANRAKSHAK_ADMIN_2024',
-          'FLOOD_PROTECTION_ADMIN',
+          'Janrakshak25',
+          'admin2025',
           'EMERGENCY_RESPONSE_KEY',
-          'DISASTER_MANAGEMENT_2024'
+          'JANRAKSHAK_ADMIN_2025'
         ];
 
-        if (!validSecretKeys.includes(userData.secret_key)) {
+        // Trim whitespace and normalize the entered key
+        const trimmedKey = userData.secret_key?.trim();
+
+        console.log('Context secret key validation:', {
+          enteredKey: userData.secret_key,
+          trimmedKey: trimmedKey,
+          validKeys: validSecretKeys,
+          keyLength: trimmedKey?.length,
+          isValid: validSecretKeys.includes(trimmedKey),
+          exactMatch: validSecretKeys.some(key => key === trimmedKey)
+        });
+
+        if (!validSecretKeys.includes(trimmedKey)) {
           toast.error('Invalid admin secret key. Please contact system administrator.');
           return { user: null, error: { message: 'Invalid secret key' } as AuthError };
         }

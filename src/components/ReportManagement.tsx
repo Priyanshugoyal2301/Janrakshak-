@@ -151,6 +151,62 @@ const ReportManagement = () => {
     critical: reports.filter(r => r.severity === 'critical').length,
   };
 
+  const handleUpdateReportStatus = async (reportId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('flood_reports')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reportId);
+
+      if (error) {
+        toast.error(`Failed to update report status: ${error.message}`);
+        return;
+      }
+
+      // Update local state
+      setReports(prevReports => 
+        prevReports.map(report => 
+          report.id === reportId 
+            ? { ...report, status: newStatus as any, updated_at: new Date().toISOString() }
+            : report
+        )
+      );
+
+      toast.success(`Report status updated to ${newStatus.replace('_', ' ')}`);
+    } catch (error: any) {
+      console.error('Error updating report status:', error);
+      toast.error('Failed to update report status');
+    }
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('flood_reports')
+        .delete()
+        .eq('id', reportId);
+
+      if (error) {
+        toast.error(`Failed to delete report: ${error.message}`);
+        return;
+      }
+
+      // Update local state
+      setReports(prevReports => prevReports.filter(report => report.id !== reportId));
+      toast.success('Report deleted successfully');
+    } catch (error: any) {
+      console.error('Error deleting report:', error);
+      toast.error('Failed to delete report');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -362,24 +418,27 @@ const ReportManagement = () => {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuLabel>Status Management</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => {}}>
+                          <DropdownMenuItem onClick={() => handleUpdateReportStatus(report.id, 'verified')}>
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Verify Report
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {}}>
+                          <DropdownMenuItem onClick={() => handleUpdateReportStatus(report.id, 'rejected')}>
                             <AlertTriangle className="h-4 w-4 mr-2" />
-                            Mark Critical
+                            Reject Report
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {}}>
+                          <DropdownMenuItem onClick={() => handleUpdateReportStatus(report.id, 'resolved')}>
                             <Activity className="h-4 w-4 mr-2" />
                             Mark Resolved
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {}}>
+                          <DropdownMenuItem onClick={() => handleUpdateReportStatus(report.id, 'false_alarm')}>
                             <AlertTriangle className="h-4 w-4 mr-2" />
                             Mark False Alarm
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                          <DropdownMenuItem 
+                            className="text-red-600 focus:text-red-600"
+                            onClick={() => handleDeleteReport(report.id)}
+                          >
                             <AlertTriangle className="h-4 w-4 mr-2" />
                             Delete Report
                           </DropdownMenuItem>

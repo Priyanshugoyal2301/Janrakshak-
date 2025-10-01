@@ -41,6 +41,7 @@ import {
   getAdminUsers, 
   updateUserRole, 
   updateUserStatus, 
+  deleteUser,
   subscribeToUsers,
   testSupabaseConnection,
   checkCurrentUserAdminStatus,
@@ -359,8 +360,25 @@ const AdminUsers = () => {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    // Note: In a real app, you'd need a delete function in adminSupabase.ts
-    toast.error('User deletion not implemented yet');
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const success = await deleteUser(userId);
+      if (success) {
+        await loadUsers();
+        toast.success('User deleted successfully');
+      } else {
+        toast.error('Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -701,6 +719,14 @@ const AdminUsers = () => {
                               <UserCheck className="h-4 w-4" />
                             </Button>
                           )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -1146,6 +1172,20 @@ const AdminUsers = () => {
             <Button variant="outline" onClick={() => setShowManageDialog(false)}>
               Cancel
             </Button>
+            {selectedUser && (
+              <Button 
+                variant="destructive" 
+                onClick={() => {
+                  setShowManageDialog(false);
+                  handleDeleteUser(selectedUser.id);
+                }}
+                disabled={loading}
+                className="mr-auto"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete User
+              </Button>
+            )}
             <Button onClick={handleUpdateUser} disabled={loading}>
               {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Edit className="h-4 w-4 mr-2" />}
               Update User

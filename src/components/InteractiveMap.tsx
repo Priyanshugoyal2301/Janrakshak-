@@ -19,7 +19,8 @@ import {
   XCircle,
   AlertTriangle,
   ExternalLink,
-  Map
+  Map,
+  Maximize
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +47,7 @@ interface InteractiveMapProps {
   onOptimizeRoute: () => Promise<void>;
   onToggleInstructions: () => void;
   onClearPoints: () => void;
+  onOpenFullscreen?: () => void;
 }
 
 // Component to handle map clicks with improved reliability
@@ -111,22 +113,45 @@ const MapViewUpdater: React.FC<{
 }> = ({ center, zoom, points }) => {
   try {
     const map = useMap();
+    const [hasInitialized, setHasInitialized] = React.useState(false);
     
     React.useEffect(() => {
-      if (map && points.length > 0) {
+      if (map && !hasInitialized) {
         try {
-          // Only update if the center has changed significantly
-          const currentCenter = map.getCenter();
-          const distance = currentCenter.distanceTo([center[0], center[1]]);
-          
-          if (distance > 100) { // Only update if moved more than 100 meters
-            map.setView(center, zoom, { animate: true, duration: 0.5 });
-          }
+          // Only set initial view once
+          map.setView(center, zoom, { animate: false });
+          setHasInitialized(true);
         } catch (error) {
-          console.error('Error updating map view:', error);
+          console.error('Error setting initial map view:', error);
         }
       }
-    }, [map, center, zoom, points.length]);
+    }, [map, center, zoom, hasInitialized]);
+    
+    // Only update view when points change significantly (not on every click)
+    React.useEffect(() => {
+      if (map && hasInitialized && points.length > 1) {
+        try {
+          // Calculate bounds to fit all points
+          const lats = points.map(p => p.lat);
+          const lngs = points.map(p => p.lng);
+          const bounds = [
+            [Math.min(...lats), Math.min(...lngs)],
+            [Math.max(...lats), Math.max(...lngs)]
+          ];
+          
+          // Only fit bounds if we have multiple points
+          if (points.length >= 2) {
+            map.fitBounds(bounds as [[number, number], [number, number]], { 
+              padding: [20, 20],
+              animate: true,
+              duration: 1
+            });
+          }
+        } catch (error) {
+          console.error('Error updating map bounds:', error);
+        }
+      }
+    }, [map, points.length, hasInitialized]); // Only depend on points.length, not individual points
     
     return null;
   } catch (error) {
@@ -156,7 +181,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   onCalculateRoute,
   onOptimizeRoute,
   onToggleInstructions,
-  onClearPoints
+  onClearPoints,
+  onOpenFullscreen
 }) => {
   const mapRef = useRef<L.Map>(null);
   const [apiStatus, setApiStatus] = useState<'testing' | 'connected' | 'disconnected'>('testing');
@@ -212,7 +238,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // Calculate map center based on points (stable calculation)
   const getMapCenter = (): [number, number] => {
     if (points.length === 0) {
-      return [30.7333, 76.7794]; // Default center (Chandigarh)
+      return [20.5937, 78.9629]; // Default center (Center of India)
     }
     
     if (points.length === 1) {
@@ -244,19 +270,19 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-4">
       {/* Interactive Map */}
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-3">
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader>
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center">
-                  <MapPin className="h-5 w-5 mr-2 text-teal-600" />
+                <CardTitle className="flex items-center text-sm">
+                  <MapPin className="h-4 w-4 mr-2 text-teal-600" />
                   Interactive Route Planner
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Click anywhere on the map to add waypoints. First click = Origin, Second click = Destination, Additional clicks = Waypoints
+                <p className="text-xs text-muted-foreground">
+                  Click map to add waypoints: Origin → Destination → Waypoints
                 </p>
               </div>
               <div className="flex items-center space-x-2">
@@ -290,8 +316,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="h-96 rounded-lg overflow-hidden relative group">
+          <CardContent className="pt-0">
+            <div className="h-80 rounded-lg overflow-hidden relative group">
               {/* Click instruction overlay */}
               <div className="absolute top-4 left-4 z-[1001] bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border">
                 <div className="flex items-center space-x-2 text-sm">
@@ -415,7 +441,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             </div>
             
             {/* Map Controls */}
-            <div className="mt-4 space-y-4">
+            <div className="mt-3 space-y-3">
               {/* Route Actions */}
               <div className="flex items-center space-x-2">
                 <Button
@@ -443,19 +469,29 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Open in Google Maps
                 </Button>
+                {onOpenFullscreen && (
+                  <Button
+                    onClick={onOpenFullscreen}
+                    variant="outline"
+                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                  >
+                    <Maximize className="h-4 w-4 mr-2" />
+                    Fullscreen
+                  </Button>
+                )}
               </div>
               
               {/* Status and Legend */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">Points Selected: {points.length}</span>
-                  <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                    <span>{points.length === 0 && 'Click to add origin'}</span>
-                    <span>{points.length === 1 && 'Click to add destination'}</span>
-                    <span>{points.length >= 2 && 'Click to add waypoints'}</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium">Points: {points.length}</span>
+                  <div className="text-xs text-muted-foreground">
+                    {points.length === 0 && 'Click to add origin'}
+                    {points.length === 1 && 'Click to add destination'}
+                    {points.length >= 2 && 'Click to add waypoints'}
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 text-xs">
+                <div className="flex items-center space-x-3 text-xs">
                   <div className="flex items-center space-x-1">
                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                     <span>Origin</span>
@@ -480,22 +516,22 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       </div>
 
       {/* Route Information Panel */}
-      <div>
+      <div className="lg:col-span-1">
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Navigation className="h-5 w-5 mr-2 text-blue-600" />
-              Route Information
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-sm">
+              <Navigation className="h-4 w-4 mr-2 text-blue-600" />
+              Route Info
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-96">
-              <div className="space-y-4">
+          <CardContent className="pt-0">
+            <ScrollArea className="h-80">
+              <div className="space-y-3">
                 {/* Points Summary */}
                 <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Waypoints ({points.length})</h4>
+                  <h4 className="font-medium text-xs">Waypoints ({points.length})</h4>
                   {points.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Click on the map to add waypoints</p>
+                    <p className="text-xs text-muted-foreground">Click map to add waypoints</p>
                   ) : (
                     <div className="space-y-1">
                       {points.map((point, index) => (
@@ -530,16 +566,16 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 {/* Route Results */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-sm">Routes ({routes.length})</h4>
+                    <h4 className="font-medium text-xs">Routes ({routes.length})</h4>
                     {routes.length > 0 && (
                       <Button
                         onClick={openInGoogleMaps}
                         size="sm"
                         variant="outline"
-                        className="h-6 px-2 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                        className="h-5 px-2 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
                       >
                         <Map className="h-3 w-3 mr-1" />
-                        Google Maps
+                        Maps
                       </Button>
                     )}
                   </div>
