@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Heart, 
   MessageCircle, 
@@ -26,7 +27,9 @@ import {
   Eye,
   Flag,
   Plus,
-  RefreshCw
+  RefreshCw,
+  ImageIcon,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,6 +54,10 @@ const Community = () => {
   const [activeTab, setActiveTab] = useState<string>('community');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
+  const [selectedReport, setSelectedReport] = useState<CommunityReport | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>('');
 
 
   useEffect(() => {
@@ -248,14 +255,14 @@ const Community = () => {
   };
 
   return (
-    <UserLayout title="Community & Nearby" description="Connect with your community and view nearby flood reports">
+    <UserLayout title="Community" description="Connect with your community and view flood reports">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Community & Nearby Reports</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Community Reports</h1>
             <p className="text-gray-600 mt-1">
-              Stay connected with your community and view nearby flood information
+              Stay connected with your community and view flood information
             </p>
           </div>
           <div className="flex items-center space-x-2">
@@ -280,7 +287,6 @@ const Community = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="community">Community Reports</TabsTrigger>
-            <TabsTrigger value="nearby">Nearby Reports</TabsTrigger>
           </TabsList>
 
           <TabsContent value="community" className="space-y-6">
@@ -408,6 +414,52 @@ const Community = () => {
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-600 mb-2">{report.description}</p>
+                        
+                        {/* Media Display */}
+                        {report.images && report.images.length > 0 && (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
+                            {report.images.slice(0, 3).map((mediaUrl, index) => {
+                              const isVideo = mediaUrl && (
+                                mediaUrl.includes('.mp4') || 
+                                mediaUrl.includes('.mov') || 
+                                mediaUrl.includes('.avi') ||
+                                mediaUrl.startsWith('data:video/')
+                              );
+                              
+                              return (
+                                <div key={index} className="relative">
+                                  {isVideo ? (
+                                    <video
+                                      src={mediaUrl}
+                                      className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
+                                      controls
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  ) : (
+                                    <img
+                                      src={mediaUrl}
+                                      alt={`Report media ${index + 1}`}
+                                      className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90"
+                                      onClick={() => {
+                                        setSelectedImageUrl(mediaUrl);
+                                        setShowImageViewer(true);
+                                      }}
+                                    />
+                                  )}
+                                  <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                                    {isVideo ? 'VIDEO' : 'IMAGE'}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {report.images.length > 3 && (
+                              <div className="flex items-center justify-center bg-gray-100 rounded-lg text-xs text-gray-500">
+                                +{report.images.length - 3} more
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
                           <div className="flex items-center">
                             <MapPin className="w-3 h-3 mr-1" />
@@ -460,6 +512,18 @@ const Community = () => {
                     </div>
                     
                     <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setSelectedReport(report);
+                          setShowDetailDialog(true);
+                        }}
+                        className="h-8 px-2"
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        View Details
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -478,47 +542,188 @@ const Community = () => {
         </div>
           </TabsContent>
 
-          <TabsContent value="nearby" className="space-y-6">
-            {/* Nearby Reports Content */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <MapPin className="w-5 h-5 mr-2 text-teal-600" />
-                  Nearby Reports
-                </CardTitle>
-                <CardDescription>
-                  View flood reports from locations near you
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Nearby Reports</h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    This feature shows flood reports from locations within a 10km radius of your current location.
-                  </p>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
-                      <MapPin className="w-4 h-4" />
-                      <span>Your location: {userProfile?.location?.address || 'Location not available'}</span>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        // This would typically load nearby reports based on user's location
-                        toast.info('Nearby reports feature coming soon!');
-                      }}
-                    >
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Load Nearby Reports
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
+
+      {/* Report Detail Dialog */}
+      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedReport && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center space-x-2">
+                  <span>{selectedReport.title}</span>
+                  <Badge className={getSeverityColor(selectedReport.severity)}>
+                    {selectedReport.severity.toUpperCase()}
+                  </Badge>
+                  <Badge className={getStatusColor(selectedReport.status)}>
+                    {selectedReport.status.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription>
+                  Report submitted by {selectedReport.user_name} • {formatTimeAgo(selectedReport.created_at || new Date().toISOString())}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {/* Location Information */}
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Location Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-blue-700 font-medium">Address:</p>
+                      <p className="text-blue-800">{selectedReport.location.address}</p>
+                    </div>
+                    <div>
+                      <p className="text-blue-700 font-medium">District:</p>
+                      <p className="text-blue-800">{selectedReport.location.district}</p>
+                    </div>
+                    <div>
+                      <p className="text-blue-700 font-medium">State:</p>
+                      <p className="text-blue-800">{selectedReport.location.state}</p>
+                    </div>
+                    <div>
+                      <p className="text-blue-700 font-medium">Coordinates:</p>
+                      <p className="text-blue-800">{selectedReport.coordinates.lat.toFixed(6)}, {selectedReport.coordinates.lng.toFixed(6)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <h3 className="font-semibold text-slate-900 mb-2">Description</h3>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <p className="text-slate-700 leading-relaxed">{selectedReport.description}</p>
+                  </div>
+                </div>
+
+                {/* Media Gallery */}
+                {selectedReport.images && selectedReport.images.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-slate-900 mb-3 flex items-center">
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Media ({selectedReport.images.length})
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {selectedReport.images.map((mediaUrl, index) => {
+                        const isVideo = mediaUrl.includes('video/') || mediaUrl.includes('.mp4') || mediaUrl.includes('.mov') || mediaUrl.includes('.avi') || mediaUrl.includes('.webm');
+                        const isBase64Video = mediaUrl.startsWith('data:video/');
+                        
+                        return (
+                          <div key={index} className="relative group">
+                            {isVideo || isBase64Video ? (
+                              <div className="relative">
+                                <video
+                                  src={mediaUrl}
+                                  className="w-full h-48 object-cover rounded-lg cursor-pointer transition-transform group-hover:scale-105"
+                                  controls
+                                  preload="metadata"
+                                />
+                                <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">
+                                  VIDEO
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <img
+                                  src={mediaUrl}
+                                  alt={`Report media ${index + 1}`}
+                                  className="w-full h-48 object-cover rounded-lg cursor-pointer transition-transform group-hover:scale-105"
+                                  onClick={() => {
+                                    setSelectedImageUrl(mediaUrl);
+                                    setShowImageViewer(true);
+                                  }}
+                                />
+                                <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
+                                  IMAGE
+                                </div>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg flex items-center justify-center">
+                              <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Report Metadata */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-medium text-slate-900 mb-2">Severity Level</h4>
+                    <Badge className={getSeverityColor(selectedReport.severity)}>
+                      {selectedReport.severity.toUpperCase()}
+                    </Badge>
+                    <p className="text-xs text-slate-600 mt-1">
+                      {selectedReport.severity === 'critical' ? 'Immediate action required' :
+                       selectedReport.severity === 'high' ? 'High priority response needed' :
+                       selectedReport.severity === 'medium' ? 'Moderate attention required' :
+                       'Low priority monitoring'}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-medium text-slate-900 mb-2">Status</h4>
+                    <Badge className={getStatusColor(selectedReport.status)}>
+                      {selectedReport.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                    <p className="text-xs text-slate-600 mt-1">
+                      {selectedReport.status === 'verified' ? 'Report has been verified' :
+                       selectedReport.status === 'pending' ? 'Awaiting verification' :
+                       selectedReport.status === 'resolved' ? 'Issue has been resolved' :
+                       'Report marked as false alarm'}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-medium text-slate-900 mb-2">Community Engagement</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Upvotes:</span>
+                        <span className="font-medium">{selectedReport.upvotes}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Downvotes:</span>
+                        <span className="font-medium">{selectedReport.downvotes}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">Views:</span>
+                        <span className="font-medium">{selectedReport.views}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Viewer Modal */}
+      <Dialog open={showImageViewer} onOpenChange={setShowImageViewer}>
+        <DialogContent className="max-w-7xl max-h-[95vh] p-0 bg-black">
+          <div className="relative w-full h-full">
+            <img
+              src={selectedImageUrl}
+              alt="Full size image"
+              className="w-full h-full object-contain"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowImageViewer(false)}
+              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UserLayout>
   );
 };

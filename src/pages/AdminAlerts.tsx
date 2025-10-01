@@ -16,7 +16,6 @@ import {
   Eye,
   Edit,
   Trash2,
-  MoreHorizontal,
   CheckCircle,
   XCircle,
   Download,
@@ -33,7 +32,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -43,6 +41,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { useAlert } from '@/contexts/AlertContext';
 import { 
   getAdminAlerts, 
   createAlert, 
@@ -53,6 +52,22 @@ import {
   createSampleAlerts,
   AdminAlert 
 } from '@/lib/adminSupabase';
+import { FloodPredictionService } from '@/lib/floodPredictionService';
+// Charts temporarily disabled for testing
+// import { 
+//   LineChart, 
+//   Line, 
+//   XAxis, 
+//   YAxis, 
+//   CartesianGrid, 
+//   Tooltip, 
+//   ResponsiveContainer,
+//   BarChart,
+//   Bar,
+//   PieChart,
+//   Pie,
+//   Cell
+// } from 'recharts';
 
 // Real data structure based on Supabase tables
 const initialData = {
@@ -68,6 +83,7 @@ const initialData = {
 };
 
 const AdminAlerts = () => {
+  const { testFlashWarning, alerts: contextAlerts, refreshAlerts } = useAlert();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,10 +105,22 @@ const AdminAlerts = () => {
   const [alerts, setAlerts] = useState<AdminAlert[]>([]);
   const [isLive, setIsLive] = useState(true);
 
+  // Flood prediction state
+  const [floodPredictions, setFloodPredictions] = useState<any[]>([]);
+  const [floodLoading, setFloodLoading] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState('Chennai');
+  const floodService = new FloodPredictionService();
+
   // Load initial data
   useEffect(() => {
     loadAlerts();
   }, []);
+
+  // Sync local alerts with context alerts
+  useEffect(() => {
+    setAlerts(contextAlerts);
+  }, [contextAlerts]);
+
 
   // Real-time alert updates
   useEffect(() => {
@@ -102,14 +130,17 @@ const AdminAlerts = () => {
       console.log('Alert update received:', payload);
       
       if (payload.eventType === 'UPDATE' && payload.new) {
+        console.log('Updating alert:', payload.new);
         setAlerts(prevAlerts => 
           prevAlerts.map(alert => 
             alert.id === payload.new.id ? { ...alert, ...payload.new } : alert
           )
         );
       } else if (payload.eventType === 'INSERT' && payload.new) {
+        console.log('Adding new alert:', payload.new);
         setAlerts(prevAlerts => [payload.new, ...prevAlerts]);
       } else if (payload.eventType === 'DELETE' && payload.old) {
+        console.log('Removing alert:', payload.old);
         setAlerts(prevAlerts => 
           prevAlerts.filter(alert => alert.id !== payload.old.id)
         );
@@ -136,6 +167,20 @@ const AdminAlerts = () => {
     }
   };
 
+  const loadFloodPredictions = async () => {
+    setFloodLoading(true);
+    try {
+      const prediction = await floodService.predictRegionalRisk(selectedLocation);
+      setFloodPredictions([prediction]);
+      toast.success('Flood prediction loaded successfully');
+    } catch (error) {
+      console.error('Error loading flood prediction:', error);
+      toast.error('Failed to load flood prediction');
+    } finally {
+      setFloodLoading(false);
+    }
+  };
+
   const handleCreateAlert = async () => {
     if (!broadcastForm.message.trim()) {
       toast.error('Please enter a message');
@@ -155,7 +200,8 @@ const AdminAlerts = () => {
         message: broadcastForm.message,
         region: broadcastForm.sentTo.join(', '),
         sent_to: broadcastForm.sentTo,
-        expires_at: new Date(Date.now() + parseInt(broadcastForm.expiresIn) * 60 * 60 * 1000).toISOString()
+        expires_at: new Date(Date.now() + parseInt(broadcastForm.expiresIn) * 60 * 60 * 1000).toISOString(),
+        created_by: 'admin@janrakshak.com'
       });
 
       setAlerts(prev => [newAlert, ...prev]);
@@ -199,6 +245,29 @@ const AdminAlerts = () => {
     }
   };
 
+  const handleDeleteAllAlerts = async () => {
+    const filteredAlerts = getFilteredAlerts();
+    if (filteredAlerts.length === 0) {
+      toast.info('No alerts to delete');
+      return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ALL ${filteredAlerts.length} alerts? This action cannot be undone!`)) return;
+    
+    try {
+      setLoading(true);
+      const deletePromises = filteredAlerts.map(alert => deleteAlert(alert.id));
+      await Promise.all(deletePromises);
+      setAlerts(prev => prev.filter(alert => !filteredAlerts.some(filteredAlert => filteredAlert.id === alert.id)));
+      toast.success(`Successfully deleted ${filteredAlerts.length} alerts!`);
+    } catch (error) {
+      console.error('Error deleting all alerts:', error);
+      toast.error('Failed to delete some alerts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdateStatus = async (alertId: string, status: 'active' | 'delivered' | 'dismissed') => {
     try {
       await updateAlertStatus(alertId, status);
@@ -215,11 +284,13 @@ const AdminAlerts = () => {
   };
 
   const getActiveAlerts = () => {
-    return alerts.filter(alert => alert.status === 'active');
+    return alerts.filter(alert => alert && alert.status === 'active');
   };
 
   const getFilteredAlerts = () => {
     return alerts.filter(alert => {
+      if (!alert) return false;
+      
       const matchesSearch = alert.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            alert.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            alert.region.toLowerCase().includes(searchTerm.toLowerCase());
@@ -291,6 +362,13 @@ const AdminAlerts = () => {
             >
               <Zap className="w-4 h-4 mr-2" />
               Sample Data
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={testFlashWarning}
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Test Alert
             </Button>
             <Button onClick={() => setShowBroadcastDialog(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -417,7 +495,7 @@ const AdminAlerts = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {alerts.filter(alert => alert.severity === 'critical').length}
+                {alerts.filter(alert => alert && alert.severity === 'critical').length}
               </div>
               <p className="text-xs text-muted-foreground">
                 Urgent alerts
@@ -432,7 +510,7 @@ const AdminAlerts = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {alerts.filter(alert => alert.status === 'delivered').length}
+                {alerts.filter(alert => alert && alert.status === 'delivered').length}
               </div>
               <p className="text-xs text-muted-foreground">
                 Successfully sent
@@ -440,6 +518,136 @@ const AdminAlerts = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* NEW FLOOD PREDICTION SECTION */}
+        <Card className="border-2 border-blue-500">
+          <CardHeader className="bg-blue-50">
+            <CardTitle className="flex items-center justify-between text-blue-800">
+              <div className="flex items-center">
+                <CloudRain className="w-6 h-6 mr-2 text-blue-600" />
+                🚨 NEW FLOOD PREDICTION SYSTEM 🚨
+              </div>
+              <div className="flex items-center space-x-2">
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger className="w-40 bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Chennai">Chennai</SelectItem>
+                    <SelectItem value="Mumbai">Mumbai</SelectItem>
+                    <SelectItem value="Delhi">Delhi</SelectItem>
+                    <SelectItem value="Bangalore">Bangalore</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={loadFloodPredictions}
+                  disabled={floodLoading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {floodLoading ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CloudRain className="w-4 h-4 mr-2" />
+                  )}
+                  LOAD DATA
+                </Button>
+              </div>
+            </CardTitle>
+            <CardDescription className="text-blue-600">
+              ⚡ Real-time AI flood prediction with live data ⚡
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            {floodPredictions.length > 0 ? (
+              <div className="space-y-6">
+                {/* BIG METRICS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-6 bg-red-500 text-white rounded-xl text-center">
+                    <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+                    <h3 className="text-lg font-bold">RISK LEVEL</h3>
+                    <p className="text-3xl font-black mt-2">
+                      {floodPredictions[0].main_prediction?.['Risk Level'] || 'N/A'}
+                    </p>
+                  </div>
+                  
+                  <div className="p-6 bg-blue-500 text-white rounded-xl text-center">
+                    <Target className="w-8 h-8 mx-auto mb-2" />
+                    <h3 className="text-lg font-bold">CONFIDENCE</h3>
+                    <p className="text-3xl font-black mt-2">
+                      {floodPredictions[0].main_prediction?.Confidence || 'N/A'}
+                    </p>
+                  </div>
+                  
+                  <div className="p-6 bg-green-500 text-white rounded-xl text-center">
+                    <Calendar className="w-8 h-8 mx-auto mb-2" />
+                    <h3 className="text-lg font-bold">RISK DATE</h3>
+                    <p className="text-xl font-black mt-2">
+                      {floodPredictions[0].main_prediction?.['Risk Date'] || 'N/A'}
+                    </p>
+                  </div>
+
+                  <div className="p-6 bg-purple-500 text-white rounded-xl text-center">
+                    <Activity className="w-8 h-8 mx-auto mb-2" />
+                    <h3 className="text-lg font-bold">DAYS</h3>
+                    <p className="text-3xl font-black mt-2">
+                      {floodPredictions[0].detailed_forecast?.length || 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* SIMPLE FORECAST */}
+                {floodPredictions[0].detailed_forecast && (
+                  <div className="bg-gray-50 p-6 rounded-xl">
+                    <h3 className="text-xl font-bold mb-4 text-gray-800">📊 10-DAY FORECAST</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      {floodPredictions[0].detailed_forecast.slice(0, 10).map((day: any, index: number) => (
+                        <div key={index} className="bg-white p-3 rounded-lg border-2 border-gray-200 text-center">
+                          <div className="text-sm font-bold text-gray-600 mb-1">
+                            {new Date(day.date).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </div>
+                          <div className={`text-sm font-bold mb-2 ${
+                            day.risk_level === 'High Risk' ? 'text-red-600' :
+                            day.risk_level === 'Medium Risk' ? 'text-yellow-600' :
+                            day.risk_level === 'Low Risk' ? 'text-yellow-500' :
+                            'text-green-600'
+                          }`}>
+                            {day.risk_level}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {Math.round(day.confidence * 100)}% confidence
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="bg-red-100 p-8 rounded-xl border-2 border-red-300">
+                  <CloudRain className="w-16 h-16 mx-auto mb-4 text-red-500" />
+                  <h3 className="text-xl font-bold mb-2 text-red-700">NO FLOOD DATA LOADED</h3>
+                  <p className="text-red-600 mb-4">Click the button below to load flood prediction data</p>
+                  <Button 
+                    onClick={loadFloodPredictions} 
+                    disabled={floodLoading}
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-3"
+                  >
+                    {floodLoading ? (
+                      <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <CloudRain className="w-5 h-5 mr-2" />
+                    )}
+                    LOAD FLOOD DATA
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card>
@@ -499,7 +707,10 @@ const AdminAlerts = () => {
               <div className="space-y-2">
                 <Label>Actions</Label>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={loadAlerts}>
+                  <Button variant="outline" size="sm" onClick={async () => {
+                    await refreshAlerts();
+                    await loadAlerts();
+                  }}>
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Refresh
                   </Button>
@@ -531,7 +742,7 @@ const AdminAlerts = () => {
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    const activeAlerts = getFilteredAlerts().filter(alert => alert.status === 'active');
+                    const activeAlerts = getFilteredAlerts().filter(alert => alert && alert.status === 'active');
                     if (activeAlerts.length === 0) {
                       toast.info('No active alerts to dismiss');
                       return;
@@ -549,7 +760,7 @@ const AdminAlerts = () => {
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    const criticalAlerts = getFilteredAlerts().filter(alert => alert.severity === 'critical');
+                    const criticalAlerts = getFilteredAlerts().filter(alert => alert && alert.severity === 'critical');
                     if (criticalAlerts.length === 0) {
                       toast.info('No critical alerts to resend');
                       return;
@@ -562,6 +773,15 @@ const AdminAlerts = () => {
                 >
                   <Send className="w-4 h-4 mr-2" />
                   Resend Critical
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDeleteAllAlerts}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete All
                 </Button>
               </div>
             </div>
@@ -605,7 +825,9 @@ const AdminAlerts = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {getFilteredAlerts().map((alert) => (
+                      {getFilteredAlerts().map((alert) => {
+                        if (!alert) return null;
+                        return (
                         <TableRow key={alert.id}>
                           <TableCell className="font-medium">{alert.type}</TableCell>
                           <TableCell>
@@ -633,35 +855,39 @@ const AdminAlerts = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleResendAlert(alert.id)}>
-                                  <Send className="w-4 h-4 mr-2" />
-                                  Resend
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleUpdateStatus(alert.id, 'dismissed')}>
-                                  <XCircle className="w-4 h-4 mr-2" />
-                                  Dismiss
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleDeleteAlert(alert.id)}
-                                  className="text-red-600"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleResendAlert(alert.id)}
+                                className="h-8 px-2"
+                              >
+                                <Send className="w-4 h-4 mr-1" />
+                                Resend
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(alert.id, 'dismissed')}
+                                className="h-8 px-2"
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Dismiss
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteAlert(alert.id)}
+                                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 )}

@@ -4,9 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import GradientCard from "@/components/GradientCard";
 import UserLayout from "@/components/UserLayout";
-import FlashWarning from "@/components/FlashWarning";
-import { getAdminAlerts, AdminAlert, subscribeToAlerts } from "@/lib/adminSupabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAlert } from "@/contexts/AlertContext";
 import { toast } from "sonner";
 import {
   Bell,
@@ -24,39 +23,32 @@ import {
 
 const Alerts = () => {
   const { userProfile } = useAuth();
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const { 
+    alerts, 
+    soundEnabled, 
+    setSoundEnabled, 
+    refreshAlerts,
+    enableAudioContext,
+    testFlashWarning
+  } = useAlert();
+  
   const [autoTranslate, setAutoTranslate] = useState(true);
-  const [alerts, setAlerts] = useState<AdminAlert[]>([]);
-  const [filteredAlerts, setFilteredAlerts] = useState<AdminAlert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredAlerts, setFilteredAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [showAllAlerts, setShowAllAlerts] = useState(false);
-  const [flashWarning, setFlashWarning] = useState<AdminAlert | null>(null);
-  const [acknowledgedAlerts, setAcknowledgedAlerts] = useState<Set<string>>(new Set());
 
   // Get user's locality for filtering
   const userLocality = userProfile?.location ? 
     `${userProfile.location.district}, ${userProfile.location.state}` : 
     null;
 
-  // Fetch real alerts from database
+  // Initialize alerts from global context
   useEffect(() => {
-    const fetchAlerts = async () => {
-      try {
-        setLoading(true);
-        const realAlerts = await getAdminAlerts();
-        setAlerts(realAlerts);
-        console.log('Fetched real alerts:', realAlerts);
-      } catch (err) {
-        console.error('Error fetching alerts:', err);
-        setError('Failed to load alerts');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAlerts();
-  }, []);
+    if (alerts.length > 0) {
+      console.log('Using alerts from global context:', alerts);
+    }
+  }, [alerts]);
 
   // Filter alerts by user locality
   useEffect(() => {
@@ -85,102 +77,6 @@ const Alerts = () => {
     }
   }, [alerts, userLocality, showAllAlerts, userProfile]);
 
-  // Subscribe to real-time alert updates
-  useEffect(() => {
-    const subscription = subscribeToAlerts((payload) => {
-      console.log('Real-time alert update:', payload);
-      
-      if (payload.eventType === 'INSERT') {
-        const newAlert = payload.new as AdminAlert;
-        
-        // Check if this is a flood-related alert that should show flash warning
-        const isFloodAlert = newAlert.type.toLowerCase().includes('flood') || 
-                            newAlert.message.toLowerCase().includes('flood') ||
-                            newAlert.severity === 'critical' ||
-                            newAlert.severity === 'high';
-        
-        // Check if alert is relevant to user's location
-        const isRelevantToUser = !userLocality || 
-          newAlert.region.toLowerCase().includes(userProfile?.location?.district?.toLowerCase() || '') ||
-          newAlert.region.toLowerCase().includes(userProfile?.location?.state?.toLowerCase() || '') ||
-          newAlert.region.toLowerCase().includes('regional') ||
-          newAlert.region.toLowerCase().includes('city wide') ||
-          newAlert.region.toLowerCase().includes('all areas');
-        
-        // Play sound only if sound is enabled
-        if (soundEnabled) {
-          const playAlertSound = () => {
-            try {
-              const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-              
-              if (audioContext.state === 'suspended') {
-                audioContext.resume();
-              }
-              
-              const oscillator = audioContext.createOscillator();
-              const gainNode = audioContext.createGain();
-              
-              oscillator.connect(gainNode);
-              gainNode.connect(audioContext.destination);
-              
-              // Long beep sound - 3 seconds duration
-              const duration = 3.0;
-              const frequency = newAlert.severity === 'critical' ? 1000 : 800;
-              
-              oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-              oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + duration);
-              
-              gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-              gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + duration * 0.8);
-              gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-              
-              oscillator.start(audioContext.currentTime);
-              oscillator.stop(audioContext.currentTime + duration);
-            } catch (e) {
-              console.log('Audio notification failed:', e);
-            }
-          };
-          
-          playAlertSound();
-        }
-
-        // Show flash warning for flood alerts that are relevant to user
-        if (isFloodAlert && isRelevantToUser && !acknowledgedAlerts.has(newAlert.id)) {
-          setFlashWarning(newAlert);
-        } else {
-
-          // Show toast notification
-          toast.success(`New Alert: ${newAlert.type}`, {
-            description: newAlert.message,
-            duration: 5000,
-            action: {
-              label: 'View',
-              onClick: () => {
-                // Scroll to alerts section
-                document.getElementById('alerts-section')?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }
-          });
-        }
-
-        // Refresh alerts
-        const fetchNewAlerts = async () => {
-          try {
-            const updatedAlerts = await getAdminAlerts();
-            setAlerts(updatedAlerts);
-          } catch (err) {
-            console.error('Error refreshing alerts:', err);
-          }
-        };
-        
-        fetchNewAlerts();
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [soundEnabled, userLocality, userProfile, acknowledgedAlerts]);
 
   // Helper function to format time ago
   const getTimeAgo = (dateString: string) => {
@@ -198,18 +94,6 @@ const Alerts = () => {
     return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
   };
 
-  // Flash warning handlers
-  const handleFlashWarningDismiss = () => {
-    setFlashWarning(null);
-  };
-
-  const handleFlashWarningAcknowledge = () => {
-    if (flashWarning) {
-      setAcknowledgedAlerts(prev => new Set([...prev, flashWarning.id]));
-      setFlashWarning(null);
-      toast.success('Alert acknowledged');
-    }
-  };
 
   // Real emergency contacts - these would come from a database in a real app
   const emergencyContacts = [
@@ -245,18 +129,10 @@ const Alerts = () => {
     }
   };
 
-  return (
-    <UserLayout title="Alerts" description="Early warning and communications">
-      {/* Flash Warning Modal */}
-      {flashWarning && (
-        <FlashWarning
-          alert={flashWarning}
-          onDismiss={handleFlashWarningDismiss}
-          onAcknowledge={handleFlashWarningAcknowledge}
-        />
-      )}
-      
-      <div className="space-y-8">
+  try {
+    return (
+      <UserLayout title="Alerts" description="Early warning and communications">
+        <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
@@ -292,7 +168,12 @@ const Alerts = () => {
               </div>
               <Switch
                 checked={soundEnabled}
-                onCheckedChange={setSoundEnabled}
+                onCheckedChange={(enabled) => {
+                  setSoundEnabled(enabled);
+                  if (enabled) {
+                    enableAudioContext();
+                  }
+                }}
                 className="data-[state=checked]:bg-green-600"
               />
             </div>
@@ -337,6 +218,31 @@ const Alerts = () => {
                     {showAllAlerts ? 'Show Local Only' : 'Show All Alerts'}
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={testFlashWarning}
+                >
+                  Test Flash Warning
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      await refreshAlerts();
+                      toast.success('Alerts refreshed');
+                    } catch (err) {
+                      toast.error('Failed to refresh alerts');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                   <Bell className="w-3 h-3 mr-1" />
                   {filteredAlerts.filter((a) => a.status === "active").length} Active
@@ -528,6 +434,22 @@ const Alerts = () => {
       </div>
     </UserLayout>
   );
+  } catch (renderError) {
+    console.error('Alerts component: Error rendering:', renderError);
+    return (
+      <UserLayout title="Alerts" description="Early warning and communications">
+        <div className="p-8 text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Alert System Error</h1>
+          <p className="text-gray-600 mb-4">There was an error loading the alerts page.</p>
+          <p className="text-sm text-gray-500 mb-4">Error: {renderError?.message || 'Unknown error'}</p>
+          <Button onClick={() => window.location.reload()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh Page
+          </Button>
+        </div>
+      </UserLayout>
+    );
+  }
 };
 
 export default Alerts;

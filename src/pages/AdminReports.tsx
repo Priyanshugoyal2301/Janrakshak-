@@ -27,6 +27,7 @@ import {
   BarChart3,
   PieChart,
   LineChart,
+  X,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -48,6 +49,7 @@ import { toast } from 'sonner';
 import { 
   getFloodReports, 
   updateFloodReportStatus,
+  deleteFloodReport,
   subscribeToFloodReports
 } from '@/lib/adminSupabase';
 
@@ -82,6 +84,8 @@ const AdminReports = () => {
   const [filterRegion, setFilterRegion] = useState('all');
   const [selectedReport, setSelectedReport] = useState(null);
   const [showReportDetails, setShowReportDetails] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>('');
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   
@@ -99,8 +103,6 @@ const AdminReports = () => {
     if (!isLive) return;
 
     const subscription = subscribeToFloodReports((payload) => {
-      console.log('Report update received:', payload);
-      
       if (payload.eventType === 'UPDATE' && payload.new) {
         setReports(prevReports => 
           prevReports.map(report => 
@@ -122,9 +124,7 @@ const AdminReports = () => {
   const loadReports = async () => {
     setLoading(true);
     try {
-      console.log('Loading flood reports from Supabase...');
       const reportData = await getFloodReports();
-      console.log('Loaded reports:', reportData);
       setReports(reportData);
       
       // Update the data structure for the UI using real Supabase data
@@ -147,7 +147,7 @@ const AdminReports = () => {
           timestamp: report.created_at || new Date().toISOString(),
           images: Array.isArray(report.images) ? report.images.map((img, index) => ({
             id: index + 1,
-            url: img,
+            url: img, // This will be either a Supabase URL or base64 data URL
             alt: `Report image ${index + 1}`
           })) : [],
           coordinates: report.location || { lat: 0, lng: 0 },
@@ -156,10 +156,7 @@ const AdminReports = () => {
                    report.severity === 'high' ? 'medium' : 'low'
         }))
       });
-      
-      console.log('Reports state updated:', reportData.length, 'reports loaded');
     } catch (error) {
-      console.error('Error loading reports:', error);
       toast.error('Failed to load reports');
     } finally {
       setLoading(false);
@@ -247,16 +244,27 @@ const AdminReports = () => {
   };
 
   const handleDeleteReport = async (reportId: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      setData(prev => ({
-        ...prev,
-        reports: prev.reports.filter(report => report.id !== reportId)
-      }));
-      setLoading(false);
-      toast.success('Report deleted');
-    }, 1000);
+    if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const success = await deleteFloodReport(reportId);
+      if (success) {
+        toast.success('Report deleted successfully');
+        // Remove from local state
+        setData(prev => ({
+          ...prev,
+          reports: prev.reports.filter(report => report.id !== reportId)
+        }));
+      } else {
+        toast.error('Failed to delete report');
+      }
+    } catch (error) {
+      toast.error('Failed to delete report');
+    }
   };
+
 
   const handleViewReportDetails = (reportId: string) => {
     const report = data.reports.find(r => r.id === reportId);
@@ -288,6 +296,73 @@ const AdminReports = () => {
   const pendingReports = filteredReports.filter(r => r.status === 'pending');
   const verifiedReports = filteredReports.filter(r => r.status === 'verified');
   const rejectedReports = filteredReports.filter(r => r.status === 'rejected');
+
+  // Calculate map center and bounds based on report locations
+  const calculateMapCenter = () => {
+    if (data.reports.length === 0) {
+      return { center: [30.7333, 76.7794], zoom: 12 }; // Default to Chandigarh
+    }
+
+    const validReports = data.reports.filter(report => 
+      report.coordinates && 
+      report.coordinates.lat && 
+      report.coordinates.lng &&
+      report.coordinates.lat !== 0 && 
+      report.coordinates.lng !== 0
+    );
+
+    if (validReports.length === 0) {
+      return { center: [30.7333, 76.7794], zoom: 12 }; // Default to Chandigarh
+    }
+
+    // Calculate bounds
+    const lats = validReports.map(r => r.coordinates.lat);
+    const lngs = validReports.map(r => r.coordinates.lng);
+    
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+
+    // Calculate center
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLng = (minLng + maxLng) / 2;
+
+    // Calculate zoom based on spread of coordinates
+    const latDiff = maxLat - minLat;
+    const lngDiff = maxLng - minLng;
+    const maxDiff = Math.max(latDiff, lngDiff);
+
+    let zoom = 12; // Default zoom
+    if (maxDiff > 0.1) zoom = 10;      // Large area
+    else if (maxDiff > 0.05) zoom = 11; // Medium area
+    else if (maxDiff > 0.01) zoom = 13; // Small area
+    else if (maxDiff > 0.005) zoom = 14; // Very small area
+    else zoom = 15; // Single point or very close points
+
+    return { center: [centerLat, centerLng], zoom };
+  };
+
+  const mapConfig = calculateMapCenter();
+
+  // Calculate report density by location
+  const calculateReportDensity = () => {
+    const locationCounts = new Map();
+    
+    data.reports.forEach(report => {
+      if (report.coordinates && report.coordinates.lat && report.coordinates.lng) {
+        const key = `${report.coordinates.lat.toFixed(4)},${report.coordinates.lng.toFixed(4)}`;
+        locationCounts.set(key, (locationCounts.get(key) || 0) + 1);
+      }
+    });
+
+    return Array.from(locationCounts.entries()).map(([location, count]) => {
+      const [lat, lng] = location.split(',').map(Number);
+      return { lat, lng, count, location };
+    }).sort((a, b) => b.count - a.count);
+  };
+
+  const reportDensity = calculateReportDensity();
 
   return (
     <AdminLayout>
@@ -390,24 +465,49 @@ const AdminReports = () => {
         <div className="lg:col-span-2">
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-teal-600" />
-                Reports Map
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <MapPin className="h-5 w-5 mr-2 text-teal-600" />
+                  Reports Map
+                </div>
+                <div className="text-sm text-gray-500">
+                  {data.reports.length > 0 ? (
+                    <>
+                      Center: {mapConfig.center[0].toFixed(4)}, {mapConfig.center[1].toFixed(4)}
+                      <span className="ml-2">Zoom: {mapConfig.zoom}</span>
+                    </>
+                  ) : (
+                    'No reports to display'
+                  )}
+                </div>
               </CardTitle>
-              <CardDescription>Geographic distribution of flood reports</CardDescription>
+              <CardDescription>
+                Geographic distribution of flood reports
+                {data.reports.length > 0 && (
+                  <span className="ml-2 text-blue-600">
+                    ({data.reports.length} reports across {new Set(data.reports.map(r => r.location)).size} locations)
+                  </span>
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-96 rounded-lg overflow-hidden">
                 <MapContainer
-                  center={[30.7333, 76.7794]}
-                  zoom={12}
+                  center={mapConfig.center}
+                  zoom={mapConfig.zoom}
                   style={{ height: '100%', width: '100%' }}
                 >
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   />
-                  {data.reports.map((report) => {
+                  {reportDensity.map((densityPoint) => {
+                    const reportsAtLocation = data.reports.filter(report => 
+                      report.coordinates && 
+                      report.coordinates.lat.toFixed(4) === densityPoint.lat.toFixed(4) &&
+                      report.coordinates.lng.toFixed(4) === densityPoint.lng.toFixed(4)
+                    );
+
                     const getMarkerColor = (severity: string) => {
                       switch (severity) {
                         case 'critical': return '#ef4444';
@@ -418,27 +518,41 @@ const AdminReports = () => {
                       }
                     };
 
+                    // Use the highest severity at this location
+                    const highestSeverity = reportsAtLocation.reduce((highest, report) => {
+                      const severityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+                      return severityOrder[report.severity] > severityOrder[highest] ? report.severity : highest;
+                    }, 'low');
+
+                    const markerSize = densityPoint.count > 5 ? 30 : densityPoint.count > 2 ? 25 : 20;
                     const customIcon = L.divIcon({
                       className: 'custom-marker',
-                      html: `<div style="background-color: ${getMarkerColor(report.severity)}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-                      iconSize: [20, 20],
-                      iconAnchor: [10, 10]
+                      html: `<div style="background-color: ${getMarkerColor(highestSeverity)}; width: ${markerSize}px; height: ${markerSize}px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: ${densityPoint.count > 9 ? '10px' : '12px'};">${densityPoint.count}</div>`,
+                      iconSize: [markerSize, markerSize],
+                      iconAnchor: [markerSize/2, markerSize/2]
                     });
 
                     return (
                       <Marker
-                        key={report.id}
-                        position={[report.coordinates.lat, report.coordinates.lng]}
+                        key={`${densityPoint.lat}-${densityPoint.lng}`}
+                        position={[densityPoint.lat, densityPoint.lng]}
                         icon={customIcon}
                       >
                         <Popup>
                           <div className="p-2">
-                            <h3 className="font-semibold text-sm">{report.title}</h3>
-                            <p className="text-xs text-gray-600">{report.location}</p>
-                            <p className="text-xs">Severity: <span className={`font-medium ${report.severity === 'critical' ? 'text-red-600' : report.severity === 'high' ? 'text-orange-600' : report.severity === 'medium' ? 'text-yellow-600' : 'text-green-600'}`}>{report.severity}</span></p>
-                            <p className="text-xs">Status: <span className={`font-medium ${report.status === 'pending' ? 'text-yellow-600' : report.status === 'approved' ? 'text-green-600' : 'text-red-600'}`}>{report.status}</span></p>
-                            <p className="text-xs">User: {report.user}</p>
-                            <p className="text-xs">Time: {new Date(report.timestamp).toLocaleString()}</p>
+                            <h3 className="font-semibold text-sm">{densityPoint.count} Report{densityPoint.count > 1 ? 's' : ''} at this location</h3>
+                            <div className="space-y-1 mt-2">
+                              {reportsAtLocation.slice(0, 3).map((report, index) => (
+                                <div key={report.id} className="text-xs border-b border-gray-100 pb-1">
+                                  <p className="font-medium">{report.title}</p>
+                                  <p className="text-gray-600">Severity: <span className={`font-medium ${report.severity === 'critical' ? 'text-red-600' : report.severity === 'high' ? 'text-orange-600' : report.severity === 'medium' ? 'text-yellow-600' : 'text-green-600'}`}>{report.severity}</span></p>
+                                  <p className="text-gray-500">{new Date(report.timestamp).toLocaleString()}</p>
+                                </div>
+                              ))}
+                              {reportsAtLocation.length > 3 && (
+                                <p className="text-xs text-gray-500">... and {reportsAtLocation.length - 3} more</p>
+                              )}
+                            </div>
                           </div>
                         </Popup>
                       </Marker>
@@ -446,23 +560,44 @@ const AdminReports = () => {
                   })}
                 </MapContainer>
               </div>
-              <div className="mt-4 flex items-center justify-center space-x-4 text-xs">
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span>Critical</span>
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-center space-x-4 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Critical</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                    <span>High</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <span>Medium</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Low</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                  <span>High</span>
+                <div className="flex items-center justify-center space-x-4 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">1</div>
+                    <span>Single report</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">3</div>
+                    <span>Multiple reports</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">5+</div>
+                    <span>High density</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <span>Medium</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span>Low</span>
-                </div>
+                {reportDensity.length > 0 && (
+                  <div className="text-center text-xs text-gray-500">
+                    Top density locations: {reportDensity.slice(0, 3).map(d => `${d.count} reports`).join(', ')}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -579,6 +714,14 @@ const AdminReports = () => {
                     <CheckCircle className="h-4 w-4" />
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteReport(report.id)}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -599,7 +742,7 @@ const AdminReports = () => {
 
       {/* Report Details Dialog */}
       <Dialog open={showReportDetails} onOpenChange={setShowReportDetails}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="w-[90vw] h-[80vh] max-w-none overflow-y-auto" style={{ aspectRatio: '16/9' }}>
           <DialogHeader>
             <DialogTitle>Report Details</DialogTitle>
             <DialogDescription>
@@ -676,28 +819,95 @@ const AdminReports = () => {
 
               {selectedReport.images.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">Attached Images</h3>
+                  <h3 className="font-semibold mb-2">Attached Media</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {selectedReport.images.map((image) => (
-                      <div key={image.id} className="border rounded-lg overflow-hidden">
-                        <div className="h-32 bg-gray-100 flex items-center justify-center">
-                          <Camera className="h-8 w-8 text-gray-400" />
+                    {selectedReport.images.map((image) => {
+                      const isVideo = image.url && (
+                        image.url.includes('.mp4') || 
+                        image.url.includes('.mov') || 
+                        image.url.includes('.avi') ||
+                        image.url.startsWith('data:video/')
+                      );
+                      
+                      return (
+                        <div key={image.id} className="border rounded-lg overflow-hidden">
+                          <div className="h-32 bg-gray-100 flex items-center justify-center">
+                            {image.url ? (
+                              isVideo ? (
+                                <video
+                                  src={image.url}
+                                  className="w-full h-full object-cover cursor-pointer hover:opacity-90"
+                                  controls
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <img 
+                                  src={image.url} 
+                                  alt={image.alt}
+                                  className="w-full h-full object-cover cursor-pointer hover:opacity-90"
+                                  onClick={() => {
+                                    setSelectedImageUrl(image.url);
+                                    setShowImageViewer(true);
+                                  }}
+                                />
+                              )
+                            ) : (
+                              <Camera className="h-8 w-8 text-gray-400" />
+                            )}
+                          </div>
+                          <p className="p-2 text-sm text-muted-foreground">
+                            {image.alt} {isVideo && <span className="text-blue-600">(Video)</span>}
+                          </p>
                         </div>
-                        <p className="p-2 text-sm text-muted-foreground">{image.alt}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
               <div>
                 <h3 className="font-semibold mb-2">Location on Map</h3>
-                <div className="h-48 bg-gradient-to-br from-teal-100 to-blue-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-8 w-8 mx-auto mb-2 text-teal-600" />
-                    <p className="text-sm text-teal-800">Map integration coming soon</p>
-                    <p className="text-xs text-teal-600">Coordinates: {selectedReport.coordinates.lat}, {selectedReport.coordinates.lng}</p>
-                  </div>
+                <div className="h-64 rounded-lg overflow-hidden border">
+                  <MapContainer
+                    center={[selectedReport.coordinates.lat, selectedReport.coordinates.lng]}
+                    zoom={15}
+                    style={{ height: '100%', width: '100%' }}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <Marker
+                      position={[selectedReport.coordinates.lat, selectedReport.coordinates.lng]}
+                    >
+                      <Popup>
+                        <div className="p-2">
+                          <h3 className="font-semibold text-sm">{selectedReport.title}</h3>
+                          <p className="text-xs text-gray-600 mt-1">{selectedReport.description}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Coordinates: {selectedReport.coordinates.lat.toFixed(6)}, {selectedReport.coordinates.lng.toFixed(6)}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-gray-500">
+                    Coordinates: {selectedReport.coordinates.lat.toFixed(6)}, {selectedReport.coordinates.lng.toFixed(6)}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const googleMapsUrl = `https://www.google.com/maps?q=${selectedReport.coordinates.lat},${selectedReport.coordinates.lng}`;
+                      window.open(googleMapsUrl, '_blank');
+                    }}
+                    className="text-xs"
+                  >
+                    <MapPin className="w-3 h-3 mr-1" />
+                    Open in Google Maps
+                  </Button>
                 </div>
               </div>
             </div>
@@ -732,6 +942,27 @@ const AdminReports = () => {
               </>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Viewer Modal */}
+      <Dialog open={showImageViewer} onOpenChange={setShowImageViewer}>
+        <DialogContent className="max-w-7xl max-h-[95vh] p-0 bg-black">
+          <div className="relative w-full h-full">
+            <img
+              src={selectedImageUrl}
+              alt="Full size image"
+              className="w-full h-full object-contain"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowImageViewer(false)}
+              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       </div>

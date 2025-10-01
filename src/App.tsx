@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
 import { SupabaseAuthProviderMinimal } from "@/contexts/SupabaseAuthContextMinimal";
+import { AlertProvider } from "@/contexts/AlertContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
@@ -80,7 +81,9 @@ const App = () => (
                 element={
                   <SupabaseAuthProviderMinimal>
                     <AdminProtectedRoute>
-                      <AdminAlerts />
+                      <AlertProvider isAdminContext={true}>
+                        <AdminAlerts />
+                      </AlertProvider>
                     </AdminProtectedRoute>
                   </SupabaseAuthProviderMinimal>
                 }
@@ -195,7 +198,9 @@ const App = () => (
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    <UserDashboard />
+                    <AlertProvider>
+                      <UserDashboard />
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -203,7 +208,9 @@ const App = () => (
                 path="/community"
                 element={
                   <ProtectedRoute>
-                    <Community />
+                    <AlertProvider>
+                      <Community />
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -211,7 +218,9 @@ const App = () => (
                 path="/flood-prediction"
                 element={
                   <ProtectedRoute>
-                    <FloodPredictionPage />
+                    <AlertProvider>
+                      <FloodPredictionPage />
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -219,9 +228,11 @@ const App = () => (
                 path="/old-dashboard"
                 element={
                   <ProtectedRoute>
-                    <Layout>
-                      <Index />
-                    </Layout>
+                    <AlertProvider>
+                      <Layout>
+                        <Index />
+                      </Layout>
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -229,7 +240,9 @@ const App = () => (
                 path="/shelters"
                 element={
                   <ProtectedRoute>
-                    <ShelterFinder />
+                    <AlertProvider>
+                      <ShelterFinder />
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -237,7 +250,9 @@ const App = () => (
                 path="/emergency-contacts"
                 element={
                   <ProtectedRoute>
-                    <EmergencyContacts />
+                    <AlertProvider>
+                      <EmergencyContacts />
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -245,9 +260,11 @@ const App = () => (
                 path="/predictions"
                 element={
                   <ProtectedRoute>
-                    <Layout>
-                      <Predictions />
-                    </Layout>
+                    <AlertProvider>
+                      <Layout>
+                        <Predictions />
+                      </Layout>
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -255,7 +272,9 @@ const App = () => (
                 path="/alerts"
                 element={
                   <ProtectedRoute>
-                    <Alerts />
+                    <AlertProvider>
+                      <Alerts />
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -263,7 +282,9 @@ const App = () => (
                 path="/reports"
                 element={
                   <ProtectedRoute>
-                    <Reports />
+                    <AlertProvider>
+                      <Reports />
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />
@@ -271,7 +292,9 @@ const App = () => (
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <Profile />
+                    <AlertProvider>
+                      <Profile />
+                    </AlertProvider>
                   </ProtectedRoute>
                 }
               />

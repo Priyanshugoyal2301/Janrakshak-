@@ -110,7 +110,7 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "My Reports", href: "/reports", icon: FileText },
-    { name: "Community & Nearby", href: "/community", icon: Users },
+    { name: "Community", href: "/community", icon: Users },
     { name: "Flood Prediction", href: "/flood-prediction", icon: CloudRain },
     { name: "Analytics", href: "/dashboard", icon: BarChart3, tab: "analytics" },
   ];

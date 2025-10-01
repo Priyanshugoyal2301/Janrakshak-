@@ -35,6 +35,7 @@
 - **Emergency Response**: Integrated evacuation planning and safe route finding
 - **Community Reports**: Crowdsourced incident reporting with image uploads
 - **Multi-Platform**: Responsive web application with mobile-first design
+- **Dynamic Map Visualization**: Intelligent map centering and report density clustering for admin management
 
 ## Features
 
@@ -46,6 +47,7 @@
 - **Assessment**: Damage assessment tools and recovery planning
 - **Planning**: Emergency evacuation routes and shelter locations
 - **Weather Forecast**: Real-time weather data integration with Windy API
+- **Admin Reports**: Dynamic map visualization with report density clustering and location-based centering
 
 ### Authentication & Security
 - **Google OAuth**: Secure single sign-on integration
@@ -64,6 +66,16 @@
 - **Shelter Finder**: Nearest shelter locations with capacity information
 - **Emergency Contacts**: Quick access to emergency services
 - **Push Notifications**: Instant alerts for critical situations
+
+### Admin Features
+- **Dynamic Map Visualization**: Intelligent map centering based on actual report locations instead of fixed coordinates
+- **Report Density Clustering**: Visual clustering of nearby reports with count indicators and severity-based color coding
+- **Real-time Report Management**: Live updates of flood reports with status tracking and real-time synchronization
+- **Geographic Analysis**: Automatic zoom adjustment based on report distribution and geographic spread
+- **Location-based Insights**: Top density locations and report concentration analysis with statistical summaries
+- **Smart Map Centering**: Automatically calculates optimal map center and zoom level based on report data
+- **Report Clustering**: Groups reports within 11-meter radius and displays count with visual indicators
+- **Enhanced Popups**: Detailed popups showing all reports at clustered locations with severity information
 
 ## Tech Stack
 
@@ -197,6 +209,8 @@ janrakshak/
 │   │   ├── FloodPredictionPage.tsx # User flood prediction page
 │   │   ├── AdminFloodPrediction.tsx # Admin flood prediction page
 │   │   ├── AdminDashboard.tsx  # Admin dashboard
+│   │   ├── AdminReports.tsx    # Admin reports management with dynamic maps
+│   │   ├── AdminAlerts.tsx     # Admin alerts management
 │   │   ├── Predictions.tsx     # Flood predictions and forecasts
 │   │   ├── Alerts.tsx          # Emergency alerts and notifications
 │   │   ├── Reports.tsx         # Community incident reports
@@ -394,12 +408,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Project Stats
 
-- **Lines of Code**: 15,000+
-- **Components**: 50+
-- **Pages**: 15+
+- **Lines of Code**: 16,000+
+- **Components**: 55+
+- **Pages**: 16+
 - **Database Tables**: 8
 - **API Endpoints**: 12
 - **Test Coverage**: 85%
+- **Map Features**: Dynamic centering, density clustering, real-time updates
 
 ---
 

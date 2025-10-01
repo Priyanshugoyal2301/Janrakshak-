@@ -499,17 +499,24 @@ export const getAdminAlerts = async (): Promise<AdminAlert[]> => {
 
 export const createAlert = async (alert: Omit<AdminAlert, 'id' | 'created_at' | 'updated_at'>): Promise<AdminAlert | null> => {
   try {
+    console.log('Creating alert:', alert);
+    
     const { data, error } = await supabase
       .from('admin_alerts')
       .insert([alert])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error creating alert:', error);
+      throw error;
+    }
+    
+    console.log('Alert created successfully:', data);
     return data;
   } catch (error) {
     console.error('Error creating alert:', error);
-    return null;
+    throw error; // Re-throw the error instead of returning null
   }
 };
 
@@ -1137,10 +1144,19 @@ export const subscribeToUsers = (callback: (payload: any) => void) => {
 };
 
 export const subscribeToAlerts = (callback: (payload: any) => void) => {
-  return supabase
+  const subscription = supabase
     .channel('admin_alerts_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_alerts' }, callback)
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'admin_alerts' 
+    }, (payload) => {
+      console.log('Real-time alert payload received:', payload);
+      callback(payload);
+    })
     .subscribe();
+    
+  return subscription;
 };
 
 // Function to create sample alerts for testing
@@ -1892,6 +1908,28 @@ export const updateFloodReportStatus = async (reportId: string, status: string):
     return true;
   } catch (error) {
     console.error('Error updating flood report status:', error);
+    return false;
+  }
+};
+
+export const deleteFloodReport = async (reportId: string): Promise<boolean> => {
+  try {
+    console.log('Deleting flood report:', reportId);
+    
+    const { error } = await supabase
+      .from('flood_reports')
+      .delete()
+      .eq('id', reportId);
+
+    if (error) {
+      console.error('Error deleting report:', error);
+      return false;
+    }
+
+    console.log('Report deleted successfully');
+    return true;
+  } catch (error) {
+    console.error('Exception deleting report:', error);
     return false;
   }
 };

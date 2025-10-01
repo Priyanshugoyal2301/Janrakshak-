@@ -11,9 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import GradientCard from "@/components/GradientCard";
 import UserLayout from "@/components/UserLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase, submitFloodReport, uploadImage, getUserReports, type FloodReport } from "@/lib/supabase";
+import { supabase, submitFloodReport, uploadMedia, getUserReports, deleteFloodReport, type FloodReport } from "@/lib/supabase";
 import { getFirebase } from '@/lib/firebase';
 import { getCurrentLocation, getLocationWithDetails, searchLocation, type LocationInfo } from "@/lib/locationService";
+import { searchPredefinedLocations, getAllStates, convertToLocationInfo, type PredefinedLocation } from "@/lib/predefinedLocations";
 import {
   Camera,
   Upload,
@@ -33,6 +34,7 @@ import {
   MessageSquare,
   Heart,
   Share2,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,6 +47,8 @@ const Reports = () => {
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState<FloodReport | null>(null);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -53,9 +57,12 @@ const Reports = () => {
     severity: "medium" as "low" | "medium" | "high" | "critical",
     locationSearch: "",
     selectedLocation: null as LocationInfo | null,
+    locationType: "geo" as "geo" | "predefined",
   });
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [predefinedLocations, setPredefinedLocations] = useState<PredefinedLocation[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
 
   // Load user location and nearby reports
   useEffect(() => {
@@ -90,7 +97,10 @@ const Reports = () => {
   };
 
   const loadUserReports = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.log('No current user found');
+      return;
+    }
     
     setLoading(true);
     try {
@@ -100,9 +110,9 @@ const Reports = () => {
       setReports(userReports);
       
       if (userReports.length === 0) {
-        toast.info('You haven\'t submitted any reports yet. Create your first report!');
+        console.log('No reports found for user');
       } else {
-        toast.success(`Loaded ${userReports.length} of your reports`);
+        console.log(`Successfully loaded ${userReports.length} reports`);
       }
     } catch (error) {
       console.error('Error loading user reports:', error);
@@ -118,17 +128,56 @@ const Reports = () => {
     if (files.length === 0) return;
 
     if (selectedImages.length + files.length > 5) {
-      toast.error('Maximum 5 images allowed');
+      toast.error('Maximum 5 files allowed');
       return;
     }
 
-    setSelectedImages(prev => [...prev, ...files]);
+    // Validate file sizes and types
+    const validFiles: File[] = [];
+    const errors: string[] = [];
 
-    // Create preview URLs
     files.forEach(file => {
-      const url = URL.createObjectURL(file);
-      setImagePreviewUrls(prev => [...prev, url]);
+      const fileSizeKB = file.size / 1024;
+      const fileSizeMB = file.size / (1024 * 1024);
+      
+      // Check if it's an image
+      if (file.type.startsWith('image/')) {
+        if (fileSizeKB > 500) {
+          errors.push(`${file.name}: Image size must be under 500KB (current: ${fileSizeKB.toFixed(1)}KB)`);
+          return;
+        }
+        validFiles.push(file);
+      }
+      // Check if it's a video
+      else if (file.type.startsWith('video/')) {
+        if (fileSizeMB > 5) {
+          errors.push(`${file.name}: Video size must be under 5MB (current: ${fileSizeMB.toFixed(1)}MB)`);
+          return;
+        }
+        validFiles.push(file);
+      }
+      // Unsupported file type
+      else {
+        errors.push(`${file.name}: Only images and videos are supported`);
+        return;
+      }
     });
+
+    // Show errors if any
+    if (errors.length > 0) {
+      errors.forEach(error => toast.error(error));
+    }
+
+    // Add valid files
+    if (validFiles.length > 0) {
+      setSelectedImages(prev => [...prev, ...validFiles]);
+
+      // Create preview URLs
+      validFiles.forEach(file => {
+        const url = URL.createObjectURL(file);
+        setImagePreviewUrls(prev => [...prev, url]);
+      });
+    }
   };
 
   const removeImage = (index: number) => {
@@ -141,16 +190,37 @@ const Reports = () => {
   };
 
   const handleLocationSearch = async (query: string) => {
-    if (query.length < 3) return;
+    if (query.length < 2) {
+      setPredefinedLocations([]);
+      setShowLocationSuggestions(false);
+      return;
+    }
     
     try {
-      const locations = await searchLocation(query);
-      if (locations.length > 0) {
-        setFormData(prev => ({ ...prev, selectedLocation: locations[0] }));
+      if (formData.locationType === 'predefined') {
+        const locations = searchPredefinedLocations(query);
+        setPredefinedLocations(locations);
+        setShowLocationSuggestions(locations.length > 0);
+      } else {
+        const locations = await searchLocation(query);
+        if (locations.length > 0) {
+          setFormData(prev => ({ ...prev, selectedLocation: locations[0] }));
+        }
       }
     } catch (error) {
       console.error('Location search error:', error);
     }
+  };
+
+  const selectPredefinedLocation = (location: PredefinedLocation) => {
+    const locationInfo = convertToLocationInfo(location);
+    setFormData(prev => ({ 
+      ...prev, 
+      selectedLocation: locationInfo,
+      locationSearch: `${location.name}, ${location.district}, ${location.state}`
+    }));
+    setPredefinedLocations([]);
+    setShowLocationSuggestions(false);
   };
 
   const useCurrentLocation = async () => {
@@ -181,12 +251,19 @@ const Reports = () => {
 
     setSubmitting(true);
     try {
-      // Upload images
+      // Upload images to Supabase storage
       const imageUrls: string[] = [];
-      for (const image of selectedImages) {
-        const url = await uploadImage(image, 'images');
-        if (url) {
-          imageUrls.push(url);
+      let uploadCount = 0;
+      
+      for (const file of selectedImages) {
+        try {
+          const url = await uploadMedia(file, 'reports-images');
+          if (url) {
+            imageUrls.push(url);
+            uploadCount++;
+          }
+        } catch (error) {
+          console.error(`Error uploading file:`, error);
         }
       }
 
@@ -231,9 +308,12 @@ const Reports = () => {
           severity: "medium",
           locationSearch: "",
           selectedLocation: userLocation,
+          locationType: "geo",
         });
         setSelectedImages([]);
         setImagePreviewUrls([]);
+        setPredefinedLocations([]);
+        setShowLocationSuggestions(false);
         setShowSubmitDialog(false);
       } else {
         toast.error('Failed to submit report');
@@ -290,29 +370,64 @@ const Reports = () => {
     setShowDetailDialog(true);
   };
 
+  const handleDeleteReport = async (reportId: string) => {
+    if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const success = await deleteFloodReport(reportId);
+      if (success) {
+        toast.success('Report deleted successfully');
+        // Refresh the user's reports list
+        await loadUserReports();
+      } else {
+        toast.error('Failed to delete report');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete report');
+    }
+  };
+
   const openLocationInMaps = (lat: number, lng: number) => {
     const url = `https://www.google.com/maps?q=${lat},${lng}`;
     window.open(url, '_blank');
   };
 
+
+  console.log('Reports component rendering, currentUser:', currentUser, 'loading:', loading, 'reports:', reports.length);
+
   return (
     <UserLayout title="My Reports" description="View and manage your flood reports">
       <div className="space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
-          My Flood Reports
-        </h1>
-        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-          View and manage your personal flood reports. Each user sees only their own reports for privacy.
-        </p>
-        
-        {userLocation && (
-          <div className="flex items-center justify-center space-x-2 text-sm text-blue-600">
-            <MapPin className="w-4 h-4" />
-            <span>Your location: {userLocation.district}, {userLocation.state}</span>
+        <div className="text-center space-y-6">
+          <div className="space-y-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
+              My Flood Reports
+            </h1>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+              View and manage your personal flood reports. Track the status of your submissions and access detailed information.
+            </p>
           </div>
-        )}
+          
+          {userLocation && (
+            <div className="inline-flex items-center space-x-2 text-sm text-blue-600 bg-blue-50 px-4 py-2 rounded-full">
+              <MapPin className="w-4 h-4" />
+              <span>Your location: {userLocation.district}, {userLocation.state}</span>
+            </div>
+          )}
+          
+          <div className="flex justify-center">
+            <Button 
+              onClick={() => setShowSubmitDialog(true)}
+              className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white px-10 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-lg"
+            >
+              <Plus className="w-6 h-6 mr-2" />
+              Submit New Report
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -359,19 +474,9 @@ const Reports = () => {
         </GradientCard>
       </div>
 
-      {/* Submit Report Button */}
-      <div className="text-center">
-        <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-          <DialogTrigger asChild>
-            <Button 
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white px-8 py-4"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Submit Flood Report
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+      {/* Submit Report Dialog */}
+      <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+          <DialogContent className="max-w-6xl w-[90vw] h-[90vh] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Submit Flood Report</DialogTitle>
               <DialogDescription>
@@ -422,9 +527,37 @@ const Reports = () => {
               {/* Location */}
               <div className="space-y-2">
                 <Label>Location</Label>
-                <div className="flex space-x-2">
+                
+                {/* Location Type Selection */}
+                <div className="flex space-x-2 mb-3">
+                  <Button
+                    type="button"
+                    variant={formData.locationType === 'geo' ? 'default' : 'outline'}
+                    onClick={() => setFormData(prev => ({ ...prev, locationType: 'geo' }))}
+                    className="flex-1"
+                  >
+                    <Navigation className="w-4 h-4 mr-2" />
+                    GPS Location
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.locationType === 'predefined' ? 'default' : 'outline'}
+                    onClick={() => setFormData(prev => ({ ...prev, locationType: 'predefined' }))}
+                    className="flex-1"
+                  >
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Predefined Location
+                  </Button>
+                </div>
+
+                {/* Location Search */}
+                <div className="relative">
                   <Input
-                    placeholder="Search for location or use current location"
+                    placeholder={
+                      formData.locationType === 'geo' 
+                        ? "Search for location or use current location"
+                        : "Search predefined locations (cities, districts, landmarks)"
+                    }
                     value={formData.locationSearch}
                     onChange={(e) => {
                       setFormData(prev => ({ ...prev, locationSearch: e.target.value }));
@@ -432,31 +565,60 @@ const Reports = () => {
                     }}
                     className="flex-1"
                   />
+                  
+                  {/* Location Suggestions Dropdown */}
+                  {showLocationSuggestions && predefinedLocations.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {predefinedLocations.map((location) => (
+                        <div
+                          key={location.id}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                          onClick={() => selectPredefinedLocation(location)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4 text-blue-500" />
+                            <div>
+                              <div className="font-medium text-gray-900">{location.name}</div>
+                              <div className="text-sm text-gray-600">
+                                {location.district}, {location.state} • {location.type}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Use Current Location Button (only for GPS) */}
+                {formData.locationType === 'geo' && (
                   <Button
                     type="button"
                     variant="outline"
                     onClick={useCurrentLocation}
-                    className="flex items-center space-x-1"
+                    className="w-full"
                   >
-                    <Navigation className="w-4 h-4" />
-                    <span>Use Current</span>
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Use Current GPS Location
                   </Button>
-                </div>
+                )}
+
+                {/* Selected Location Display */}
                 {formData.selectedLocation && (
-                  <div className="text-sm text-slate-600 flex items-center space-x-1">
-                    <MapPin className="w-4 h-4" />
+                  <div className="text-sm text-slate-600 flex items-center space-x-1 p-2 bg-blue-50 rounded-md">
+                    <MapPin className="w-4 h-4 text-blue-500" />
                     <span>{formData.selectedLocation.address}</span>
                   </div>
                 )}
               </div>
 
-              {/* Image Upload */}
+              {/* Media Upload */}
               <div className="space-y-2">
-                <Label>Images (Optional)</Label>
+                <Label>Images & Videos (Optional)</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,video/*"
                     multiple
                     onChange={handleImageSelection}
                     className="hidden"
@@ -464,32 +626,54 @@ const Reports = () => {
                   />
                   <label htmlFor="image-upload" className="cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-gray-600">Click to upload images or drag and drop</p>
-                    <p className="text-sm text-gray-500">PNG, JPG up to 10MB each (max 5 images)</p>
+                    <p className="text-gray-600">Click to upload images/videos or drag and drop</p>
+                    <p className="text-sm text-gray-500">
+                      Images: PNG, JPG up to 500KB each<br/>
+                      Videos: MP4, MOV up to 5MB each<br/>
+                      Maximum 5 files total
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">Files will be stored securely (Supabase storage or base64)</p>
+                    <p className="text-xs text-gray-500 mt-1">Note: If Supabase storage is not available, files will be stored as base64 data</p>
                   </label>
                 </div>
 
-                {/* Image Previews */}
+                {/* Media Previews */}
                 {imagePreviewUrls.length > 0 && (
                   <div className="grid grid-cols-3 gap-4 mt-4">
-                    {imagePreviewUrls.map((url, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={url}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
+                    {imagePreviewUrls.map((url, index) => {
+                      const file = selectedImages[index];
+                      const isVideo = file?.type.startsWith('video/');
+                      
+                      return (
+                        <div key={index} className="relative">
+                          {isVideo ? (
+                            <video
+                              src={url}
+                              className="w-full h-24 object-cover rounded-lg"
+                              controls
+                            />
+                          ) : (
+                            <img
+                              src={url}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-lg"
+                            />
+                          )}
+                          <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                            {isVideo ? 'VIDEO' : 'IMAGE'}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -524,7 +708,6 @@ const Reports = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
 
       {/* Report Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
@@ -593,22 +776,49 @@ const Reports = () => {
                   <div>
                     <h3 className="font-semibold text-slate-900 mb-3 flex items-center">
                       <ImageIcon className="w-4 h-4 mr-2" />
-                      Images ({selectedReport.images.length})
+                      Media ({selectedReport.images.length})
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {selectedReport.images.map((imageUrl, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={imageUrl}
-                            alt={`Report image ${index + 1}`}
-                            className="w-full h-48 object-cover rounded-lg cursor-pointer transition-transform group-hover:scale-105"
-                            onClick={() => window.open(imageUrl, '_blank')}
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg flex items-center justify-center">
-                            <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {selectedReport.images.map((mediaUrl, index) => {
+                        const isVideo = mediaUrl.includes('video/') || mediaUrl.includes('.mp4') || mediaUrl.includes('.mov') || mediaUrl.includes('.avi') || mediaUrl.includes('.webm');
+                        const isBase64Video = mediaUrl.startsWith('data:video/');
+                        
+                        return (
+                          <div key={index} className="relative group">
+                            {isVideo || isBase64Video ? (
+                              <div className="relative">
+                                <video
+                                  src={mediaUrl}
+                                  className="w-full h-48 object-cover rounded-lg cursor-pointer transition-transform group-hover:scale-105"
+                                  controls
+                                  preload="metadata"
+                                />
+                                <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">
+                                  VIDEO
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <img
+                                  src={mediaUrl}
+                                  alt={`Report media ${index + 1}`}
+                                  className="w-full h-48 object-cover rounded-lg cursor-pointer transition-transform group-hover:scale-105"
+                                  onClick={() => {
+                                    setSelectedImageUrl(mediaUrl);
+                                    setShowImageViewer(true);
+                                  }}
+                                />
+                                <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
+                                  IMAGE
+                                </div>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg flex items-center justify-center">
+                              <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -695,6 +905,7 @@ const Reports = () => {
         </DialogContent>
       </Dialog>
 
+
       {/* Reports List */}
       <div className="space-y-6">
         <h2 className="text-2xl font-bold text-slate-900">My Reports</h2>
@@ -710,76 +921,117 @@ const Reports = () => {
             <p className="text-slate-600">You haven't submitted any reports yet. Create your first report!</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {reports.map((report) => (
-              <Card key={report.id} className="shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
+              <Card key={report.id} className="shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-slate-50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <CardTitle className="text-lg text-slate-900 mb-2">{report.title}</CardTitle>
-                      <div className="flex items-center space-x-4 text-sm text-slate-600">
+                      <CardTitle className="text-lg font-semibold text-slate-900 mb-2 line-clamp-2">
+                        {report.title}
+                      </CardTitle>
+                      <div className="flex items-center space-x-3 text-sm text-slate-500">
                         <div className="flex items-center space-x-1">
-                          <Users className="w-4 h-4" />
-                          <span>{report.user_name}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="w-4 h-4" />
+                          <MapPin className="w-4 h-4 text-blue-500" />
                           <span>{report.location.district}, {report.location.state}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Clock className="w-4 h-4" />
+                          <Clock className="w-4 h-4 text-green-500" />
                           <span>{formatTimeAgo(report.created_at || new Date().toISOString())}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Badge className={getSeverityColor(report.severity)}>
+                    <div className="flex flex-col space-y-2">
+                      <Badge className={`${getSeverityColor(report.severity)} text-xs font-medium px-2 py-1`}>
                         {report.severity.toUpperCase()}
                       </Badge>
-                      <Badge className={getStatusColor(report.status)}>
+                      <Badge className={`${getStatusColor(report.status)} text-xs font-medium px-2 py-1`}>
                         {report.status.replace('_', ' ').toUpperCase()}
                       </Badge>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-slate-700 mb-4">{report.description}</p>
+                
+                <CardContent className="pt-0">
+                  <p className="text-slate-700 mb-4 line-clamp-3 leading-relaxed">
+                    {report.description}
+                  </p>
                   
-                  {/* Images */}
+                  {/* Media Preview */}
                   {report.images && report.images.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                      {report.images.map((imageUrl, index) => (
-                        <img
-                          key={index}
-                          src={imageUrl}
-                          alt={`Report image ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-90"
-                          onClick={() => window.open(imageUrl, '_blank')}
-                        />
-                      ))}
+                    <div className="mb-4">
+                      <div className="grid grid-cols-2 gap-2">
+                        {report.images.slice(0, 2).map((mediaUrl, index) => {
+                          const isVideo = mediaUrl && (
+                            mediaUrl.includes('.mp4') || 
+                            mediaUrl.includes('.mov') || 
+                            mediaUrl.includes('.avi') ||
+                            mediaUrl.startsWith('data:video/')
+                          );
+                          
+                          return (
+                            <div key={index} className="relative group">
+                              {isVideo ? (
+                                <video
+                                  src={mediaUrl}
+                                  className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                  controls
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              ) : (
+                                <img
+                                  src={mediaUrl}
+                                  alt={`Report media ${index + 1}`}
+                                  className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => {
+                                    setSelectedImageUrl(mediaUrl);
+                                    setShowImageViewer(true);
+                                  }}
+                                />
+                              )}
+                              <div className="absolute top-1 left-1 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                                {isVideo ? 'VIDEO' : 'IMAGE'}
+                              </div>
+                              {report.images.length > 2 && index === 1 && (
+                                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+                                  <span className="text-white text-sm font-medium">+{report.images.length - 2}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <div className="flex space-x-4">
-                      <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600">
-                        <Heart className="w-4 h-4 mr-1" />
-                        Helpful
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                    <div className="flex items-center space-x-2 text-sm text-slate-500">
+                      <div className="flex items-center space-x-1">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Report #{report.id?.slice(-6)}</span>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleViewDetails(report)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        View
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600">
-                        <MessageSquare className="w-4 h-4 mr-1" />
-                        Comment
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600">
-                        <Share2 className="w-4 h-4 mr-1" />
-                        Share
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleDeleteReport(report.id!)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete
                       </Button>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => handleViewDetails(report)}>
-                      <Eye className="w-4 h-4 mr-1" />
-                      View Details
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -787,6 +1039,27 @@ const Reports = () => {
           </div>
         )}
       </div>
+
+      {/* Image Viewer Modal */}
+      <Dialog open={showImageViewer} onOpenChange={setShowImageViewer}>
+        <DialogContent className="max-w-7xl max-h-[95vh] p-0 bg-black">
+          <div className="relative w-full h-full">
+            <img
+              src={selectedImageUrl}
+              alt="Full size image"
+              className="w-full h-full object-contain"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowImageViewer(false)}
+              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UserLayout>
   );
 };

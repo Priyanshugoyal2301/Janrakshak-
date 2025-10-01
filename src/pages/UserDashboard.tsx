@@ -313,7 +313,6 @@ const UserDashboard = () => {
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="reports">My Reports</TabsTrigger>
-              <TabsTrigger value="nearby">Nearby Reports</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
@@ -586,72 +585,6 @@ const UserDashboard = () => {
               </Card>
             </TabsContent>
 
-            {/* Nearby Reports Tab */}
-            <TabsContent value="nearby" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Nearby Reports</CardTitle>
-                  <CardDescription>Flood reports in your area</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {nearbyReports.length > 0 ? (
-                    <div className="space-y-4">
-                      {nearbyReports.map((report) => (
-                        <Card key={report.id}>
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-3 mb-2">
-                                  <h3 className="text-lg font-semibold">{report.title}</h3>
-                                  <Badge className={getSeverityColor(report.severity)}>
-                                    {report.severity}
-                                  </Badge>
-                                  <Badge className={getStatusColor(report.status)}>
-                                    {report.status}
-                                  </Badge>
-                                </div>
-                                <p className="text-gray-600 mb-3">{report.description}</p>
-                                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                  <span className="flex items-center">
-                                    <MapPin className="w-4 h-4 mr-1" />
-                                    {typeof report.location === 'string' 
-                                      ? report.location 
-                                      : report.location?.address || 'Unknown Location'
-                                    }
-                                  </span>
-                                  <span className="flex items-center">
-                                    <Clock className="w-4 h-4 mr-1" />
-                                    {new Date(report.created_at).toLocaleString()}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Button variant="outline" size="sm">
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View
-                                </Button>
-                                <Button variant="outline" size="sm">
-                                  <Navigation className="w-4 h-4 mr-2" />
-                                  Navigate
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Map className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">No nearby reports found</p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Reports will appear here when they are submitted in your area
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             {/* Analytics Tab */}
             <TabsContent value="analytics" className="space-y-6">

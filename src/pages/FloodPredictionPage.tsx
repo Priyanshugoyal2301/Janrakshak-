@@ -1,14 +1,12 @@
 import React from 'react';
-import Layout from '@/components/Layout';
+import UserLayout from '@/components/UserLayout';
 import FloodPredictionSimple from '@/components/FloodPredictionSimple';
 
 const FloodPredictionPage: React.FC = () => {
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <FloodPredictionSimple />
-      </div>
-    </Layout>
+    <UserLayout title="Flood Prediction" description="AI-powered flood risk assessment">
+      <FloodPredictionSimple />
+    </UserLayout>
   );
 };
 

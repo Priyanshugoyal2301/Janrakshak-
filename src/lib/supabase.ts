@@ -57,44 +57,118 @@ export interface UserLocation {
 }
 
 // Helper functions
-export const uploadImage = async (file: File, bucket: string = 'images'): Promise<string | null> => {
+// Convert file to base64 for fallback storage
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
+
+export const uploadMedia = async (file: File, bucket: string = 'reports-images'): Promise<string | null> => {
   try {
+    // Use reports-images bucket with folder path
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     
+    // Upload to reports-images bucket in reports-images folder
+    const folderPath = 'reports-images'; // This creates a folder inside the bucket
+    const fullPath = `${folderPath}/${fileName}`;
+    
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(fileName, file);
+      .upload(fullPath, file);
 
-    if (error) {
-      console.error('Error uploading image:', error);
+    if (!error) {
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fullPath);
+
+      return urlData.publicUrl;
+    } else {
+      // Try fallback buckets if reports-images fails
+      const fallbackBuckets = ['image', 'uploads', 'files', 'media', 'images'];
+      
+      for (const bucketName of fallbackBuckets) {
+        const { data: fallbackData, error: fallbackError } = await supabase.storage
+          .from(bucketName)
+          .upload(fullPath, file);
+
+        if (!fallbackError) {
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fullPath);
+
+          return urlData.publicUrl;
+        }
+      }
+    }
+    
+    // If all bucket uploads failed, fallback to base64
+    const base64Data = await fileToBase64(file);
+    return base64Data;
+    
+  } catch (error) {
+    // Fallback to base64
+    try {
+      const base64Data = await fileToBase64(file);
+      return base64Data;
+    } catch (base64Error) {
       return null;
     }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-
-    return urlData.publicUrl;
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    return null;
   }
 };
 
-export const deleteImage = async (url: string, bucket: string = 'images'): Promise<boolean> => {
+export const deleteImage = async (url: string, bucket: string = 'reports-images'): Promise<boolean> => {
   try {
-    const fileName = url.split('/').pop();
-    if (!fileName) return false;
+    // Extract the full path from the URL
+    const urlParts = url.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    const folderPath = 'reports-images';
+    const fullPath = `${folderPath}/${fileName}`;
+    
+    console.log('Deleting file:', fullPath, 'from bucket:', bucket);
 
     const { error } = await supabase.storage
       .from(bucket)
-      .remove([fileName]);
+      .remove([fullPath]);
 
-    return !error;
+    if (error) {
+      console.error('Error deleting file:', error);
+      return false;
+    }
+
+    console.log('File deleted successfully:', fullPath);
+    return true;
   } catch (error) {
-    console.error('Error deleting image:', error);
+    console.error('Exception deleting file:', error);
+    return false;
+  }
+};
+
+// Delete a flood report
+export const deleteFloodReport = async (reportId: string): Promise<boolean> => {
+  try {
+    console.log('Deleting flood report:', reportId);
+    
+    const { error } = await supabase
+      .from('flood_reports')
+      .delete()
+      .eq('id', reportId);
+
+    if (error) {
+      console.error('Error deleting report:', error);
+      return false;
+    }
+
+    console.log('Report deleted successfully');
+    return true;
+  } catch (error) {
+    console.error('Exception deleting report:', error);
     return false;
   }
 };
@@ -245,6 +319,8 @@ export const getUserReports = async (userId: string): Promise<FloodReport[]> => 
     if (!functionError && functionData) {
       console.log('User reports data from function:', functionData);
       return functionData;
+    } else if (functionError) {
+      console.warn('RPC function error, falling back to direct query:', functionError);
     }
 
     // Fallback to direct query

@@ -25,6 +25,8 @@ const FlashWarning: React.FC<FlashWarningProps> = ({
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [pulse, setPulse] = useState(true);
 
+  console.log('FlashWarning component rendered with alert:', alert);
+
   // Auto-pulse effect for critical alerts
   useEffect(() => {
     if (alert.severity === 'critical') {
@@ -41,25 +43,38 @@ const FlashWarning: React.FC<FlashWarningProps> = ({
       const playWarningSound = () => {
         try {
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-          const oscillator = audioContext.createOscillator();
-          const gainNode = audioContext.createGain();
           
-          oscillator.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-          
-          // Create a more urgent warning sound
-          oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
-          oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.1);
-          oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.2);
-          
-          gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-          
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.3);
+          if (audioContext.state === 'suspended') {
+            audioContext.resume().then(() => {
+              playUrgentSound(audioContext);
+            }).catch(() => {
+              console.log('Audio context resume failed');
+            });
+          } else {
+            playUrgentSound(audioContext);
+          }
         } catch (e) {
           console.log('Warning sound failed:', e);
         }
+      };
+
+      const playUrgentSound = (audioContext: AudioContext) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Create a more urgent warning sound
+        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.2);
+        
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
       };
 
       // Play sound immediately and then every 3 seconds for critical alerts
@@ -71,6 +86,10 @@ const FlashWarning: React.FC<FlashWarningProps> = ({
   }, [soundEnabled, alert.severity]);
 
   const handleDismiss = () => {
+    if (alert.severity === 'critical') {
+      const confirmed = confirm('Are you sure you want to dismiss this CRITICAL flood alert? This could put you at risk!');
+      if (!confirmed) return;
+    }
     setIsVisible(false);
     setTimeout(onDismiss, 300); // Allow animation to complete
   };
@@ -103,9 +122,9 @@ const FlashWarning: React.FC<FlashWarningProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-75">
       <Card 
-        className={`w-full max-w-2xl ${getSeverityColor()} ${pulse && alert.severity === 'critical' ? 'animate-pulse' : ''} transform transition-all duration-300`}
+        className={`w-full max-w-3xl ${getSeverityColor()} ${pulse && alert.severity === 'critical' ? 'animate-pulse' : ''} transform transition-all duration-300 shadow-2xl border-4`}
       >
         <div className="p-6">
           {/* Header */}
@@ -113,11 +132,11 @@ const FlashWarning: React.FC<FlashWarningProps> = ({
             <div className="flex items-center space-x-3">
               <AlertTriangle className={`w-8 h-8 ${getSeverityTextColor()}`} />
               <div>
-                <h2 className={`text-2xl font-bold ${getSeverityTextColor()}`}>
-                  {alert.severity === 'critical' ? '🚨 CRITICAL FLOOD ALERT' : '⚠️ FLOOD WARNING'}
+                <h2 className={`text-4xl font-bold ${getSeverityTextColor()} mb-2`}>
+                  {alert.severity === 'critical' ? '🚨 CRITICAL FLOOD ALERT 🚨' : '⚠️ FLOOD WARNING ⚠️'}
                 </h2>
-                <p className={`text-sm ${getSeverityTextColor()} opacity-90`}>
-                  {alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert
+                <p className={`text-lg ${getSeverityTextColor()} opacity-90 font-semibold`}>
+                  {alert.type.charAt(0).toUpperCase() + alert.type.slice(1)} Alert - IMMEDIATE ACTION REQUIRED
                 </p>
               </div>
             </div>
@@ -134,21 +153,29 @@ const FlashWarning: React.FC<FlashWarningProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleDismiss}
-                className={`${getSeverityTextColor()} hover:bg-white hover:bg-opacity-20`}
+                className={`bg-white bg-opacity-20 ${getSeverityTextColor()} hover:bg-white hover:bg-opacity-30 hover:text-gray-900`}
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </Button>
             </div>
           </div>
 
           {/* Alert Content */}
-          <div className={`mb-6 ${getSeverityTextColor()}`}>
-            <p className="text-lg mb-2 font-medium">
-              {alert.message}
-            </p>
-            <div className="flex items-center space-x-4 text-sm opacity-90">
-              <span>📍 {alert.region}</span>
-              <span>🕐 {new Date(alert.created_at).toLocaleString()}</span>
+          <div className={`mb-8 ${getSeverityTextColor()}`}>
+            <div className="bg-white bg-opacity-20 rounded-lg p-4 mb-4">
+              <p className="text-xl mb-3 font-semibold leading-relaxed">
+                {alert.message}
+              </p>
+            </div>
+            <div className="flex items-center space-x-6 text-lg opacity-90">
+              <span className="flex items-center">
+                <span className="mr-2">📍</span>
+                <strong>{alert.region}</strong>
+              </span>
+              <span className="flex items-center">
+                <span className="mr-2">🕐</span>
+                <strong>{new Date(alert.created_at).toLocaleString()}</strong>
+              </span>
             </div>
           </div>
 
@@ -161,19 +188,21 @@ const FlashWarning: React.FC<FlashWarningProps> = ({
                 </p>
               )}
             </div>
-            <div className="flex space-x-3">
+            <div className="flex space-x-4">
               <Button
                 variant="outline"
+                size="lg"
                 onClick={handleDismiss}
-                className={`${getSeverityTextColor()} border-white border-opacity-30 hover:bg-white hover:bg-opacity-20`}
+                className="bg-white bg-opacity-90 text-gray-900 border-white border-2 hover:bg-white hover:text-gray-900 text-lg px-8 py-3 font-semibold shadow-lg"
               >
                 Dismiss
               </Button>
               <Button
+                size="lg"
                 onClick={handleAcknowledge}
-                className="bg-white text-gray-900 hover:bg-gray-100"
+                className="bg-white text-gray-900 hover:bg-gray-100 text-lg px-8 py-3 font-semibold shadow-lg"
               >
-                I Understand
+                I Understand & Acknowledge
               </Button>
             </div>
           </div>

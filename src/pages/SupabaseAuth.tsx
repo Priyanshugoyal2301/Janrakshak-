@@ -129,7 +129,7 @@ const SupabaseAuthPage = () => {
     const validSecretKeys = [
       "janrakshak25",
       "admin2025",
-      "EMERGENCY_RESPONSE_KEuY",
+      "EMERGENCY_RESPONSE_KEY",
       "JANRAKSHAK_ADMIN_2025",
     ];
 
