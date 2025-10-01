@@ -46,7 +46,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, AreaChart as RechartsAreaChart, Area } from 'recharts';
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, AreaChart as RechartsAreaChart, Area, Legend } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -820,16 +820,28 @@ const AdminDashboard = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ day, count }) => `${day}: ${count}`}
-                        outerRadius={80}
+                        label={({ day, count, percent }) => 
+                          `${day}: ${count} (${(percent * 100).toFixed(0)}%)`
+                        }
+                        outerRadius={60}
+                        innerRadius={20}
                         fill="#8884d8"
                         dataKey="count"
+                        paddingAngle={2}
                       >
                         {data.trends.reportSubmissions.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#ec4899'][index % 7]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip 
+                        formatter={(value, name) => [value, 'Reports']}
+                        labelFormatter={(label) => `Category: ${label}`}
+                      />
+                      <Legend 
+                        verticalAlign="bottom" 
+                        height={36}
+                        wrapperStyle={{ fontSize: '12px' }}
+                      />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
