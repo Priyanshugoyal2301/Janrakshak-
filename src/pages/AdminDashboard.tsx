@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  FileText, 
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Users,
+  FileText,
   AlertTriangle,
   MapPin,
   Activity,
@@ -32,25 +32,75 @@ import {
   Download,
   Filter,
   Search,
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, AreaChart as RechartsAreaChart, Area, Legend } from 'recharts';
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { getDashboardStats, getAnalyticsData } from '@/lib/adminSupabase';
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import {
+  LineChart as RechartsLineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart as RechartsBarChart,
+  Bar,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  AreaChart as RechartsAreaChart,
+  Area,
+  Legend,
+} from "recharts";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Circle,
+  Polyline,
+  useMap,
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { getDashboardStats, getAnalyticsData } from "@/lib/adminSupabase";
 
 // Real data structure - will be populated from Supabase
 const initialData = {
@@ -71,19 +121,19 @@ const initialData = {
   shelters: [],
   trends: {
     userGrowth: [],
-    reportSubmissions: []
+    reportSubmissions: [],
   },
   floodRegions: [],
-  mapReports: []
+  mapReports: [],
 };
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterSeverity, setFilterSeverity] = useState('all');
+  const [activeTab, setActiveTab] = useState("overview");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterSeverity, setFilterSeverity] = useState("all");
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
@@ -109,19 +159,14 @@ const AdminDashboard = () => {
   const loadRealData = async () => {
     setLoading(true);
     try {
-      console.log('Loading real dashboard data from Supabase...');
-      
       // Get dashboard stats and analytics data in parallel
       const [statsData, analyticsData] = await Promise.all([
         getDashboardStats(),
-        getAnalyticsData()
+        getAnalyticsData(),
       ]);
 
-      console.log('Dashboard stats loaded:', statsData);
-      console.log('Analytics data loaded:', analyticsData);
-
       // Update the data state with real Supabase data
-      setData(prev => ({
+      setData((prev) => ({
         ...prev,
         stats: {
           totalUsers: statsData.totalUsers,
@@ -137,9 +182,9 @@ const AdminDashboard = () => {
         },
         trends: {
           userGrowth: analyticsData.userGrowth,
-          reportSubmissions: analyticsData.reportSubmissions
+          reportSubmissions: analyticsData.reportSubmissions,
         },
-        shelters: analyticsData.shelterOccupancy.map(shelter => ({
+        shelters: analyticsData.shelterOccupancy.map((shelter) => ({
           id: shelter.shelter,
           name: shelter.shelter,
           location: shelter.shelter,
@@ -148,18 +193,17 @@ const AdminDashboard = () => {
           status: shelter.status,
           coordinates: [0, 0], // This would need to be fetched separately
           contact: "N/A",
-          facilities: []
+          facilities: [],
         })),
         alerts: [], // This would need to be fetched separately
         recentReports: [], // This would need to be fetched separately
         floodRegions: [], // This would need to be fetched separately
-        mapReports: [] // This would need to be fetched separately
+        mapReports: [], // This would need to be fetched separately
       }));
 
       setLastUpdate(new Date());
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -167,118 +211,147 @@ const AdminDashboard = () => {
 
   const refreshData = async () => {
     await loadRealData();
-    toast.success('Dashboard data refreshed successfully');
+    toast.success("Dashboard data refreshed successfully");
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "critical":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "high":
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "low":
+        return "bg-green-100 text-green-800 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'verified': return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "verified":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "rejected":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getShelterStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-green-100 text-green-800 border-green-200';
-      case 'near_full': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'full': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "available":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "near_full":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "full":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getAlertSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-500 text-white';
-      case 'high': return 'bg-orange-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-white';
-      case 'low': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
+      case "critical":
+        return "bg-red-500 text-white";
+      case "high":
+        return "bg-orange-500 text-white";
+      case "medium":
+        return "bg-yellow-500 text-white";
+      case "low":
+        return "bg-green-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   // Quick Actions Handlers
   const handleSendAlert = () => {
-    toast.success('Opening alert broadcast form...');
+    toast.success("Opening alert broadcast form...");
     // Navigate to alerts page with broadcast form open
-    navigate('/admin/alerts?action=broadcast');
+    navigate("/admin/alerts?action=broadcast");
   };
 
   const handleAddShelter = () => {
-    toast.success('Opening shelter creation form...');
+    toast.success("Opening shelter creation form...");
     // Navigate to shelters page with add form open
-    navigate('/admin/shelters?action=add');
+    navigate("/admin/shelters?action=add");
   };
 
   const handleAssignRescue = () => {
-    toast.success('Opening rescue assignment form...');
+    toast.success("Opening rescue assignment form...");
     // Navigate to routes page with assignment form open
-    navigate('/admin/routes?action=assign');
+    navigate("/admin/routes?action=assign");
   };
 
   const handleViewAnalytics = () => {
-    toast.success('Opening analytics dashboard...');
-    navigate('/admin/analytics');
+    toast.success("Opening analytics dashboard...");
+    navigate("/admin/analytics");
   };
 
   const handleManageUsers = () => {
-    toast.success('Opening user management...');
-    navigate('/admin/users');
+    toast.success("Opening user management...");
+    navigate("/admin/users");
   };
 
   const handleViewReports = () => {
-    toast.success('Opening reports management...');
-    navigate('/admin/reports');
+    toast.success("Opening reports management...");
+    navigate("/admin/reports");
   };
 
   // KPI Card click handlers
   const handleKPIClick = (type: string) => {
     switch (type) {
-      case 'users':
+      case "users":
         handleManageUsers();
         break;
-      case 'reports':
+      case "reports":
         handleViewReports();
         break;
-      case 'shelters':
-        navigate('/admin/shelters');
+      case "shelters":
+        navigate("/admin/shelters");
         break;
-      case 'alerts':
-        navigate('/admin/alerts');
+      case "alerts":
+        navigate("/admin/alerts");
         break;
       default:
         break;
     }
   };
 
-  const StatCard = ({ title, value, change, icon: Icon, color, description, trend, type }: any) => (
-    <Card 
+  const StatCard = ({
+    title,
+    value,
+    change,
+    icon: Icon,
+    color,
+    description,
+    trend,
+    type,
+  }: any) => (
+    <Card
       className="relative overflow-hidden hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm border-0 shadow-lg cursor-pointer hover:scale-105"
       onClick={() => handleKPIClick(type)}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
         <div className={`p-2 rounded-lg ${color}`}>
           <Icon className="h-4 w-4 text-white" />
         </div>
@@ -295,7 +368,7 @@ const AdminDashboard = () => {
             ) : (
               <ArrowDownRight className="h-3 w-3 text-red-500 mr-1" />
             )}
-            <span className={change > 0 ? 'text-green-500' : 'text-red-500'}>
+            <span className={change > 0 ? "text-green-500" : "text-red-500"}>
               {Math.abs(change)}% from last month
             </span>
           </p>
@@ -303,21 +376,26 @@ const AdminDashboard = () => {
         {trend && (
           <div className="mt-2">
             <Progress value={trend} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-1">{trend}% of target</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {trend}% of target
+            </p>
           </div>
         )}
       </CardContent>
     </Card>
   );
 
-  const filteredReports = data.recentReports.filter(report => {
-    const matchesSearch = searchTerm === '' || 
+  const filteredReports = data.recentReports.filter((report) => {
+    const matchesSearch =
+      searchTerm === "" ||
       report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || report.status === filterStatus;
-    const matchesSeverity = filterSeverity === 'all' || report.severity === filterSeverity;
-    
+
+    const matchesStatus =
+      filterStatus === "all" || report.status === filterStatus;
+    const matchesSeverity =
+      filterSeverity === "all" || report.severity === filterSeverity;
+
     return matchesSearch && matchesStatus && matchesSeverity;
   });
 
@@ -327,9 +405,13 @@ const AdminDashboard = () => {
       <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-teal-200 rounded-lg p-4">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <div className={`w-3 h-3 rounded-full ${isLive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+            <div
+              className={`w-3 h-3 rounded-full ${
+                isLive ? "bg-green-500 animate-pulse" : "bg-gray-400"
+              }`}
+            ></div>
             <span className="text-sm font-medium text-gray-700">
-              {isLive ? 'Live Updates' : 'Paused'}
+              {isLive ? "Live Updates" : "Paused"}
             </span>
           </div>
           <div className="text-xs text-gray-500">
@@ -341,10 +423,14 @@ const AdminDashboard = () => {
             variant="outline"
             size="sm"
             onClick={() => setIsLive(!isLive)}
-            className={isLive ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-700'}
+            className={
+              isLive
+                ? "bg-green-50 border-green-200 text-green-700"
+                : "bg-gray-50 border-gray-200 text-gray-700"
+            }
           >
             <Activity className="h-4 w-4 mr-2" />
-            {isLive ? 'Live' : 'Paused'}
+            {isLive ? "Live" : "Paused"}
           </Button>
           <Button
             variant="outline"
@@ -352,27 +438,34 @@ const AdminDashboard = () => {
             onClick={refreshData}
             disabled={loading}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
       </div>
 
       {/* Alert Banner */}
-      {data.alerts.filter(alert => alert.severity === 'critical').length > 0 && (
+      {data.alerts.filter((alert) => alert.severity === "critical").length >
+        0 && (
         <div className="bg-red-500 text-white p-4 rounded-lg flex items-center space-x-3 animate-pulse">
           <AlertTriangle className="h-5 w-5" />
           <div>
             <p className="font-semibold">Critical Alert Active</p>
             <p className="text-sm opacity-90">
-              {data.alerts.filter(alert => alert.severity === 'critical').length} critical alerts require immediate attention
+              {
+                data.alerts.filter((alert) => alert.severity === "critical")
+                  .length
+              }{" "}
+              critical alerts require immediate attention
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="ml-auto bg-white/20 border-white/30 text-white hover:bg-white/30"
-            onClick={() => navigate('/admin/alerts')}
+            onClick={() => navigate("/admin/alerts")}
           >
             View Details
           </Button>
@@ -478,32 +571,32 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-24 flex-col hover:bg-teal-50 hover:border-teal-200 transition-colors"
               onClick={handleSendAlert}
             >
               <Bell className="h-6 w-6 mb-2 text-teal-600" />
               <span className="font-medium">Send Alert</span>
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-24 flex-col hover:bg-blue-50 hover:border-blue-200 transition-colors"
               onClick={handleAddShelter}
             >
               <Home className="h-6 w-6 mb-2 text-blue-600" />
               <span className="font-medium">Add Shelter</span>
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-24 flex-col hover:bg-green-50 hover:border-green-200 transition-colors"
               onClick={handleAssignRescue}
             >
               <Users className="h-6 w-6 mb-2 text-green-600" />
               <span className="font-medium">Assign Rescue</span>
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-24 flex-col hover:bg-purple-50 hover:border-purple-200 transition-colors"
               onClick={handleViewAnalytics}
             >
@@ -515,21 +608,37 @@ const AdminDashboard = () => {
       </Card>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
+          <TabsTrigger
+            value="overview"
+            className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900"
+          >
             <BarChart3 className="h-4 w-4 mr-2" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
+          <TabsTrigger
+            value="reports"
+            className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900"
+          >
             <FileText className="h-4 w-4 mr-2" />
             Reports
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
+          <TabsTrigger
+            value="alerts"
+            className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900"
+          >
             <AlertTriangle className="h-4 w-4 mr-2" />
             Alerts
           </TabsTrigger>
-          <TabsTrigger value="shelters" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
+          <TabsTrigger
+            value="shelters"
+            className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900"
+          >
             <Home className="h-4 w-4 mr-2" />
             Shelters
           </TabsTrigger>
@@ -545,31 +654,37 @@ const AdminDashboard = () => {
                   <MapPin className="h-5 w-5 mr-2 text-teal-600" />
                   Live Map
                 </CardTitle>
-                <CardDescription>Active shelters, reports, and flood zones</CardDescription>
+                <CardDescription>
+                  Active shelters, reports, and flood zones
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64 rounded-lg overflow-hidden">
                   <MapContainer
-                    center={[30.9010, 75.8573]}
+                    center={[30.901, 75.8573]}
                     zoom={8}
-                    style={{ height: '100%', width: '100%' }}
+                    style={{ height: "100%", width: "100%" }}
                   >
                     <TileLayer
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    
+
                     {/* Flood Regions */}
                     {data.floodRegions.map((region) => {
                       const getFloodColor = (severity: string) => {
                         switch (severity) {
-                          case 'high': return '#ef4444';
-                          case 'medium': return '#f59e0b';
-                          case 'low': return '#3b82f6';
-                          default: return '#6b7280';
+                          case "high":
+                            return "#ef4444";
+                          case "medium":
+                            return "#f59e0b";
+                          case "low":
+                            return "#3b82f6";
+                          default:
+                            return "#6b7280";
                         }
                       };
-                      
+
                       return (
                         <Circle
                           key={region.id}
@@ -579,44 +694,69 @@ const AdminDashboard = () => {
                             color: getFloodColor(region.severity),
                             fillColor: getFloodColor(region.severity),
                             fillOpacity: 0.3,
-                            weight: 2
+                            weight: 2,
                           }}
                         >
                           <Popup>
                             <div className="p-2">
-                              <h3 className="font-semibold text-sm">{region.name}</h3>
-                              <p className="text-xs text-gray-600">Severity: <span className={`font-medium ${region.severity === 'high' ? 'text-red-600' : region.severity === 'medium' ? 'text-orange-600' : 'text-blue-600'}`}>{region.severity}</span></p>
-                              <p className="text-xs">Population: {region.population.toLocaleString()}</p>
-                              <p className="text-xs">Reports: {region.reports}</p>
+                              <h3 className="font-semibold text-sm">
+                                {region.name}
+                              </h3>
+                              <p className="text-xs text-gray-600">
+                                Severity:{" "}
+                                <span
+                                  className={`font-medium ${
+                                    region.severity === "high"
+                                      ? "text-red-600"
+                                      : region.severity === "medium"
+                                      ? "text-orange-600"
+                                      : "text-blue-600"
+                                  }`}
+                                >
+                                  {region.severity}
+                                </span>
+                              </p>
+                              <p className="text-xs">
+                                Population: {region.population.toLocaleString()}
+                              </p>
+                              <p className="text-xs">
+                                Reports: {region.reports}
+                              </p>
                             </div>
                           </Popup>
                         </Circle>
                       );
                     })}
-                    
+
                     {/* Shelters */}
                     {data.shelters.map((shelter) => {
                       const getShelterIcon = (status: string) => {
                         switch (status) {
-                          case 'available': return '🟢';
-                          case 'near_full': return '🟡';
-                          case 'full': return '🔴';
-                          default: return '🏠';
+                          case "available":
+                            return "🟢";
+                          case "near_full":
+                            return "🟡";
+                          case "full":
+                            return "🔴";
+                          default:
+                            return "🏠";
                         }
                       };
-                      
+
                       const customIcon = L.divIcon({
-                        className: 'custom-marker',
-                        html: `<div style="background-color: white; border: 2px solid #0ea5e9; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${getShelterIcon(shelter.status)}</div>`,
+                        className: "custom-marker",
+                        html: `<div style="background-color: white; border: 2px solid #0ea5e9; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${getShelterIcon(
+                          shelter.status
+                        )}</div>`,
                         iconSize: [30, 30],
-                        iconAnchor: [15, 15]
+                        iconAnchor: [15, 15],
                       });
-                      
+
                       const openGoogleMaps = () => {
                         const url = `https://www.google.com/maps/dir/?api=1&destination=${shelter.coordinates[0]},${shelter.coordinates[1]}`;
-                        window.open(url, '_blank');
+                        window.open(url, "_blank");
                       };
-                      
+
                       return (
                         <Marker
                           key={shelter.id}
@@ -625,18 +765,45 @@ const AdminDashboard = () => {
                         >
                           <Popup>
                             <div className="p-2">
-                              <h3 className="font-semibold text-sm">{shelter.name}</h3>
-                              <p className="text-xs text-gray-600">{shelter.location}</p>
-                              <p className="text-xs">Capacity: {shelter.capacity}</p>
-                              <p className="text-xs">Occupancy: {shelter.currentOccupancy}</p>
-                              <p className="text-xs">Status: <span className={`font-medium ${shelter.status === 'available' ? 'text-green-600' : shelter.status === 'near_full' ? 'text-yellow-600' : 'text-red-600'}`}>{shelter.status.replace('_', ' ')}</span></p>
-                              <p className="text-xs">Contact: {shelter.contact}</p>
-                              <p className="text-xs">Facilities: {shelter.facilities.join(', ')}</p>
+                              <h3 className="font-semibold text-sm">
+                                {shelter.name}
+                              </h3>
+                              <p className="text-xs text-gray-600">
+                                {shelter.location}
+                              </p>
+                              <p className="text-xs">
+                                Capacity: {shelter.capacity}
+                              </p>
+                              <p className="text-xs">
+                                Occupancy: {shelter.currentOccupancy}
+                              </p>
+                              <p className="text-xs">
+                                Status:{" "}
+                                <span
+                                  className={`font-medium ${
+                                    shelter.status === "available"
+                                      ? "text-green-600"
+                                      : shelter.status === "near_full"
+                                      ? "text-yellow-600"
+                                      : "text-red-600"
+                                  }`}
+                                >
+                                  {shelter.status.replace("_", " ")}
+                                </span>
+                              </p>
+                              <p className="text-xs">
+                                Contact: {shelter.contact}
+                              </p>
+                              <p className="text-xs">
+                                Facilities: {shelter.facilities.join(", ")}
+                              </p>
                               <div className="mt-2 space-y-1">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => navigate(`/admin/shelters?id=${shelter.id}`)}
+                                  onClick={() =>
+                                    navigate(`/admin/shelters?id=${shelter.id}`)
+                                  }
                                   className="w-full text-xs"
                                 >
                                   <Edit className="h-3 w-3 mr-1" />
@@ -657,26 +824,35 @@ const AdminDashboard = () => {
                         </Marker>
                       );
                     })}
-                    
+
                     {/* Reports */}
                     {data.mapReports.map((report) => {
                       const getReportColor = (severity: string) => {
                         switch (severity) {
-                          case 'critical': return '#ef4444';
-                          case 'high': return '#f59e0b';
-                          case 'medium': return '#eab308';
-                          case 'low': return '#10b981';
-                          default: return '#6b7280';
+                          case "critical":
+                            return "#ef4444";
+                          case "high":
+                            return "#f59e0b";
+                          case "medium":
+                            return "#eab308";
+                          case "low":
+                            return "#10b981";
+                          default:
+                            return "#6b7280";
                         }
                       };
-                      
+
                       const customIcon = L.divIcon({
-                        className: 'custom-marker',
-                        html: `<div style="background-color: ${getReportColor(report.severity)}; border: 2px solid white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${report.emoji}</div>`,
+                        className: "custom-marker",
+                        html: `<div style="background-color: ${getReportColor(
+                          report.severity
+                        )}; border: 2px solid white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${
+                          report.emoji
+                        }</div>`,
                         iconSize: [25, 25],
-                        iconAnchor: [12, 12]
+                        iconAnchor: [12, 12],
                       });
-                      
+
                       return (
                         <Marker
                           key={report.id}
@@ -685,17 +861,52 @@ const AdminDashboard = () => {
                         >
                           <Popup>
                             <div className="p-2">
-                              <h3 className="font-semibold text-sm">{report.title}</h3>
-                              <p className="text-xs text-gray-600">{report.location}</p>
-                              <p className="text-xs">Severity: <span className={`font-medium ${report.severity === 'critical' ? 'text-red-600' : report.severity === 'high' ? 'text-orange-600' : report.severity === 'medium' ? 'text-yellow-600' : 'text-green-600'}`}>{report.severity}</span></p>
-                              <p className="text-xs">Status: <span className={`font-medium ${report.status === 'pending' ? 'text-yellow-600' : 'text-green-600'}`}>{report.status}</span></p>
+                              <h3 className="font-semibold text-sm">
+                                {report.title}
+                              </h3>
+                              <p className="text-xs text-gray-600">
+                                {report.location}
+                              </p>
+                              <p className="text-xs">
+                                Severity:{" "}
+                                <span
+                                  className={`font-medium ${
+                                    report.severity === "critical"
+                                      ? "text-red-600"
+                                      : report.severity === "high"
+                                      ? "text-orange-600"
+                                      : report.severity === "medium"
+                                      ? "text-yellow-600"
+                                      : "text-green-600"
+                                  }`}
+                                >
+                                  {report.severity}
+                                </span>
+                              </p>
+                              <p className="text-xs">
+                                Status:{" "}
+                                <span
+                                  className={`font-medium ${
+                                    report.status === "pending"
+                                      ? "text-yellow-600"
+                                      : "text-green-600"
+                                  }`}
+                                >
+                                  {report.status}
+                                </span>
+                              </p>
                               <p className="text-xs">User: {report.user}</p>
-                              <p className="text-xs">Time: {new Date(report.timestamp).toLocaleString()}</p>
+                              <p className="text-xs">
+                                Time:{" "}
+                                {new Date(report.timestamp).toLocaleString()}
+                              </p>
                               <div className="mt-2">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => navigate(`/admin/reports?id=${report.id}`)}
+                                  onClick={() =>
+                                    navigate(`/admin/reports?id=${report.id}`)
+                                  }
                                   className="w-full text-xs"
                                 >
                                   <Eye className="h-3 w-3 mr-1" />
@@ -741,7 +952,9 @@ const AdminDashboard = () => {
                   <Activity className="h-5 w-5 mr-2 text-green-600" />
                   System Health
                 </CardTitle>
-                <CardDescription>Platform performance and status</CardDescription>
+                <CardDescription>
+                  Platform performance and status
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -785,7 +998,9 @@ const AdminDashboard = () => {
                   <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
                   User Growth Trend
                 </CardTitle>
-                <CardDescription>Monthly user registration trends</CardDescription>
+                <CardDescription>
+                  Monthly user registration trends
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -795,8 +1010,20 @@ const AdminDashboard = () => {
                       <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip />
-                      <Line type="monotone" dataKey="users" stroke="#0ea5e9" strokeWidth={2} name="Users" />
-                      <Line type="monotone" dataKey="active" stroke="#10b981" strokeWidth={2} name="Active" />
+                      <Line
+                        type="monotone"
+                        dataKey="users"
+                        stroke="#0ea5e9"
+                        strokeWidth={2}
+                        name="Users"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="active"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        name="Active"
+                      />
                     </RechartsLineChart>
                   </ResponsiveContainer>
                 </div>
@@ -828,25 +1055,38 @@ const AdminDashboard = () => {
                         paddingAngle={3}
                       >
                         {data.trends.reportSubmissions.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#ec4899'][index % 7]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              [
+                                "#0ea5e9",
+                                "#10b981",
+                                "#f59e0b",
+                                "#ef4444",
+                                "#8b5cf6",
+                                "#f97316",
+                                "#ec4899",
+                              ][index % 7]
+                            }
+                          />
                         ))}
                       </Pie>
-                      <Tooltip 
-                        formatter={(value, name) => [value, 'Reports']}
+                      <Tooltip
+                        formatter={(value, name) => [value, "Reports"]}
                         labelFormatter={(label) => `Category: ${label}`}
                         contentStyle={{
-                          backgroundColor: 'white',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          backgroundColor: "white",
+                          border: "1px solid #e5e7eb",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                         }}
                       />
-                      <Legend 
-                        verticalAlign="bottom" 
+                      <Legend
+                        verticalAlign="bottom"
                         height={60}
-                        wrapperStyle={{ 
-                          fontSize: '12px',
-                          paddingTop: '10px'
+                        wrapperStyle={{
+                          fontSize: "12px",
+                          paddingTop: "10px",
                         }}
                         iconType="circle"
                       />
@@ -868,11 +1108,22 @@ const AdminDashboard = () => {
                     <FileText className="h-5 w-5 mr-2 text-teal-600" />
                     Recent Reports
                   </CardTitle>
-                  <CardDescription>Latest flood reports from users</CardDescription>
+                  <CardDescription>
+                    Latest flood reports from users
+                  </CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={refreshData}
+                    disabled={loading}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 mr-2 ${
+                        loading ? "animate-spin" : ""
+                      }`}
+                    />
                     Refresh
                   </Button>
                   <Button variant="outline" size="sm">
@@ -905,7 +1156,10 @@ const AdminDashboard = () => {
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={filterSeverity} onValueChange={setFilterSeverity}>
+                <Select
+                  value={filterSeverity}
+                  onValueChange={setFilterSeverity}
+                >
                   <SelectTrigger className="w-32 bg-white/50 border-gray-200">
                     <SelectValue placeholder="Severity" />
                   </SelectTrigger>
@@ -938,7 +1192,9 @@ const AdminDashboard = () => {
                         <TableCell>
                           <div>
                             <div className="font-medium">{report.title}</div>
-                            <div className="text-sm text-muted-foreground line-clamp-2">{report.description}</div>
+                            <div className="text-sm text-muted-foreground line-clamp-2">
+                              {report.description}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -973,49 +1229,67 @@ const AdminDashboard = () => {
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="hover:bg-gray-100">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="hover:bg-gray-100"
+                              >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => navigate(`/admin/reports?id=${report.id}`)}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  navigate(`/admin/reports?id=${report.id}`)
+                                }
+                              >
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                setData(prev => ({
-                                  ...prev,
-                                  recentReports: prev.recentReports.map(r => 
-                                    r.id === report.id ? { ...r, status: 'verified' } : r
-                                  )
-                                }));
-                                toast.success('Report approved successfully');
-                              }}>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setData((prev) => ({
+                                    ...prev,
+                                    recentReports: prev.recentReports.map((r) =>
+                                      r.id === report.id
+                                        ? { ...r, status: "verified" }
+                                        : r
+                                    ),
+                                  }));
+                                  toast.success("Report approved successfully");
+                                }}
+                              >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Approve
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                setData(prev => ({
-                                  ...prev,
-                                  recentReports: prev.recentReports.map(r => 
-                                    r.id === report.id ? { ...r, status: 'rejected' } : r
-                                  )
-                                }));
-                                toast.success('Report rejected');
-                              }}>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setData((prev) => ({
+                                    ...prev,
+                                    recentReports: prev.recentReports.map((r) =>
+                                      r.id === report.id
+                                        ? { ...r, status: "rejected" }
+                                        : r
+                                    ),
+                                  }));
+                                  toast.success("Report rejected");
+                                }}
+                              >
                                 <XCircle className="h-4 w-4 mr-2" />
                                 Reject
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="text-red-600 focus:text-red-600"
                                 onClick={() => {
-                                  setData(prev => ({
+                                  setData((prev) => ({
                                     ...prev,
-                                    recentReports: prev.recentReports.filter(r => r.id !== report.id)
+                                    recentReports: prev.recentReports.filter(
+                                      (r) => r.id !== report.id
+                                    ),
                                   }));
-                                  toast.success('Report deleted');
+                                  toast.success("Report deleted");
                                 }}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
@@ -1041,13 +1315,22 @@ const AdminDashboard = () => {
                 <AlertTriangle className="h-5 w-5 mr-2 text-red-600" />
                 Active Alerts
               </CardTitle>
-              <CardDescription>Real-time flood warnings and system alerts</CardDescription>
+              <CardDescription>
+                Real-time flood warnings and system alerts
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {data.alerts.map((alert) => (
-                  <div key={alert.id} className="flex items-center space-x-4 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                    <div className={`p-2 rounded-lg ${getAlertSeverityColor(alert.severity)}`}>
+                  <div
+                    key={alert.id}
+                    className="flex items-center space-x-4 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    <div
+                      className={`p-2 rounded-lg ${getAlertSeverityColor(
+                        alert.severity
+                      )}`}
+                    >
                       <AlertTriangle className="h-4 w-4 text-white" />
                     </div>
                     <div className="flex-1">
@@ -1057,15 +1340,19 @@ const AdminDashboard = () => {
                           {alert.severity}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{formatDate(alert.timestamp)}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {alert.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatDate(alert.timestamp)}
+                      </p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge className="bg-green-100 text-green-800 border-green-200">
                         {alert.status}
                       </Badge>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => navigate(`/admin/alerts?id=${alert.id}`)}
                       >
@@ -1088,35 +1375,53 @@ const AdminDashboard = () => {
                 <Home className="h-5 w-5 mr-2 text-green-600" />
                 Shelter Status
               </CardTitle>
-              <CardDescription>Current shelter capacity and occupancy</CardDescription>
+              <CardDescription>
+                Current shelter capacity and occupancy
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {data.shelters.map((shelter) => (
-                  <div key={shelter.id} className="flex items-center space-x-4 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                  <div
+                    key={shelter.id}
+                    className="flex items-center space-x-4 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
                     <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center">
                       <Home className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium">{shelter.name}</h4>
-                      <p className="text-sm text-muted-foreground">{shelter.location}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {shelter.location}
+                      </p>
                       <div className="flex items-center space-x-4 mt-2">
                         <span className="text-sm">
-                          <span className="font-medium">{shelter.currentOccupancy}</span> / {shelter.capacity} people
+                          <span className="font-medium">
+                            {shelter.currentOccupancy}
+                          </span>{" "}
+                          / {shelter.capacity} people
                         </span>
                         <div className="flex-1 max-w-32">
-                          <Progress value={(shelter.currentOccupancy / shelter.capacity) * 100} className="h-2" />
+                          <Progress
+                            value={
+                              (shelter.currentOccupancy / shelter.capacity) *
+                              100
+                            }
+                            className="h-2"
+                          />
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge className={getShelterStatusColor(shelter.status)}>
-                        {shelter.status.replace('_', ' ')}
+                        {shelter.status.replace("_", " ")}
                       </Badge>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/admin/shelters?id=${shelter.id}`)}
+                        onClick={() =>
+                          navigate(`/admin/shelters?id=${shelter.id}`)
+                        }
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit

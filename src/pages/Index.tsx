@@ -7,7 +7,10 @@ import MapComponent from "@/components/Map";
 import Notch from "@/components/Notch";
 import { useAuth } from "@/contexts/AuthContext";
 import { getLocationData, getNearbyReports } from "@/lib/supabase";
-import { getLocationWithDetails, type LocationInfo } from "@/lib/locationService";
+import {
+  getLocationWithDetails,
+  type LocationInfo,
+} from "@/lib/locationService";
 import {
   Droplets,
   AlertTriangle,
@@ -31,23 +34,44 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import JanRakshakChatbot from "@/components/JanRakshakChatbot";
 
 const Dashboard = () => {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
-  
+
   // Location-based state
   const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [localReports, setLocalReports] = useState(0);
-  const [localRiskLevel, setLocalRiskLevel] = useState<'safe' | 'warning' | 'critical'>('safe');
-  
+  const [localRiskLevel, setLocalRiskLevel] = useState<
+    "safe" | "warning" | "critical"
+  >("safe");
+
   // Existing state
   const [waterLevel, setWaterLevel] = useState(65);
   const [activeAlerts, setActiveAlerts] = useState(5);
   const [protectedAreas, setProtectedAreas] = useState(1247);
   const [watchZones, setWatchZones] = useState(23);
   const [communityMembers, setCommunityMembers] = useState(89456);
+
+  // Wake up the pre-alert model service
+  useEffect(() => {
+    const wakeUpPreAlertModel = async () => {
+      try {
+        await fetch("https://janrakshak-pre-alert-model.onrender.com/", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (error) {
+        // Silently handle errors - this is a background operation
+      }
+    };
+
+    wakeUpPreAlertModel();
+  }, []);
 
   // Load user location and local data
   useEffect(() => {
@@ -59,32 +83,45 @@ const Dashboard = () => {
     try {
       const location = await getLocationWithDetails();
       setUserLocation(location);
-      
+
       // Load location-based data
       if (location.state) {
-        const locationData = await getLocationData(location.state, location.district);
+        const locationData = await getLocationData(
+          location.state,
+          location.district
+        );
         if (locationData.length > 0) {
           const currentData = locationData[0];
           setWaterLevel(currentData.current_water_level || 65);
-          setLocalRiskLevel(currentData.risk_level || 'safe');
+          setLocalRiskLevel(currentData.risk_level || "safe");
         }
-        
+
         // Load nearby reports
-        const reports = await getNearbyReports(location.coords.lat, location.coords.lng, 50);
+        const reports = await getNearbyReports(
+          location.coords.lat,
+          location.coords.lng,
+          50
+        );
         setLocalReports(reports.length);
-        setActiveAlerts(reports.filter(r => r.severity === 'critical' || r.severity === 'high').length);
+        setActiveAlerts(
+          reports.filter(
+            (r) => r.severity === "critical" || r.severity === "high"
+          ).length
+        );
       }
-      
-      toast.success(`Location detected: ${location.district}, ${location.state}`);
+
+      toast.success(
+        `Location detected: ${location.district}, ${location.state}`
+      );
     } catch (error) {
-      console.error('Error loading location data:', error);
+      console.error("Error loading location data:", error);
       // Use default Punjab location
       setUserLocation({
-        coords: { lat: 30.9010, lng: 75.8573 },
+        coords: { lat: 30.901, lng: 75.8573 },
         address: "Punjab, India",
         state: "Punjab",
         district: "",
-        country: "India"
+        country: "India",
       });
     } finally {
       setLocationLoading(false);
@@ -134,11 +171,21 @@ const Dashboard = () => {
   ];
 
   const waterLevelGauges = [
-    { 
-      city: userLocation?.district || "Amritsar", 
-      level: waterLevel, 
-      status: localRiskLevel === 'critical' ? "Critical" : localRiskLevel === 'warning' ? "Warning" : "Normal", 
-      color: localRiskLevel === 'critical' ? "bg-red-500" : localRiskLevel === 'warning' ? "bg-yellow-500" : "bg-green-500"
+    {
+      city: userLocation?.district || "Amritsar",
+      level: waterLevel,
+      status:
+        localRiskLevel === "critical"
+          ? "Critical"
+          : localRiskLevel === "warning"
+          ? "Warning"
+          : "Normal",
+      color:
+        localRiskLevel === "critical"
+          ? "bg-red-500"
+          : localRiskLevel === "warning"
+          ? "bg-yellow-500"
+          : "bg-green-500",
     },
     { city: "Ludhiana", level: 62, status: "Moderate", color: "bg-yellow-500" },
     { city: "Jalandhar", level: 35, status: "Light", color: "bg-green-500" },
@@ -154,16 +201,27 @@ const Dashboard = () => {
             <h1 className="text-5xl font-bold">Real-Time Flood Monitoring</h1>
             {locationLoading && <Loader2 className="w-6 h-6 animate-spin" />}
           </div>
-          
+
           {/* Location Banner */}
           {userLocation && (
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-w-md mx-auto">
               <div className="flex items-center justify-center space-x-2 text-sm">
                 <MapPin className="w-4 h-4" />
-                <span>Monitoring: {userLocation.district || userLocation.state}, {userLocation.state}</span>
+                <span>
+                  Monitoring: {userLocation.district || userLocation.state},{" "}
+                  {userLocation.state}
+                </span>
               </div>
               <div className="flex items-center justify-center space-x-4 mt-2 text-xs">
-                <Badge className={`${localRiskLevel === 'critical' ? 'bg-red-500' : localRiskLevel === 'warning' ? 'bg-yellow-500' : 'bg-green-500'} text-white`}>
+                <Badge
+                  className={`${
+                    localRiskLevel === "critical"
+                      ? "bg-red-500"
+                      : localRiskLevel === "warning"
+                      ? "bg-yellow-500"
+                      : "bg-green-500"
+                  } text-white`}
+                >
                   {localRiskLevel.toUpperCase()} RISK
                 </Badge>
                 <span>{localReports} Local Reports</span>
@@ -178,12 +236,11 @@ const Dashboard = () => {
               </div>
             </div>
           )}
-          
+
           <p className="text-xl opacity-90 max-w-3xl mx-auto">
-            {userLocation 
+            {userLocation
               ? `Advanced AI-powered flood prediction and early warning system protecting your community in ${userLocation.state} with precision and care`
-              : "Advanced AI-powered flood prediction and early warning system protecting communities across India with precision and care"
-            }
+              : "Advanced AI-powered flood prediction and early warning system protecting communities across India with precision and care"}
           </p>
 
           {/* Hero Stats */}
@@ -555,6 +612,43 @@ const Dashboard = () => {
           </div>
         </GradientCard>
 
+        {/* JanRakshak AI Assistant */}
+        <GradientCard className="p-6">
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">
+            AI Emergency Assistant
+          </h3>
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-2">
+                Available Features:
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
+                  Emergency Assistance
+                </div>
+                <div className="flex items-center">
+                  <FileText className="w-4 h-4 mr-2 text-green-500" />
+                  Submit Reports
+                </div>
+                <div className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-2 text-blue-500" />
+                  Find Shelters
+                </div>
+                <div className="flex items-center">
+                  <Users className="w-4 h-4 mr-2 text-purple-500" />
+                  Emergency Contacts
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600">
+              Click the chat button in the bottom right corner to start a
+              conversation with our AI assistant. It can help you submit flood
+              reports, find emergency resources, and get safety information.
+            </p>
+          </div>
+        </GradientCard>
+
         <GradientCard className="p-6">
           <h3 className="text-xl font-semibold text-slate-900 mb-6">
             Emergency Actions
@@ -578,12 +672,12 @@ const Dashboard = () => {
               onClick={() => {
                 // Check if device supports phone calls
                 if (navigator.userAgent.match(/iPhone|Android/i)) {
-                  window.open('tel:108', '_self');
+                  window.open("tel:108", "_self");
                 } else {
                   // Show emergency contact information for desktop
-                  window.open('https://www.dial108.com/', '_blank');
+                  window.open("https://www.dial108.com/", "_blank");
                 }
-                console.log('Emergency helpline activated');
+                console.log("Emergency helpline activated");
               }}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 h-12"
             >

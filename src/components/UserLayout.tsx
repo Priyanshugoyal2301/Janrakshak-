@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Menu,
   X,
@@ -23,8 +23,8 @@ import {
   RefreshCw,
   MapPin,
   Users,
-  CloudRain
-} from 'lucide-react';
+  CloudRain,
+} from "lucide-react";
 
 interface UserLayoutProps {
   children: React.ReactNode;
@@ -32,9 +32,13 @@ interface UserLayoutProps {
   description?: string;
 }
 
-const UserLayout = ({ children, title = "Dashboard", description = "Welcome back" }: UserLayoutProps) => {
+const UserLayout = ({
+  children,
+  title = "Dashboard",
+  description = "Welcome back",
+}: UserLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [detectedLocation, setDetectedLocation] = useState<string>('');
+  const [detectedLocation, setDetectedLocation] = useState<string>("");
   const { currentUser, userProfile, logout, updateUserProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,9 +46,9 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
   const handleSignOut = async () => {
     try {
       await logout();
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -52,52 +56,58 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
   useEffect(() => {
     const detectLocation = async () => {
       // Only detect if user doesn't have location set
-      if (!userProfile?.location?.state && !userProfile?.location?.district && navigator.geolocation) {
+      if (
+        !userProfile?.location?.state &&
+        !userProfile?.location?.district &&
+        navigator.geolocation
+      ) {
         try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 300000 // 5 minutes
-            });
-          });
+          const position = await new Promise<GeolocationPosition>(
+            (resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000, // 5 minutes
+              });
+            }
+          );
 
           const { latitude, longitude } = position.coords;
-          
+
           // Use reverse geocoding to get location details
           try {
             const response = await fetch(
               `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
             );
             const data = await response.json();
-            
-            if (data.countryName === 'India') {
-              const locationString = data.locality 
+
+            if (data.countryName === "India") {
+              const locationString = data.locality
                 ? `${data.locality}, ${data.principalSubdivision}`
-                : data.principalSubdivision || 'India';
+                : data.principalSubdivision || "India";
               setDetectedLocation(locationString);
-              
+
               // Auto-update user profile with detected location
               if (currentUser && userProfile) {
                 await updateUserProfile({
                   location: {
-                    state: data.principalSubdivision || '',
-                    district: data.locality || '',
+                    state: data.principalSubdivision || "",
+                    district: data.locality || "",
                     coordinates: {
                       lat: latitude,
-                      lng: longitude
-                    }
-                  }
+                      lng: longitude,
+                    },
+                  },
                 });
               }
             }
           } catch (geocodeError) {
-            console.error('Error with reverse geocoding:', geocodeError);
-            setDetectedLocation('Location detected');
+            console.error("Error with reverse geocoding:", geocodeError);
+            setDetectedLocation("Location detected");
           }
         } catch (error) {
-          console.error('Error detecting location:', error);
-          setDetectedLocation('Location unavailable');
+          console.error("Error detecting location:", error);
+          setDetectedLocation("Location unavailable");
         }
       }
     };
@@ -112,7 +122,11 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
     { name: "My Reports", href: "/reports", icon: FileText },
     { name: "Community", href: "/community", icon: Users },
     { name: "Flood Prediction", href: "/flood-prediction", icon: CloudRain },
-    { name: "Analytics", href: "/dashboard", icon: BarChart3, tab: "analytics" },
+    {
+      name: "Analytics",
+      href: "/analytics",
+      icon: BarChart3,
+    },
   ];
 
   const quickActions = [
@@ -126,27 +140,49 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
   ];
 
   const handleNavigation = (item: any) => {
-    if (item.tab) {
-      // Navigate to dashboard with specific tab
-      navigate('/dashboard', { state: { activeTab: item.tab } });
-    } else {
-      navigate(item.href);
+    console.log(
+      "Navigation clicked:",
+      item.name,
+      "from:",
+      location.pathname,
+      "to:",
+      item.href
+    );
+
+    // Prevent navigation if already on the same page
+    if (location.pathname === item.href) {
+      console.log("Already on same page, just closing sidebar");
+      setSidebarOpen(false);
+      return;
     }
+
+    console.log("Navigating to:", item.href);
+
+    // Close sidebar first for smoother UX
     setSidebarOpen(false);
+
+    // Small delay to allow sidebar animation to complete
+    setTimeout(() => {
+      navigate(item.href, { replace: false });
+    }, 100);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
       {/* Mobile Sidebar */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-teal-100 to-blue-200 text-gray-700 backdrop-blur-xl shadow-lg border-r border-teal-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-teal-100 to-blue-200 text-gray-700 backdrop-blur-xl shadow-2xl border border-teal-200 rounded-r-2xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:left-4 lg:top-4 lg:bottom-4 lg:rounded-2xl ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-teal-200">
           <div className="flex items-center space-x-2">
@@ -167,15 +203,20 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
         <nav className="flex-1 px-4 py-6 space-y-2">
           <div className="space-y-1">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href && (!item.tab || location.hash === `#${item.tab}`);
+              const isActive =
+                location.pathname === item.href &&
+                (!item.tab || location.hash === `#${item.tab}`);
               return (
                 <Button
                   key={item.name}
-                  variant={isActive ? 'default' : 'ghost'}
+                  variant={isActive ? "default" : "ghost"}
                   className={`w-full justify-start text-teal-700 ${
-                    isActive ? 'bg-teal-600 text-white' : 'hover:bg-teal-200'
+                    isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
                   }`}
-                  onClick={() => handleNavigation(item)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation(item);
+                  }}
                 >
                   <item.icon className="w-4 h-4 mr-3" />
                   {item.name}
@@ -192,11 +233,14 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
               return (
                 <Button
                   key={item.name}
-                  variant={isActive ? 'default' : 'ghost'}
+                  variant={isActive ? "default" : "ghost"}
                   className={`w-full justify-start text-teal-700 ${
-                    isActive ? 'bg-teal-600 text-white' : 'hover:bg-teal-200'
+                    isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
                   }`}
-                  onClick={() => handleNavigation(item)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation(item);
+                  }}
                 >
                   <item.icon className="w-4 h-4 mr-3" />
                   {item.name}
@@ -213,11 +257,14 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
               return (
                 <Button
                   key={item.name}
-                  variant={isActive ? 'default' : 'ghost'}
+                  variant={isActive ? "default" : "ghost"}
                   className={`w-full justify-start text-teal-700 ${
-                    isActive ? 'bg-teal-600 text-white' : 'hover:bg-teal-200'
+                    isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
                   }`}
-                  onClick={() => handleNavigation(item)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation(item);
+                  }}
                 >
                   <item.icon className="w-4 h-4 mr-3" />
                   {item.name}
@@ -240,9 +287,9 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
       </div>
 
       {/* Main Content */}
-      <div className="lg:ml-64">
+      <div className="lg:ml-72">
         {/* Top Bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div className="bg-white/90 backdrop-blur-sm shadow-sm border border-gray-200 rounded-xl mx-4 mt-4 px-6 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -263,12 +310,11 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
             <div className="flex items-center space-x-2">
               <Badge variant="outline" className="text-xs">
                 <MapPin className="w-3 h-3 mr-1" />
-                {userProfile?.location?.district && userProfile?.location?.state 
+                {userProfile?.location?.district && userProfile?.location?.state
                   ? `${userProfile.location.district}, ${userProfile.location.state}`
-                  : userProfile?.location?.state 
-                    ? userProfile.location.state
-                    : detectedLocation || 'Location not set'
-                }
+                  : userProfile?.location?.state
+                  ? userProfile.location.state
+                  : detectedLocation || "Location not set"}
               </Badge>
               <div className="flex items-center space-x-2">
                 <Button
@@ -277,36 +323,42 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
                   onClick={async () => {
                     if (navigator.geolocation && currentUser && userProfile) {
                       try {
-                        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-                          navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            enableHighAccuracy: true,
-                            timeout: 10000,
-                            maximumAge: 0 // Force fresh location
-                          });
-                        });
+                        const position = await new Promise<GeolocationPosition>(
+                          (resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(
+                              resolve,
+                              reject,
+                              {
+                                enableHighAccuracy: true,
+                                timeout: 10000,
+                                maximumAge: 0, // Force fresh location
+                              }
+                            );
+                          }
+                        );
 
                         const { latitude, longitude } = position.coords;
-                        
+
                         const response = await fetch(
                           `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
                         );
                         const data = await response.json();
-                        
-                        if (data.countryName === 'India') {
+
+                        if (data.countryName === "India") {
                           await updateUserProfile({
                             location: {
-                              state: data.principalSubdivision || '',
-                              district: data.locality || '',
+                              state: data.principalSubdivision || "",
+                              district: data.locality || "",
                               coordinates: {
                                 lat: latitude,
-                                lng: longitude
-                              }
-                            }
+                                lng: longitude,
+                              },
+                            },
                           });
-                          setDetectedLocation('');
+                          setDetectedLocation("");
                         }
                       } catch (error) {
-                        console.error('Error updating location:', error);
+                        console.error("Error updating location:", error);
                       }
                     }
                   }}
@@ -328,9 +380,7 @@ const UserLayout = ({ children, title = "Dashboard", description = "Welcome back
         </div>
 
         {/* Page Content */}
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="p-6 pt-4">{children}</div>
       </div>
     </div>
   );

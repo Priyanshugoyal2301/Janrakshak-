@@ -22,6 +22,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSystem from "./pages/AdminSystem";
 import AdminFloodPrediction from "./pages/AdminFloodPrediction";
 import AdminRiskAssessment from "./pages/AdminRiskAssessment";
+import AdminTraining from "./pages/AdminTraining";
 import AdminTest from "./pages/AdminTest";
 import AdminDebug from "./pages/AdminDebug";
 import AdminSimple from "./pages/AdminSimple";
@@ -37,7 +38,9 @@ import Predictions from "./pages/Predictions";
 import Alerts from "./pages/Alerts";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
+import JanRakshakChatbot from "./components/JanRakshakChatbot";
 
 const queryClient = new QueryClient();
 
@@ -51,261 +54,282 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/admin/signup" element={
-              <SupabaseAuthProvider>
-                <SupabaseAuth />
-              </SupabaseAuthProvider>
-            } />
-            <Route path="/admin/signin" element={
-              <SupabaseAuthProvider>
-                <SupabaseAuth />
-              </SupabaseAuthProvider>
-            } />
-              
-              {/* Redirect old admin URLs */}
-              <Route path="/supabase-auth" element={<Navigate to="/admin/signin" replace />} />
-              
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <Admin />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/alerts"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AlertProvider isAdminContext={true}>
-                        <AdminAlerts />
-                      </AlertProvider>
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/reports"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AdminReports />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AdminUsers />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/shelters"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AdminShelters />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/routes"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AdminRoutes />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/risk-assessment"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AdminRiskAssessment />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/flood-prediction"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AdminFloodPrediction />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/analytics"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AdminAnalytics />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin/system"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminProtectedRoute>
-                      <AdminSystem />
-                    </AdminProtectedRoute>
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              <Route
-                path="/admin-test"
-                element={<AdminTest />}
-              />
-              <Route
-                path="/admin-debug"
-                element={<AdminDebug />}
-              />
-              <Route
-                path="/admin-simple"
-                element={<AdminSimple />}
-              />
-              <Route
-                path="/admin-basic"
-                element={<AdminBasic />}
-              />
-              <Route
-                path="/admin-minimal-test"
-                element={
-                  <SupabaseAuthProviderMinimal>
-                    <AdminMinimalTest />
-                  </SupabaseAuthProviderMinimal>
-                }
-              />
-              
-              {/* Protected Routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <UserDashboard />
+            <Route
+              path="/admin/signup"
+              element={
+                <SupabaseAuthProvider>
+                  <SupabaseAuth />
+                </SupabaseAuthProvider>
+              }
+            />
+            <Route
+              path="/admin/signin"
+              element={
+                <SupabaseAuthProvider>
+                  <SupabaseAuth />
+                </SupabaseAuthProvider>
+              }
+            />
+
+            {/* Redirect old admin URLs */}
+            <Route
+              path="/supabase-auth"
+              element={<Navigate to="/admin/signin" replace />}
+            />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <Admin />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/alerts"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AlertProvider isAdminContext={true}>
+                      <AdminAlerts />
                     </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/community"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <Community />
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/flood-prediction"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <FloodPredictionPage />
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/old-dashboard"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <Layout>
-                        <Index />
-                      </Layout>
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/shelters"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <ShelterFinder />
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/emergency-contacts"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <EmergencyContacts />
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/predictions"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <Layout>
-                        <Predictions />
-                      </Layout>
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/alerts"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <Alerts />
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/reports"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <Reports />
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <AlertProvider>
-                      <Profile />
-                    </AlertProvider>
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Redirect old routes */}
-              <Route path="/index" element={<Navigate to="/dashboard" replace />} />
-              
-              {/* 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/reports"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminReports />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminUsers />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/shelters"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminShelters />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/routes"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminRoutes />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/risk-assessment"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminRiskAssessment />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/flood-prediction"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminFloodPrediction />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/training"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminTraining />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminAnalytics />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route
+              path="/admin/system"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminProtectedRoute>
+                    <AdminSystem />
+                  </AdminProtectedRoute>
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+            <Route path="/admin-test" element={<AdminTest />} />
+            <Route path="/admin-debug" element={<AdminDebug />} />
+            <Route path="/admin-simple" element={<AdminSimple />} />
+            <Route path="/admin-basic" element={<AdminBasic />} />
+            <Route
+              path="/admin-minimal-test"
+              element={
+                <SupabaseAuthProviderMinimal>
+                  <AdminMinimalTest />
+                </SupabaseAuthProviderMinimal>
+              }
+            />
+
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <UserDashboard />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/community"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <Community />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/flood-prediction"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <FloodPredictionPage />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/old-dashboard"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <Layout>
+                      <Index />
+                    </Layout>
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/shelters"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <ShelterFinder />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/emergency-contacts"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <EmergencyContacts />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/predictions"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <Layout>
+                      <Predictions />
+                    </Layout>
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alerts"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <Alerts />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <Reports />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <Profile />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AlertProvider>
+                    <Analytics />
+                  </AlertProvider>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Redirect old routes */}
+            <Route
+              path="/index"
+              element={<Navigate to="/dashboard" replace />}
+            />
+
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
+        <JanRakshakChatbot />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

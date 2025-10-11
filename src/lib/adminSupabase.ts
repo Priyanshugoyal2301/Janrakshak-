@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
 // Types for admin tables (Firebase-integrated)
 export interface AdminUser {
@@ -7,7 +7,7 @@ export interface AdminUser {
   email: string;
   display_name?: string;
   photo_url?: string;
-  role: 'user' | 'admin' | 'emergency_responder' | 'volunteer' | 'rescue_team';
+  role: "user" | "admin" | "emergency_responder" | "volunteer" | "rescue_team";
   disabled: boolean;
   joined_at: string;
   last_login?: string;
@@ -19,12 +19,12 @@ export interface AdminUser {
   specialization?: string;
   experience?: string;
   team?: string;
-  status: 'active' | 'suspended' | 'inactive';
+  status: "active" | "suspended" | "inactive";
   region: string;
   reports_submitted: number;
   last_activity: string;
   is_online?: boolean;
-  volunteer_status: 'inactive' | 'active' | 'standby' | 'busy';
+  volunteer_status: "inactive" | "active" | "standby" | "busy";
   availability: string;
   rating: number;
   missions_completed: number;
@@ -33,11 +33,11 @@ export interface AdminUser {
 export interface AdminAlert {
   id: string;
   type: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   message: string;
   region: string;
   sent_to: string[];
-  status: 'active' | 'delivered' | 'dismissed';
+  status: "active" | "delivered" | "dismissed";
   expires_at: string;
   created_by: string;
   created_at: string;
@@ -53,7 +53,7 @@ export interface AdminShelter {
   address: string;
   capacity: number;
   current_occupancy: number;
-  status: 'available' | 'near_full' | 'full';
+  status: "available" | "near_full" | "full";
   contact_person: string;
   contact_phone: string;
   contact_email: string;
@@ -71,12 +71,12 @@ export interface AdminMission {
   title: string;
   origin: string;
   destination: string;
-  mode: 'Road' | 'Boat' | 'Air';
+  mode: "Road" | "Boat" | "Air";
   assigned_team: string;
   team_leader: string;
   team_contact: string;
-  status: 'planned' | 'active' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  status: "planned" | "active" | "completed" | "cancelled";
+  priority: "low" | "medium" | "high" | "critical";
   estimated_time: string;
   distance: string;
   start_time: string;
@@ -101,7 +101,7 @@ export interface AdminMission {
 export interface AdminSystemLog {
   id: string;
   timestamp: string;
-  level: 'info' | 'warning' | 'error';
+  level: "info" | "warning" | "error";
   service: string;
   message: string;
   details?: string;
@@ -114,9 +114,9 @@ export interface AdminNotification {
   user_id: string;
   title: string;
   message: string;
-  type: 'alert' | 'mission' | 'system' | 'general';
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  status: 'sent' | 'delivered' | 'read' | 'failed';
+  type: "alert" | "mission" | "system" | "general";
+  priority: "low" | "medium" | "high" | "critical";
+  status: "sent" | "delivered" | "read" | "failed";
   sent_at: string;
   read_at?: string;
   metadata: any;
@@ -127,112 +127,126 @@ export interface AdminNotification {
 export const testSupabaseConnection = async (): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .from('user_profiles')
-      .select('id')
+      .from("user_profiles")
+      .select("id")
       .limit(1);
 
     if (error) {
-      console.error('Supabase connection test failed:', error);
       return false;
     }
-    
-    console.log('Supabase connection test successful:', data);
+
     return true;
   } catch (error) {
-    console.error('Supabase connection test error:', error);
     return false;
   }
 };
 
 // Check current user's admin status
-export const checkCurrentUserAdminStatus = async (): Promise<{isAdmin: boolean, user: any}> => {
+export const checkCurrentUserAdminStatus = async (): Promise<{
+  isAdmin: boolean;
+  user: any;
+}> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log('Current Supabase user:', user);
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) {
       return { isAdmin: false, user: null };
     }
 
     const { data, error } = await supabase
-      .from('user_profiles')
-      .select('id, firebase_uid, email, role')
-      .eq('firebase_uid', user.id)
+      .from("user_profiles")
+      .select("id, firebase_uid, email, role")
+      .eq("firebase_uid", user.id)
       .single();
 
     if (error) {
-      console.error('Error checking user admin status:', error);
       return { isAdmin: false, user: null };
     }
 
-    const isAdmin = data?.role === 'admin' || data?.role === 'emergency_responder';
-    console.log('User admin status:', { user: data, isAdmin });
-    
+    const isAdmin =
+      data?.role === "admin" || data?.role === "emergency_responder";
+
     return { isAdmin, user: data };
   } catch (error) {
-    console.error('Error checking admin status:', error);
     return { isAdmin: false, user: null };
   }
 };
 
 // Function to sync Firebase users to Supabase
-export const syncFirebaseUsersToSupabase = async (): Promise<{ success: boolean; count: number; message: string }> => {
+export const syncFirebaseUsersToSupabase = async (): Promise<{
+  success: boolean;
+  count: number;
+  message: string;
+}> => {
   try {
-    console.log('Starting Firebase to Supabase user sync...');
-    
     // Get current Firebase user (this is just for testing - in real app you'd get all users)
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) {
-      return { success: false, count: 0, message: 'No authenticated Firebase user found' };
+      return {
+        success: false,
+        count: 0,
+        message: "No authenticated Firebase user found",
+      };
     }
 
     // Check if user already exists in Supabase
     const { data: existingUser } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('firebase_uid', user.id)
+      .from("user_profiles")
+      .select("*")
+      .eq("firebase_uid", user.id)
       .single();
 
     if (existingUser) {
-      return { success: true, count: 1, message: 'User already exists in Supabase' };
+      return {
+        success: true,
+        count: 1,
+        message: "User already exists in Supabase",
+      };
     }
 
     // Create user profile in Supabase
     const { data: newUser, error } = await supabase
-      .from('user_profiles')
+      .from("user_profiles")
       .insert({
         firebase_uid: user.id,
-        email: user.email || 'unknown@example.com',
-        display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User',
+        email: user.email || "unknown@example.com",
+        display_name:
+          user.user_metadata?.full_name ||
+          user.email?.split("@")[0] ||
+          "Unknown User",
         photo_url: user.user_metadata?.avatar_url || null,
-        role: 'admin', // Set as admin for testing
+        role: "admin", // Set as admin for testing
         disabled: false,
         joined_at: new Date().toISOString(),
         last_login: new Date().toISOString(),
-        status: 'active',
-        region: 'Unknown',
+        status: "active",
+        region: "Unknown",
         reports_submitted: 0,
         last_activity: new Date().toISOString(),
         is_online: true,
-        volunteer_status: 'inactive',
-        availability: '24/7',
+        volunteer_status: "inactive",
+        availability: "24/7",
         rating: 0.0,
-        missions_completed: 0
+        missions_completed: 0,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error creating user profile:', error);
       return { success: false, count: 0, message: `Error: ${error.message}` };
     }
 
-    console.log('User synced successfully:', newUser);
-    return { success: true, count: 1, message: 'User synced successfully to Supabase' };
-    
+    return {
+      success: true,
+      count: 1,
+      message: "User synced successfully to Supabase",
+    };
   } catch (error) {
-    console.error('Error syncing Firebase users:', error);
     return { success: false, count: 0, message: `Sync error: ${error}` };
   }
 };
@@ -240,75 +254,65 @@ export const syncFirebaseUsersToSupabase = async (): Promise<{ success: boolean;
 // User Management Functions
 export const getAdminUsers = async (): Promise<AdminUser[]> => {
   try {
-    console.log('Attempting to fetch users from Supabase...');
-    
     // Test connection first
     const connectionOk = await testSupabaseConnection();
     if (!connectionOk) {
-      console.log('Connection test failed, returning sample data');
       return getSampleAdminUsers();
     }
 
     const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("user_profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Supabase error fetching users:', error);
-      console.error('Error details:', error.message, error.code, error.details);
-      
       // If table doesn't exist, return sample data
-      if (error.code === 'PGRST116' || error.message.includes('relation "user_profiles" does not exist')) {
-        console.log('User profiles table not found, returning sample data');
+      if (
+        error.code === "PGRST116" ||
+        error.message.includes('relation "user_profiles" does not exist')
+      ) {
         return getSampleAdminUsers();
       }
-      
+
       return [];
     }
-    
-    console.log('Fetched users from Supabase:', data);
-    console.log('First user structure:', data?.[0]);
-    
+
     // If no data, return sample data
     if (!data || data.length === 0) {
-      console.log('No users found in database, returning sample data');
       return getSampleAdminUsers();
     }
-    
+
     // Ensure all required fields have default values
-    const processedData = (data || []).map(user => ({
-      id: user.id || '',
-      firebase_uid: user.firebase_uid || '',
-      email: user.email || 'unknown@example.com',
-      display_name: user.display_name || user.email || 'Unknown User',
+    const processedData = (data || []).map((user) => ({
+      id: user.id || "",
+      firebase_uid: user.firebase_uid || "",
+      email: user.email || "unknown@example.com",
+      display_name: user.display_name || user.email || "Unknown User",
       photo_url: user.photo_url || null,
-      role: user.role || 'user',
+      role: user.role || "user",
       disabled: user.disabled !== undefined ? user.disabled : false,
       joined_at: user.joined_at || new Date().toISOString(),
       last_login: user.last_login || null,
       created_at: user.created_at || new Date().toISOString(),
       updated_at: user.updated_at || new Date().toISOString(),
-      phone: user.phone || '',
-      emergency_contact: user.emergency_contact || '',
-      specialization: user.specialization || '',
-      experience: user.experience || '',
-      team: user.team || '',
-      status: user.status || 'active',
-      region: user.region || 'Unknown',
+      phone: user.phone || "",
+      emergency_contact: user.emergency_contact || "",
+      specialization: user.specialization || "",
+      experience: user.experience || "",
+      team: user.team || "",
+      status: user.status || "active",
+      region: user.region || "Unknown",
       reports_submitted: user.reports_submitted || 0,
       last_activity: user.last_activity || new Date().toISOString(),
       is_online: user.is_online !== undefined ? user.is_online : false,
-      volunteer_status: user.volunteer_status || 'inactive',
-      availability: user.availability || '24/7',
+      volunteer_status: user.volunteer_status || "inactive",
+      availability: user.availability || "24/7",
       rating: user.rating || 0.0,
-      missions_completed: user.missions_completed || 0
+      missions_completed: user.missions_completed || 0,
     }));
-    
-    console.log('Processed users:', processedData);
+
     return processedData;
   } catch (error) {
-    console.error('Error fetching admin users:', error);
     return getSampleAdminUsers();
   }
 };
@@ -317,163 +321,161 @@ export const getAdminUsers = async (): Promise<AdminUser[]> => {
 const getSampleAdminUsers = (): AdminUser[] => {
   return [
     {
-      id: '1',
-      firebase_uid: 'sample-user-1',
-      email: 'admin@janrakshak.com',
-      display_name: 'Admin User',
+      id: "1",
+      firebase_uid: "sample-user-1",
+      email: "admin@janrakshak.com",
+      display_name: "Admin User",
       photo_url: null,
-      role: 'admin',
+      role: "admin",
       disabled: false,
       joined_at: new Date().toISOString(),
       last_login: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      phone: '+91 98765 43210',
-      emergency_contact: '+91 98765 43211',
-      specialization: 'Emergency Management',
-      experience: '5 years',
-      team: 'Team Alpha',
-      status: 'active',
-      region: 'Chennai',
+      phone: "+91 98765 43210",
+      emergency_contact: "+91 98765 43211",
+      specialization: "Emergency Management",
+      experience: "5 years",
+      team: "Team Alpha",
+      status: "active",
+      region: "Chennai",
       reports_submitted: 25,
       last_activity: new Date().toISOString(),
       is_online: true,
-      volunteer_status: 'active',
-      availability: '24/7',
+      volunteer_status: "active",
+      availability: "24/7",
       rating: 4.8,
-      missions_completed: 25
+      missions_completed: 25,
     },
     {
-      id: '2',
-      firebase_uid: 'sample-user-2',
-      email: 'volunteer@janrakshak.com',
-      display_name: 'John Doe',
+      id: "2",
+      firebase_uid: "sample-user-2",
+      email: "volunteer@janrakshak.com",
+      display_name: "John Doe",
       photo_url: null,
-      role: 'volunteer',
+      role: "volunteer",
       disabled: false,
       joined_at: new Date().toISOString(),
       last_login: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      phone: '+91 98765 43212',
-      emergency_contact: '+91 98765 43213',
-      specialization: 'Water Rescue',
-      experience: '3 years',
-      team: 'Team Beta',
-      status: 'active',
-      region: 'Chennai',
+      phone: "+91 98765 43212",
+      emergency_contact: "+91 98765 43213",
+      specialization: "Water Rescue",
+      experience: "3 years",
+      team: "Team Beta",
+      status: "active",
+      region: "Chennai",
       reports_submitted: 15,
       last_activity: new Date().toISOString(),
       is_online: true,
-      volunteer_status: 'active',
-      availability: 'Weekends',
+      volunteer_status: "active",
+      availability: "Weekends",
       rating: 4.5,
-      missions_completed: 15
+      missions_completed: 15,
     },
     {
-      id: '3',
-      firebase_uid: 'sample-user-3',
-      email: 'rescue@janrakshak.com',
-      display_name: 'Jane Smith',
+      id: "3",
+      firebase_uid: "sample-user-3",
+      email: "rescue@janrakshak.com",
+      display_name: "Jane Smith",
       photo_url: null,
-      role: 'rescue_team',
+      role: "rescue_team",
       disabled: false,
       joined_at: new Date().toISOString(),
       last_login: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      phone: '+91 98765 43214',
-      emergency_contact: '+91 98765 43215',
-      specialization: 'Search & Rescue',
-      experience: '7 years',
-      team: 'Team Gamma',
-      status: 'active',
-      region: 'Chennai',
+      phone: "+91 98765 43214",
+      emergency_contact: "+91 98765 43215",
+      specialization: "Search & Rescue",
+      experience: "7 years",
+      team: "Team Gamma",
+      status: "active",
+      region: "Chennai",
       reports_submitted: 40,
       last_activity: new Date().toISOString(),
       is_online: true,
-      volunteer_status: 'active',
-      availability: '24/7',
+      volunteer_status: "active",
+      availability: "24/7",
       rating: 4.9,
-      missions_completed: 40
+      missions_completed: 40,
     },
     {
-      id: '4',
-      firebase_uid: 'sample-user-4',
-      email: 'user@janrakshak.com',
-      display_name: 'Regular User',
+      id: "4",
+      firebase_uid: "sample-user-4",
+      email: "user@janrakshak.com",
+      display_name: "Regular User",
       photo_url: null,
-      role: 'user',
+      role: "user",
       disabled: false,
       joined_at: new Date().toISOString(),
       last_login: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      phone: '+91 98765 43216',
-      emergency_contact: '+91 98765 43217',
-      specialization: '',
-      experience: '',
-      team: '',
-      status: 'active',
-      region: 'Chennai',
+      phone: "+91 98765 43216",
+      emergency_contact: "+91 98765 43217",
+      specialization: "",
+      experience: "",
+      team: "",
+      status: "active",
+      region: "Chennai",
       reports_submitted: 5,
       last_activity: new Date().toISOString(),
       is_online: false,
-      volunteer_status: 'inactive',
-      availability: '24/7',
+      volunteer_status: "inactive",
+      availability: "24/7",
       rating: 0.0,
-      missions_completed: 0
-    }
+      missions_completed: 0,
+    },
   ];
 };
 
-
-export const updateUserRole = async (userId: string, role: string): Promise<boolean> => {
+export const updateUserRole = async (
+  userId: string,
+  role: string
+): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('user_profiles')
+      .from("user_profiles")
       .update({ role, updated_at: new Date().toISOString() })
-      .eq('id', userId);
+      .eq("id", userId);
 
     return !error;
   } catch (error) {
-    console.error('Error updating user role:', error);
     return false;
   }
 };
 
-export const updateUserStatus = async (userId: string, status: string): Promise<boolean> => {
+export const updateUserStatus = async (
+  userId: string,
+  status: string
+): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('user_profiles')
+      .from("user_profiles")
       .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', userId);
+      .eq("id", userId);
 
     return !error;
   } catch (error) {
-    console.error('Error updating user status:', error);
     return false;
   }
 };
 
 export const deleteUser = async (userId: string): Promise<boolean> => {
   try {
-    console.log('Deleting user:', userId);
-    
     const { error } = await supabase
-      .from('user_profiles')
+      .from("user_profiles")
       .delete()
-      .eq('id', userId);
+      .eq("id", userId);
 
     if (error) {
-      console.error('Error deleting user:', error);
       return false;
     }
 
-    console.log('User deleted successfully');
     return true;
   } catch (error) {
-    console.error('Exception deleting user:', error);
     return false;
   }
 };
@@ -482,76 +484,81 @@ export const deleteUser = async (userId: string): Promise<boolean> => {
 export const getAdminAlerts = async (): Promise<AdminAlert[]> => {
   try {
     const { data, error } = await supabase
-      .from('admin_alerts')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("admin_alerts")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Supabase error fetching alerts:', error);
+      console.error("Supabase error fetching alerts:", error);
       throw error;
     }
-    
-    console.log('Fetched alerts from Supabase:', data);
-    console.log('First alert structure:', data?.[0]);
-    
+
+    console.log("Fetched alerts from Supabase:", data);
+    console.log("First alert structure:", data?.[0]);
+
     // Ensure all required fields have default values
-    const processedData = (data || []).map(alert => ({
-      id: alert.id || '',
-      type: alert.type || 'Unknown Type',
-      severity: alert.severity || 'medium',
-      message: alert.message || 'No message',
-      region: alert.region || 'Unknown Region',
+    const processedData = (data || []).map((alert) => ({
+      id: alert.id || "",
+      type: alert.type || "Unknown Type",
+      severity: alert.severity || "medium",
+      message: alert.message || "No message",
+      region: alert.region || "Unknown Region",
       sent_to: Array.isArray(alert.sent_to) ? alert.sent_to : [],
-      status: alert.status || 'active',
+      status: alert.status || "active",
       expires_at: alert.expires_at || new Date().toISOString(),
-      created_by: alert.created_by || 'Unknown Creator',
+      created_by: alert.created_by || "Unknown Creator",
       delivery_count: alert.delivery_count || 0,
       read_count: alert.read_count || 0,
       created_at: alert.created_at || new Date().toISOString(),
-      updated_at: alert.updated_at || new Date().toISOString()
+      updated_at: alert.updated_at || new Date().toISOString(),
     }));
-    
-    console.log('Processed alerts:', processedData);
+
+    console.log("Processed alerts:", processedData);
     return processedData;
   } catch (error) {
-    console.error('Error fetching admin alerts:', error);
+    console.error("Error fetching admin alerts:", error);
     return [];
   }
 };
 
-export const createAlert = async (alert: Omit<AdminAlert, 'id' | 'created_at' | 'updated_at'>): Promise<AdminAlert | null> => {
+export const createAlert = async (
+  alert: Omit<AdminAlert, "id" | "created_at" | "updated_at">
+): Promise<AdminAlert | null> => {
   try {
-    console.log('Creating alert:', alert);
-    
+    console.log("Creating alert:", alert);
+
     const { data, error } = await supabase
-      .from('admin_alerts')
+      .from("admin_alerts")
       .insert([alert])
       .select()
       .single();
 
     if (error) {
-      console.error('Supabase error creating alert:', error);
+      console.error("Supabase error creating alert:", error);
       throw error;
     }
-    
-    console.log('Alert created successfully:', data);
+
+    console.log("Alert created successfully:", data);
     return data;
   } catch (error) {
-    console.error('Error creating alert:', error);
+    console.error("Error creating alert:", error);
     throw error; // Re-throw the error instead of returning null
   }
 };
 
-export const updateAlertStatus = async (alertId: string, status: string): Promise<boolean> => {
+export const updateAlertStatus = async (
+  alertId: string,
+  status: string
+): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('admin_alerts')
+      .from("admin_alerts")
       .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', alertId);
+      .eq("id", alertId);
 
     return !error;
   } catch (error) {
-    console.error('Error updating alert status:', error);
+    console.error("Error updating alert status:", error);
     return false;
   }
 };
@@ -559,41 +566,43 @@ export const updateAlertStatus = async (alertId: string, status: string): Promis
 export const deleteAlert = async (alertId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('admin_alerts')
+      .from("admin_alerts")
       .delete()
-      .eq('id', alertId);
+      .eq("id", alertId);
 
     if (error) {
-      console.error('Error deleting alert:', error);
+      console.error("Error deleting alert:", error);
       return false;
     }
 
-    console.log('Alert deleted successfully:', alertId);
+    console.log("Alert deleted successfully:", alertId);
     return true;
   } catch (error) {
-    console.error('Error deleting alert:', error);
+    console.error("Error deleting alert:", error);
     return false;
   }
 };
 
-export const resendAlert = async (alertId: string): Promise<{ success: boolean; message: string }> => {
+export const resendAlert = async (
+  alertId: string
+): Promise<{ success: boolean; message: string }> => {
   try {
-    console.log('Resending alert:', alertId);
-    
+    console.log("Resending alert:", alertId);
+
     // Get the original alert
     const { data: originalAlert, error: fetchError } = await supabase
-      .from('admin_alerts')
-      .select('*')
-      .eq('id', alertId)
+      .from("admin_alerts")
+      .select("*")
+      .eq("id", alertId)
       .single();
 
     if (fetchError) {
-      console.error('Error fetching alert for resend:', fetchError);
-      return { success: false, message: 'Failed to fetch alert details' };
+      console.error("Error fetching alert for resend:", fetchError);
+      return { success: false, message: "Failed to fetch alert details" };
     }
 
     if (!originalAlert) {
-      return { success: false, message: 'Alert not found' };
+      return { success: false, message: "Alert not found" };
     }
 
     // Create a new alert with updated timestamps and delivery count
@@ -603,41 +612,44 @@ export const resendAlert = async (alertId: string): Promise<{ success: boolean; 
       message: originalAlert.message,
       region: originalAlert.region,
       sent_to: originalAlert.sent_to,
-      status: 'active',
+      status: "active",
       expires_at: originalAlert.expires_at,
       created_by: originalAlert.created_by,
       delivery_count: (originalAlert.delivery_count || 0) + 1,
-      read_count: 0
+      read_count: 0,
     };
 
     // Insert the new alert
     const { data: resendAlert, error: insertError } = await supabase
-      .from('admin_alerts')
+      .from("admin_alerts")
       .insert([newAlert])
       .select()
       .single();
 
     if (insertError) {
-      console.error('Error resending alert:', insertError);
-      return { success: false, message: 'Failed to resend alert' };
+      console.error("Error resending alert:", insertError);
+      return { success: false, message: "Failed to resend alert" };
     }
 
     // Log the resend action
     await logSystemEvent(
-      'info',
-      'Alerts System',
-      'Alert resent',
+      "info",
+      "Alerts System",
+      "Alert resent",
       `Original Alert ID: ${alertId}, New Alert ID: ${resendAlert.id}, Severity: ${originalAlert.severity}`
     );
 
-    console.log('Alert resent successfully:', resendAlert);
-    return { 
-      success: true, 
-      message: `Alert "${originalAlert.type}" resent successfully to ${originalAlert.sent_to.length} recipients` 
+    console.log("Alert resent successfully:", resendAlert);
+    return {
+      success: true,
+      message: `Alert "${originalAlert.type}" resent successfully to ${originalAlert.sent_to.length} recipients`,
     };
   } catch (error) {
-    console.error('Error resending alert:', error);
-    return { success: false, message: 'Failed to resend alert due to system error' };
+    console.error("Error resending alert:", error);
+    return {
+      success: false,
+      message: "Failed to resend alert due to system error",
+    };
   }
 };
 
@@ -645,55 +657,58 @@ export const resendAlert = async (alertId: string): Promise<{ success: boolean; 
 export const getAdminShelters = async (): Promise<AdminShelter[]> => {
   try {
     const { data, error } = await supabase
-      .from('admin_shelters')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("admin_shelters")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Supabase error fetching shelters:', error);
-      
+      console.error("Supabase error fetching shelters:", error);
+
       // If table doesn't exist, return sample data
-      if (error.code === 'PGRST116' || error.message.includes('relation "admin_shelters" does not exist')) {
-        console.log('Admin shelters table not found, returning sample data');
+      if (
+        error.code === "PGRST116" ||
+        error.message.includes('relation "admin_shelters" does not exist')
+      ) {
+        console.log("Admin shelters table not found, returning sample data");
         return getSampleAdminShelters();
       }
-      
+
       return [];
     }
-    
-    console.log('Fetched shelters from Supabase:', data);
-    console.log('First shelter structure:', data?.[0]);
-    
+
+    console.log("Fetched shelters from Supabase:", data);
+    console.log("First shelter structure:", data?.[0]);
+
     // If no data, return sample data
     if (!data || data.length === 0) {
-      console.log('No shelters found in database, returning sample data');
+      console.log("No shelters found in database, returning sample data");
       return getSampleAdminShelters();
     }
-    
+
     // Ensure all required fields have default values
-    const processedData = (data || []).map(shelter => ({
-      id: shelter.id || '',
-      name: shelter.name || 'Unknown Shelter',
-      location: shelter.location || 'Unknown Location',
-      address: shelter.address || 'Unknown Address',
+    const processedData = (data || []).map((shelter) => ({
+      id: shelter.id || "",
+      name: shelter.name || "Unknown Shelter",
+      location: shelter.location || "Unknown Location",
+      address: shelter.address || "Unknown Address",
       capacity: shelter.capacity || 0,
       current_occupancy: shelter.current_occupancy || 0,
-      status: shelter.status || 'available',
-      contact_person: shelter.contact_person || 'Unknown Contact',
-      contact_phone: shelter.contact_phone || 'Unknown Phone',
-      contact_email: shelter.contact_email || 'Unknown Email',
+      status: shelter.status || "available",
+      contact_person: shelter.contact_person || "Unknown Contact",
+      contact_phone: shelter.contact_phone || "Unknown Phone",
+      contact_email: shelter.contact_email || "Unknown Email",
       facilities: Array.isArray(shelter.facilities) ? shelter.facilities : [],
       coordinates: shelter.coordinates || { lat: 0, lng: 0 },
       is_active: shelter.is_active !== undefined ? shelter.is_active : true,
-      notes: shelter.notes || '',
+      notes: shelter.notes || "",
       created_at: shelter.created_at || new Date().toISOString(),
-      updated_at: shelter.updated_at || new Date().toISOString()
+      updated_at: shelter.updated_at || new Date().toISOString(),
     }));
-    
-    console.log('Processed shelters:', processedData);
+
+    console.log("Processed shelters:", processedData);
     return processedData;
   } catch (error) {
-    console.error('Error fetching admin shelters:', error);
+    console.error("Error fetching admin shelters:", error);
     return getSampleAdminShelters();
   }
 };
@@ -702,84 +717,86 @@ export const getAdminShelters = async (): Promise<AdminShelter[]> => {
 const getSampleAdminShelters = (): AdminShelter[] => {
   return [
     {
-      id: '1',
-      name: 'Chennai Central Shelter',
-      location: 'Chennai Central',
-      address: '123 Main Street, Chennai Central',
+      id: "1",
+      name: "Chennai Central Shelter",
+      location: "Chennai Central",
+      address: "123 Main Street, Chennai Central",
       capacity: 200,
       current_occupancy: 45,
-      status: 'available',
-      contact_person: 'Rajesh Kumar',
-      contact_phone: '+91 98765 43210',
-      contact_email: 'rajesh@shelter.com',
-      facilities: ['Food', 'Water', 'Medical', 'WiFi', 'Beds'],
+      status: "available",
+      contact_person: "Rajesh Kumar",
+      contact_phone: "+91 98765 43210",
+      contact_email: "rajesh@shelter.com",
+      facilities: ["Food", "Water", "Medical", "WiFi", "Beds"],
       coordinates: { lat: 13.0827, lng: 80.2707 },
       is_active: true,
-      notes: 'Main evacuation center',
+      notes: "Main evacuation center",
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     {
-      id: '2',
-      name: 'Sector 17 Community Center',
-      location: 'Sector 17',
-      address: '456 Community Road, Sector 17',
+      id: "2",
+      name: "Sector 17 Community Center",
+      location: "Sector 17",
+      address: "456 Community Road, Sector 17",
       capacity: 150,
       current_occupancy: 120,
-      status: 'near_full',
-      contact_person: 'Priya Sharma',
-      contact_phone: '+91 98765 43211',
-      contact_email: 'priya@shelter.com',
-      facilities: ['Food', 'Water', 'Medical', 'Parking'],
-      coordinates: { lat: 13.0900, lng: 80.2800 },
+      status: "near_full",
+      contact_person: "Priya Sharma",
+      contact_phone: "+91 98765 43211",
+      contact_email: "priya@shelter.com",
+      facilities: ["Food", "Water", "Medical", "Parking"],
+      coordinates: { lat: 13.09, lng: 80.28 },
       is_active: true,
-      notes: 'Community-based shelter',
+      notes: "Community-based shelter",
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     {
-      id: '3',
-      name: 'Sports Complex Shelter',
-      location: 'Sports Complex',
-      address: '789 Sports Avenue, Chennai',
+      id: "3",
+      name: "Sports Complex Shelter",
+      location: "Sports Complex",
+      address: "789 Sports Avenue, Chennai",
       capacity: 300,
       current_occupancy: 280,
-      status: 'near_full',
-      contact_person: 'Amit Singh',
-      contact_phone: '+91 98765 43212',
-      contact_email: 'amit@shelter.com',
-      facilities: ['Food', 'Water', 'Medical', 'WiFi', 'Beds', 'Shower'],
-      coordinates: { lat: 13.1000, lng: 80.2900 },
+      status: "near_full",
+      contact_person: "Amit Singh",
+      contact_phone: "+91 98765 43212",
+      contact_email: "amit@shelter.com",
+      facilities: ["Food", "Water", "Medical", "WiFi", "Beds", "Shower"],
+      coordinates: { lat: 13.1, lng: 80.29 },
       is_active: true,
-      notes: 'Large capacity shelter',
+      notes: "Large capacity shelter",
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     {
-      id: '4',
-      name: 'School Shelter',
-      location: 'Government School',
-      address: '321 School Street, Chennai',
+      id: "4",
+      name: "School Shelter",
+      location: "Government School",
+      address: "321 School Street, Chennai",
       capacity: 100,
       current_occupancy: 15,
-      status: 'available',
-      contact_person: 'Sarah Wilson',
-      contact_phone: '+91 98765 43213',
-      contact_email: 'sarah@shelter.com',
-      facilities: ['Food', 'Water', 'Medical'],
-      coordinates: { lat: 13.0700, lng: 80.2600 },
+      status: "available",
+      contact_person: "Sarah Wilson",
+      contact_phone: "+91 98765 43213",
+      contact_email: "sarah@shelter.com",
+      facilities: ["Food", "Water", "Medical"],
+      coordinates: { lat: 13.07, lng: 80.26 },
       is_active: true,
-      notes: 'Educational institution shelter',
+      notes: "Educational institution shelter",
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
+      updated_at: new Date().toISOString(),
+    },
   ];
 };
 
-export const createShelter = async (shelter: Omit<AdminShelter, 'id' | 'created_at' | 'updated_at'>): Promise<AdminShelter | null> => {
+export const createShelter = async (
+  shelter: Omit<AdminShelter, "id" | "created_at" | "updated_at">
+): Promise<AdminShelter | null> => {
   try {
     const { data, error } = await supabase
-      .from('admin_shelters')
+      .from("admin_shelters")
       .insert([shelter])
       .select()
       .single();
@@ -787,25 +804,33 @@ export const createShelter = async (shelter: Omit<AdminShelter, 'id' | 'created_
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error creating shelter:', error);
+    console.error("Error creating shelter:", error);
     return null;
   }
 };
 
-export const updateShelterOccupancy = async (shelterId: string, occupancy: number): Promise<boolean> => {
+export const updateShelterOccupancy = async (
+  shelterId: string,
+  occupancy: number
+): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('admin_shelters')
-      .update({ 
+      .from("admin_shelters")
+      .update({
         current_occupancy: occupancy,
-        status: occupancy >= 90 ? 'full' : occupancy >= 70 ? 'near_full' : 'available',
-        updated_at: new Date().toISOString() 
+        status:
+          occupancy >= 90
+            ? "full"
+            : occupancy >= 70
+            ? "near_full"
+            : "available",
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', shelterId);
+      .eq("id", shelterId);
 
     return !error;
   } catch (error) {
-    console.error('Error updating shelter occupancy:', error);
+    console.error("Error updating shelter occupancy:", error);
     return false;
   }
 };
@@ -813,19 +838,19 @@ export const updateShelterOccupancy = async (shelterId: string, occupancy: numbe
 export const deleteShelter = async (shelterId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('admin_shelters')
+      .from("admin_shelters")
       .delete()
-      .eq('id', shelterId);
+      .eq("id", shelterId);
 
     if (error) {
-      console.error('Supabase error deleting shelter:', error);
+      console.error("Supabase error deleting shelter:", error);
       throw error;
     }
 
-    console.log('Shelter deleted successfully:', shelterId);
+    console.log("Shelter deleted successfully:", shelterId);
     return true;
   } catch (error) {
-    console.error('Error deleting shelter:', error);
+    console.error("Error deleting shelter:", error);
     return false;
   }
 };
@@ -834,27 +859,29 @@ export const deleteShelter = async (shelterId: string): Promise<boolean> => {
 export const getAdminMissions = async (): Promise<AdminMission[]> => {
   try {
     const { data, error } = await supabase
-      .from('admin_missions')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("admin_missions")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Supabase error fetching missions:', error);
+      console.error("Supabase error fetching missions:", error);
       throw error;
     }
-    
-    console.log('Fetched missions from Supabase:', data);
+
+    console.log("Fetched missions from Supabase:", data);
     return data || [];
   } catch (error) {
-    console.error('Error fetching admin missions:', error);
+    console.error("Error fetching admin missions:", error);
     return [];
   }
 };
 
-export const createMission = async (mission: Omit<AdminMission, 'id' | 'created_at' | 'updated_at'>): Promise<AdminMission | null> => {
+export const createMission = async (
+  mission: Omit<AdminMission, "id" | "created_at" | "updated_at">
+): Promise<AdminMission | null> => {
   try {
     const { data, error } = await supabase
-      .from('admin_missions')
+      .from("admin_missions")
       .insert([mission])
       .select()
       .single();
@@ -862,30 +889,33 @@ export const createMission = async (mission: Omit<AdminMission, 'id' | 'created_
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error creating mission:', error);
+    console.error("Error creating mission:", error);
     return null;
   }
 };
 
-export const updateMissionStatus = async (missionId: string, status: string): Promise<boolean> => {
+export const updateMissionStatus = async (
+  missionId: string,
+  status: string
+): Promise<boolean> => {
   try {
-    const updateData: any = { 
-      status, 
-      updated_at: new Date().toISOString() 
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString(),
     };
 
-    if (status === 'completed') {
+    if (status === "completed") {
       updateData.actual_completion = new Date().toISOString();
     }
 
     const { error } = await supabase
-      .from('admin_missions')
+      .from("admin_missions")
       .update(updateData)
-      .eq('id', missionId);
+      .eq("id", missionId);
 
     return !error;
   } catch (error) {
-    console.error('Error updating mission status:', error);
+    console.error("Error updating mission status:", error);
     return false;
   }
 };
@@ -894,41 +924,43 @@ export const updateMissionStatus = async (missionId: string, status: string): Pr
 export const getSystemLogs = async (): Promise<AdminSystemLog[]> => {
   try {
     const { data, error } = await supabase
-      .from('admin_system_logs')
-      .select('*')
-      .order('timestamp', { ascending: false })
+      .from("admin_system_logs")
+      .select("*")
+      .order("timestamp", { ascending: false })
       .limit(100);
 
     if (error) {
-      console.error('Supabase error fetching system logs:', error);
+      console.error("Supabase error fetching system logs:", error);
       throw error;
     }
-    
-    console.log('Fetched system logs from Supabase:', data);
-    
+
+    console.log("Fetched system logs from Supabase:", data);
+
     // If no logs exist or very few logs, create some real system logs based on current activity
     if (!data || data.length < 5) {
-      console.log('Insufficient system logs found, creating sample logs based on real activity...');
+      console.log(
+        "Insufficient system logs found, creating sample logs based on real activity..."
+      );
       await createRealSystemLogs();
-      
+
       // Fetch again after creating logs
       const { data: newData, error: newError } = await supabase
-        .from('admin_system_logs')
-        .select('*')
-        .order('timestamp', { ascending: false })
+        .from("admin_system_logs")
+        .select("*")
+        .order("timestamp", { ascending: false })
         .limit(100);
-        
+
       if (newError) {
-        console.error('Error fetching logs after creation:', newError);
+        console.error("Error fetching logs after creation:", newError);
         return [];
       }
-      
+
       return newData || [];
     }
-    
+
     return data || [];
   } catch (error) {
-    console.error('Error fetching system logs:', error);
+    console.error("Error fetching system logs:", error);
     return [];
   }
 };
@@ -936,20 +968,16 @@ export const getSystemLogs = async (): Promise<AdminSystemLog[]> => {
 // Function to create real system logs based on current system activity
 const createRealSystemLogs = async () => {
   try {
-    console.log('Creating real system logs based on current activity...');
-    
+    console.log("Creating real system logs based on current activity...");
+
     // Get current system stats to create realistic logs
-    const [
-      usersResult,
-      reportsResult,
-      alertsResult,
-      sheltersResult
-    ] = await Promise.all([
-      supabase.from('user_profiles').select('id', { count: 'exact' }),
-      supabase.from('flood_reports').select('id', { count: 'exact' }),
-      supabase.from('admin_alerts').select('id', { count: 'exact' }),
-      supabase.from('admin_shelters').select('id', { count: 'exact' })
-    ]);
+    const [usersResult, reportsResult, alertsResult, sheltersResult] =
+      await Promise.all([
+        supabase.from("user_profiles").select("id", { count: "exact" }),
+        supabase.from("flood_reports").select("id", { count: "exact" }),
+        supabase.from("admin_alerts").select("id", { count: "exact" }),
+        supabase.from("admin_shelters").select("id", { count: "exact" }),
+      ]);
 
     const totalUsers = usersResult.count || 0;
     const totalReports = reportsResult.count || 0;
@@ -959,95 +987,111 @@ const createRealSystemLogs = async () => {
     const realLogs = [
       {
         timestamp: new Date().toISOString(),
-        level: 'info' as const,
-        service: 'System Monitor',
-        message: 'System health check completed successfully',
-        details: `Database connection: OK, Active users: ${totalUsers}, Total reports: ${totalReports}`
+        level: "info" as const,
+        service: "System Monitor",
+        message: "System health check completed successfully",
+        details: `Database connection: OK, Active users: ${totalUsers}, Total reports: ${totalReports}`,
       },
       {
         timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
-        level: 'info' as const,
-        service: 'Database',
-        message: 'Database connection pool refreshed',
-        details: `Active connections: ${Math.floor(Math.random() * 20) + 10}, Max connections: 100`
+        level: "info" as const,
+        service: "Database",
+        message: "Database connection pool refreshed",
+        details: `Active connections: ${
+          Math.floor(Math.random() * 20) + 10
+        }, Max connections: 100`,
       },
       {
         timestamp: new Date(Date.now() - 600000).toISOString(), // 10 minutes ago
-        level: 'info' as const,
-        service: 'Authentication',
-        message: 'User authentication successful',
-        details: `Total registered users: ${totalUsers}, Active sessions: ${Math.floor(totalUsers * 0.3)}`
+        level: "info" as const,
+        service: "Authentication",
+        message: "User authentication successful",
+        details: `Total registered users: ${totalUsers}, Active sessions: ${Math.floor(
+          totalUsers * 0.3
+        )}`,
       },
       {
         timestamp: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
-        level: 'info' as const,
-        service: 'Reports API',
-        message: 'Flood report processed successfully',
-        details: `Total reports in system: ${totalReports}, Pending verification: ${Math.floor(totalReports * 0.2)}`
+        level: "info" as const,
+        service: "Reports API",
+        message: "Flood report processed successfully",
+        details: `Total reports in system: ${totalReports}, Pending verification: ${Math.floor(
+          totalReports * 0.2
+        )}`,
       },
       {
         timestamp: new Date(Date.now() - 1200000).toISOString(), // 20 minutes ago
-        level: 'info' as const,
-        service: 'Alerts System',
-        message: 'Alert system status check',
-        details: `Active alerts: ${totalAlerts}, Total shelters: ${totalShelters}, System status: Operational`
+        level: "info" as const,
+        service: "Alerts System",
+        message: "Alert system status check",
+        details: `Active alerts: ${totalAlerts}, Total shelters: ${totalShelters}, System status: Operational`,
       },
       {
         timestamp: new Date(Date.now() - 1500000).toISOString(), // 25 minutes ago
-        level: 'info' as const,
-        service: 'Backup System',
-        message: 'Automated backup completed',
-        details: `Backup size: ${(Math.random() * 2 + 1).toFixed(1)} GB, Duration: ${Math.floor(Math.random() * 10) + 5} minutes`
+        level: "info" as const,
+        service: "Backup System",
+        message: "Automated backup completed",
+        details: `Backup size: ${(Math.random() * 2 + 1).toFixed(
+          1
+        )} GB, Duration: ${Math.floor(Math.random() * 10) + 5} minutes`,
       },
       {
         timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
-        level: 'warning' as const,
-        service: 'System Monitor',
-        message: 'High memory usage detected',
-        details: `Memory usage: ${Math.floor(Math.random() * 20) + 75}%, Threshold: 80%`
+        level: "warning" as const,
+        service: "System Monitor",
+        message: "High memory usage detected",
+        details: `Memory usage: ${
+          Math.floor(Math.random() * 20) + 75
+        }%, Threshold: 80%`,
       },
       {
         timestamp: new Date(Date.now() - 2100000).toISOString(), // 35 minutes ago
-        level: 'info' as const,
-        service: 'API Gateway',
-        message: 'API rate limit reset',
-        details: `Requests processed: ${Math.floor(Math.random() * 1000) + 500}, Rate limit: 1000/min`
+        level: "info" as const,
+        service: "API Gateway",
+        message: "API rate limit reset",
+        details: `Requests processed: ${
+          Math.floor(Math.random() * 1000) + 500
+        }, Rate limit: 1000/min`,
       },
       {
         timestamp: new Date(Date.now() - 2400000).toISOString(), // 40 minutes ago
-        level: 'info' as const,
-        service: 'Shelter Management',
-        message: 'Shelter capacity updated',
-        details: `Total shelters: ${totalShelters}, Available capacity: ${Math.floor(totalShelters * 0.6)}`
+        level: "info" as const,
+        service: "Shelter Management",
+        message: "Shelter capacity updated",
+        details: `Total shelters: ${totalShelters}, Available capacity: ${Math.floor(
+          totalShelters * 0.6
+        )}`,
       },
       {
         timestamp: new Date(Date.now() - 2700000).toISOString(), // 45 minutes ago
-        level: 'error' as const,
-        service: 'Reports API',
-        message: 'Failed to process flood report',
-        details: `Error: Invalid coordinates provided, Report ID: ${Math.floor(Math.random() * 1000) + 1000}`
-      }
+        level: "error" as const,
+        service: "Reports API",
+        message: "Failed to process flood report",
+        details: `Error: Invalid coordinates provided, Report ID: ${
+          Math.floor(Math.random() * 1000) + 1000
+        }`,
+      },
     ];
 
     // Insert the real logs into the database
-    const { error } = await supabase
-      .from('admin_system_logs')
-      .insert(realLogs);
+    const { error } = await supabase.from("admin_system_logs").insert(realLogs);
 
     if (error) {
-      console.error('Error inserting real system logs:', error);
+      console.error("Error inserting real system logs:", error);
     } else {
-      console.log('Successfully created real system logs:', realLogs.length);
+      console.log("Successfully created real system logs:", realLogs.length);
     }
   } catch (error) {
-    console.error('Error creating real system logs:', error);
+    console.error("Error creating real system logs:", error);
   }
 };
 
-export const addSystemLog = async (log: Omit<AdminSystemLog, 'id'>): Promise<AdminSystemLog | null> => {
+export const addSystemLog = async (
+  log: Omit<AdminSystemLog, "id">
+): Promise<AdminSystemLog | null> => {
   try {
     const { data, error } = await supabase
-      .from('admin_system_logs')
+      .from("admin_system_logs")
       .insert([log])
       .select()
       .single();
@@ -1055,44 +1099,49 @@ export const addSystemLog = async (log: Omit<AdminSystemLog, 'id'>): Promise<Adm
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error adding system log:', error);
+    console.error("Error adding system log:", error);
     return null;
   }
 };
 
 // Function to log system events automatically
-export const logSystemEvent = async (level: 'info' | 'warning' | 'error', service: string, message: string, details?: string) => {
+export const logSystemEvent = async (
+  level: "info" | "warning" | "error",
+  service: string,
+  message: string,
+  details?: string
+) => {
   try {
-    const logEntry: Omit<AdminSystemLog, 'id'> = {
+    const logEntry: Omit<AdminSystemLog, "id"> = {
       timestamp: new Date().toISOString(),
       level,
       service,
       message,
-      details
+      details,
     };
-    
+
     await addSystemLog(logEntry);
     console.log(`System log added: ${level} - ${service} - ${message}`);
   } catch (error) {
-    console.error('Error logging system event:', error);
+    console.error("Error logging system event:", error);
   }
 };
 
 // Function to automatically log dashboard access
 export const logDashboardAccess = async (userId?: string) => {
   await logSystemEvent(
-    'info',
-    'Authentication',
-    'Admin dashboard accessed',
-    userId ? `User ID: ${userId}` : 'Anonymous access'
+    "info",
+    "Authentication",
+    "Admin dashboard accessed",
+    userId ? `User ID: ${userId}` : "Anonymous access"
   );
 };
 
 // Function to automatically log report processing
 export const logReportProcessing = async (reportId: string, action: string) => {
   await logSystemEvent(
-    'info',
-    'Reports API',
+    "info",
+    "Reports API",
     `Report ${action}`,
     `Report ID: ${reportId}, Action: ${action}`
   );
@@ -1101,9 +1150,9 @@ export const logReportProcessing = async (reportId: string, action: string) => {
 // Function to automatically log alert creation
 export const logAlertCreation = async (alertId: string, severity: string) => {
   await logSystemEvent(
-    'info',
-    'Alerts System',
-    'New alert created',
+    "info",
+    "Alerts System",
+    "New alert created",
     `Alert ID: ${alertId}, Severity: ${severity}`
   );
 };
@@ -1113,37 +1162,37 @@ export const getAdminAnalytics = async () => {
   try {
     // Get user statistics
     const { data: userStats } = await supabase
-      .from('user_profiles')
-      .select('role, status, created_at');
+      .from("user_profiles")
+      .select("role, status, created_at");
 
     // Get report statistics
     const { data: reportStats } = await supabase
-      .from('flood_reports')
-      .select('severity, status, created_at');
+      .from("flood_reports")
+      .select("severity, status, created_at");
 
     // Get shelter statistics
     const { data: shelterStats } = await supabase
-      .from('admin_shelters')
-      .select('capacity, current_occupancy, status');
+      .from("admin_shelters")
+      .select("capacity, current_occupancy, status");
 
     // Get alert statistics
     const { data: alertStats } = await supabase
-      .from('admin_alerts')
-      .select('severity, status, created_at');
+      .from("admin_alerts")
+      .select("severity, status, created_at");
 
     return {
       users: userStats || [],
       reports: reportStats || [],
       shelters: shelterStats || [],
-      alerts: alertStats || []
+      alerts: alertStats || [],
     };
   } catch (error) {
-    console.error('Error fetching admin analytics:', error);
+    console.error("Error fetching admin analytics:", error);
     return {
       users: [],
       reports: [],
       shelters: [],
-      alerts: []
+      alerts: [],
     };
   }
 };
@@ -1151,147 +1200,186 @@ export const getAdminAnalytics = async () => {
 // Realtime Subscriptions
 export const subscribeToUsers = (callback: (payload: any) => void) => {
   return supabase
-    .channel('user_profiles_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'user_profiles' }, (payload) => {
-      console.log('Raw Supabase payload:', payload);
-      // Transform Supabase payload to our expected format
-      const transformedPayload = {
-        eventType: payload.eventType,
-        new: payload.new,
-        old: payload.old
-      };
-      callback(transformedPayload);
-    })
+    .channel("user_profiles_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "user_profiles" },
+      (payload) => {
+        console.log("Raw Supabase payload:", payload);
+        // Transform Supabase payload to our expected format
+        const transformedPayload = {
+          eventType: payload.eventType,
+          new: payload.new,
+          old: payload.old,
+        };
+        callback(transformedPayload);
+      }
+    )
     .subscribe();
 };
 
 export const subscribeToAlerts = (callback: (payload: any) => void) => {
   const subscription = supabase
-    .channel('admin_alerts_changes')
-    .on('postgres_changes', { 
-      event: '*', 
-      schema: 'public', 
-      table: 'admin_alerts' 
-    }, (payload) => {
-      console.log('Real-time alert payload received:', payload);
-      callback(payload);
-    })
+    .channel("admin_alerts_changes")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "admin_alerts",
+      },
+      (payload) => {
+        console.log("Real-time alert payload received:", payload);
+        callback(payload);
+      }
+    )
     .subscribe();
-    
+
   return subscription;
 };
 
 // Function to create sample alerts for testing
-export const createSampleAlerts = async (): Promise<{ success: boolean; count: number; message: string }> => {
+export const createSampleAlerts = async (): Promise<{
+  success: boolean;
+  count: number;
+  message: string;
+}> => {
   try {
-    console.log('Creating sample alerts...');
-    
+    console.log("Creating sample alerts...");
+
     const sampleAlerts = [
       {
-        type: 'Flood Warning',
-        severity: 'high',
-        message: 'Heavy rainfall expected in Chennai area. Please stay indoors and avoid low-lying areas.',
-        sent_to: ['all_users'],
-        region: 'Chennai',
+        type: "Flood Warning",
+        severity: "high",
+        message:
+          "Heavy rainfall expected in Chennai area. Please stay indoors and avoid low-lying areas.",
+        sent_to: ["all_users"],
+        region: "Chennai",
         expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
-        status: 'active'
+        status: "active",
       },
       {
-        type: 'Weather Update',
-        severity: 'medium',
-        message: 'Rain intensity decreasing in Tamil Nadu region. Conditions improving.',
-        sent_to: ['chennai_users'],
-        region: 'Tamil Nadu',
+        type: "Weather Update",
+        severity: "medium",
+        message:
+          "Rain intensity decreasing in Tamil Nadu region. Conditions improving.",
+        sent_to: ["chennai_users"],
+        region: "Tamil Nadu",
         expires_at: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString(), // 1 hour from now
-        status: 'active'
+        status: "active",
       },
       {
-        type: 'Emergency Alert',
-        severity: 'critical',
-        message: 'Immediate evacuation required in Sector 17. Emergency services deployed.',
-        sent_to: ['sector_17_users'],
-        region: 'Sector 17',
+        type: "Emergency Alert",
+        severity: "critical",
+        message:
+          "Immediate evacuation required in Sector 17. Emergency services deployed.",
+        sent_to: ["sector_17_users"],
+        region: "Sector 17",
         expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes from now
-        status: 'active'
-      }
+        status: "active",
+      },
     ];
 
     const { data, error } = await supabase
-      .from('admin_alerts')
+      .from("admin_alerts")
       .insert(sampleAlerts)
       .select();
 
     if (error) {
-      console.error('Error creating sample alerts:', error);
+      console.error("Error creating sample alerts:", error);
       return { success: false, count: 0, message: `Error: ${error.message}` };
     }
 
-    console.log('Sample alerts created successfully:', data);
-    return { success: true, count: data.length, message: `${data.length} sample alerts created successfully` };
-    
+    console.log("Sample alerts created successfully:", data);
+    return {
+      success: true,
+      count: data.length,
+      message: `${data.length} sample alerts created successfully`,
+    };
   } catch (error) {
-    console.error('Error creating sample alerts:', error);
+    console.error("Error creating sample alerts:", error);
     return { success: false, count: 0, message: `Error: ${error}` };
   }
 };
 
 export const subscribeToShelters = (callback: (payload: any) => void) => {
   return supabase
-    .channel('admin_shelters_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_shelters' }, callback)
+    .channel("admin_shelters_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "admin_shelters" },
+      callback
+    )
     .subscribe();
 };
 
 export const subscribeToMissions = (callback: (payload: any) => void) => {
   return supabase
-    .channel('admin_missions_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_missions' }, callback)
+    .channel("admin_missions_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "admin_missions" },
+      callback
+    )
     .subscribe();
 };
 
 export const subscribeToReports = (callback: (payload: any) => void) => {
   return supabase
-    .channel('flood_reports_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'flood_reports' }, callback)
+    .channel("flood_reports_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "flood_reports" },
+      callback
+    )
     .subscribe();
 };
 
 // Analytics Functions
 export const getDashboardStats = async () => {
   try {
-    console.log('Fetching dashboard stats from Supabase...');
-    
     // Get all counts in parallel
     const [
       usersResult,
       reportsResult,
       sheltersResult,
       alertsResult,
-      missionsResult
+      missionsResult,
     ] = await Promise.all([
-      supabase.from('user_profiles').select('id, status', { count: 'exact' }),
-      supabase.from('flood_reports').select('id, status, severity', { count: 'exact' }),
-      supabase.from('admin_shelters').select('id, is_active', { count: 'exact' }),
-      supabase.from('admin_alerts').select('id, status', { count: 'exact' }),
-      supabase.from('admin_missions').select('id, status', { count: 'exact' })
+      supabase.from("user_profiles").select("id, status", { count: "exact" }),
+      supabase
+        .from("flood_reports")
+        .select("id, status, severity", { count: "exact" }),
+      supabase
+        .from("admin_shelters")
+        .select("id, is_active", { count: "exact" }),
+      supabase.from("admin_alerts").select("id, status", { count: "exact" }),
+      supabase.from("admin_missions").select("id, status", { count: "exact" }),
     ]);
 
     const totalUsers = usersResult.count || 0;
-    const activeUsers = usersResult.data?.filter(u => u.status === 'active').length || 0;
-    
+    const activeUsers =
+      usersResult.data?.filter((u) => u.status === "active").length || 0;
+
     const totalReports = reportsResult.count || 0;
-    const pendingReports = reportsResult.data?.filter(r => r.status === 'pending').length || 0;
-    const criticalReports = reportsResult.data?.filter(r => r.severity === 'critical').length || 0;
-    const verifiedReports = reportsResult.data?.filter(r => r.status === 'verified').length || 0;
-    
+    const pendingReports =
+      reportsResult.data?.filter((r) => r.status === "pending").length || 0;
+    const criticalReports =
+      reportsResult.data?.filter((r) => r.severity === "critical").length || 0;
+    const verifiedReports =
+      reportsResult.data?.filter((r) => r.status === "verified").length || 0;
+
     const totalShelters = sheltersResult.count || 0;
-    const activeShelters = sheltersResult.data?.filter(s => s.is_active).length || 0;
-    
+    const activeShelters =
+      sheltersResult.data?.filter((s) => s.is_active).length || 0;
+
     const totalAlerts = alertsResult.count || 0;
-    const activeAlerts = alertsResult.data?.filter(a => a.status === 'active').length || 0;
-    
+    const activeAlerts =
+      alertsResult.data?.filter((a) => a.status === "active").length || 0;
+
     const totalMissions = missionsResult.count || 0;
-    const pendingMissions = missionsResult.data?.filter(m => m.status === 'pending').length || 0;
+    const pendingMissions =
+      missionsResult.data?.filter((m) => m.status === "pending").length || 0;
 
     const stats = {
       totalUsers,
@@ -1309,13 +1397,14 @@ export const getDashboardStats = async () => {
       // Calculated metrics
       avgResponseTime: 2.3, // This would need to be calculated from actual data
       systemUptime: 99.9, // This would need to be calculated from actual data
-      shelterCapacity: totalShelters > 0 ? Math.round((activeShelters / totalShelters) * 100) : 0
+      shelterCapacity:
+        totalShelters > 0
+          ? Math.round((activeShelters / totalShelters) * 100)
+          : 0,
     };
 
-    console.log('Dashboard stats:', stats);
     return stats;
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
     return {
       totalUsers: 0,
       activeUsers: 0,
@@ -1331,62 +1420,62 @@ export const getDashboardStats = async () => {
       pendingMissions: 0,
       avgResponseTime: 0,
       systemUptime: 0,
-      shelterCapacity: 0
+      shelterCapacity: 0,
     };
   }
 };
 
 export const getAnalyticsData = async () => {
   try {
-    console.log('Fetching analytics data from Supabase...');
-    
     // Get user growth data (last 6 months)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    
+
     const userGrowthResult = await supabase
-      .from('user_profiles')
-      .select('created_at, status')
-      .gte('created_at', sixMonthsAgo.toISOString())
-      .order('created_at', { ascending: true });
+      .from("user_profiles")
+      .select("created_at, status")
+      .gte("created_at", sixMonthsAgo.toISOString())
+      .order("created_at", { ascending: true });
 
     // Get report submissions data (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const reportsResult = await supabase
-      .from('flood_reports')
-      .select('created_at, severity')
-      .gte('created_at', sevenDaysAgo.toISOString())
-      .order('created_at', { ascending: true });
+      .from("flood_reports")
+      .select("created_at, severity")
+      .gte("created_at", sevenDaysAgo.toISOString())
+      .order("created_at", { ascending: true });
 
     // Get shelter occupancy data
     const sheltersResult = await supabase
-      .from('admin_shelters')
-      .select('name, capacity, current_occupancy, status')
-      .eq('is_active', true);
+      .from("admin_shelters")
+      .select("name, capacity, current_occupancy, status")
+      .eq("is_active", true);
 
     // Get alerts data (last 6 months)
     const alertsResult = await supabase
-      .from('admin_alerts')
-      .select('created_at, severity')
-      .gte('created_at', sixMonthsAgo.toISOString())
-      .order('created_at', { ascending: true });
+      .from("admin_alerts")
+      .select("created_at, severity")
+      .gte("created_at", sixMonthsAgo.toISOString())
+      .order("created_at", { ascending: true });
 
     // Process user growth data
     const userGrowth = processUserGrowthData(userGrowthResult.data || []);
-    
+
     // Process report submissions data
-    const reportSubmissions = processReportSubmissionsData(reportsResult.data || []);
-    
+    const reportSubmissions = processReportSubmissionsData(
+      reportsResult.data || []
+    );
+
     // Process shelter occupancy data
-    const shelterOccupancy = (sheltersResult.data || []).map(shelter => ({
+    const shelterOccupancy = (sheltersResult.data || []).map((shelter) => ({
       shelter: shelter.name,
       capacity: shelter.capacity,
       occupancy: shelter.current_occupancy,
-      status: shelter.status
+      status: shelter.status,
     }));
-    
+
     // Process alerts data
     const floodAlerts = processAlertsData(alertsResult.data || []);
 
@@ -1397,14 +1486,14 @@ export const getAnalyticsData = async () => {
       floodAlerts,
       // Additional metrics
       avgReportsPerDay: calculateAvgReportsPerDay(reportsResult.data || []),
-      shelterUtilizationRate: calculateShelterUtilizationRate(sheltersResult.data || []),
-      userSatisfactionScore: 4.2 // This would need to be calculated from actual feedback data
+      shelterUtilizationRate: calculateShelterUtilizationRate(
+        sheltersResult.data || []
+      ),
+      userSatisfactionScore: 4.2, // This would need to be calculated from actual feedback data
     };
 
-    console.log('Analytics data:', analyticsData);
     return analyticsData;
   } catch (error) {
-    console.error('Error fetching analytics data:', error);
     return {
       userGrowth: [],
       reportSubmissions: [],
@@ -1412,83 +1501,121 @@ export const getAnalyticsData = async () => {
       floodAlerts: [],
       avgReportsPerDay: 0,
       shelterUtilizationRate: 0,
-      userSatisfactionScore: 0
+      userSatisfactionScore: 0,
     };
   }
 };
 
 // Helper functions for data processing
 const processUserGrowthData = (users: any[]) => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const currentDate = new Date();
   const result = [];
-  
+
   for (let i = 5; i >= 0; i--) {
-    const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-    const monthUsers = users.filter(user => {
+    const targetDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() - i,
+      1
+    );
+    const monthUsers = users.filter((user) => {
       const userDate = new Date(user.created_at);
-      return userDate.getFullYear() === targetDate.getFullYear() && 
-             userDate.getMonth() === targetDate.getMonth();
+      return (
+        userDate.getFullYear() === targetDate.getFullYear() &&
+        userDate.getMonth() === targetDate.getMonth()
+      );
     });
-    
+
     result.push({
       month: months[targetDate.getMonth()],
       users: monthUsers.length,
       reports: 0, // This would need separate calculation
-      active: monthUsers.filter(u => u.status === 'active').length
+      active: monthUsers.filter((u) => u.status === "active").length,
     });
   }
-  
+
   return result;
 };
 
 const processReportSubmissionsData = (reports: any[]) => {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const result = [];
-  
+
   for (let i = 6; i >= 0; i--) {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() - i);
-    const dayReports = reports.filter(report => {
+    const dayReports = reports.filter((report) => {
       const reportDate = new Date(report.created_at);
       return reportDate.toDateString() === targetDate.toDateString();
     });
-    
+
     result.push({
       day: days[targetDate.getDay()],
       count: dayReports.length,
-      critical: dayReports.filter(r => r.severity === 'critical').length,
-      high: dayReports.filter(r => r.severity === 'high').length,
-      medium: dayReports.filter(r => r.severity === 'medium').length,
-      low: dayReports.filter(r => r.severity === 'low').length
+      critical: dayReports.filter((r) => r.severity === "critical").length,
+      high: dayReports.filter((r) => r.severity === "high").length,
+      medium: dayReports.filter((r) => r.severity === "medium").length,
+      low: dayReports.filter((r) => r.severity === "low").length,
     });
   }
-  
+
   return result;
 };
 
 const processAlertsData = (alerts: any[]) => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const currentDate = new Date();
   const result = [];
-  
+
   for (let i = 5; i >= 0; i--) {
-    const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-    const monthAlerts = alerts.filter(alert => {
+    const targetDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() - i,
+      1
+    );
+    const monthAlerts = alerts.filter((alert) => {
       const alertDate = new Date(alert.created_at);
-      return alertDate.getFullYear() === targetDate.getFullYear() && 
-             alertDate.getMonth() === targetDate.getMonth();
+      return (
+        alertDate.getFullYear() === targetDate.getFullYear() &&
+        alertDate.getMonth() === targetDate.getMonth()
+      );
     });
-    
+
     result.push({
       month: months[targetDate.getMonth()],
       alerts: monthAlerts.length,
-      critical: monthAlerts.filter(a => a.severity === 'critical').length,
-      high: monthAlerts.filter(a => a.severity === 'high').length,
-      medium: monthAlerts.filter(a => a.severity === 'medium').length
+      critical: monthAlerts.filter((a) => a.severity === "critical").length,
+      high: monthAlerts.filter((a) => a.severity === "high").length,
+      medium: monthAlerts.filter((a) => a.severity === "medium").length,
     });
   }
-  
+
   return result;
 };
 
@@ -1496,41 +1623,44 @@ const calculateAvgReportsPerDay = (reports: any[]) => {
   if (reports.length === 0) return 0;
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const recentReports = reports.filter(r => new Date(r.created_at) >= sevenDaysAgo);
+  const recentReports = reports.filter(
+    (r) => new Date(r.created_at) >= sevenDaysAgo
+  );
   return Math.round((recentReports.length / 7) * 10) / 10;
 };
 
 const calculateShelterUtilizationRate = (shelters: any[]) => {
   if (shelters.length === 0) return 0;
   const totalCapacity = shelters.reduce((sum, s) => sum + s.capacity, 0);
-  const totalOccupancy = shelters.reduce((sum, s) => sum + s.current_occupancy, 0);
-  return totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100 * 10) / 10 : 0;
+  const totalOccupancy = shelters.reduce(
+    (sum, s) => sum + s.current_occupancy,
+    0
+  );
+  return totalCapacity > 0
+    ? Math.round((totalOccupancy / totalCapacity) * 100 * 10) / 10
+    : 0;
 };
 
 // System Health Functions
 export const getSystemHealth = async () => {
   try {
-    console.log('Fetching system health data from Supabase...');
-    
+    console.log("Fetching system health data from Supabase...");
+
     const startTime = Date.now();
-    
+
     // Test database connection and performance
     const dbTestStart = Date.now();
-    const dbTest = await supabase.from('user_profiles').select('id').limit(1);
+    const dbTest = await supabase.from("user_profiles").select("id").limit(1);
     const dbResponseTime = Date.now() - dbTestStart;
-    
+
     // Get database statistics
-    const [
-      usersCount,
-      reportsCount,
-      sheltersCount,
-      alertsCount
-    ] = await Promise.all([
-      supabase.from('user_profiles').select('id', { count: 'exact' }),
-      supabase.from('flood_reports').select('id', { count: 'exact' }),
-      supabase.from('admin_shelters').select('id', { count: 'exact' }),
-      supabase.from('admin_alerts').select('id', { count: 'exact' })
-    ]);
+    const [usersCount, reportsCount, sheltersCount, alertsCount] =
+      await Promise.all([
+        supabase.from("user_profiles").select("id", { count: "exact" }),
+        supabase.from("flood_reports").select("id", { count: "exact" }),
+        supabase.from("admin_shelters").select("id", { count: "exact" }),
+        supabase.from("admin_alerts").select("id", { count: "exact" }),
+      ]);
 
     const totalEndTime = Date.now();
     const totalResponseTime = totalEndTime - startTime;
@@ -1540,11 +1670,15 @@ export const getSystemHealth = async () => {
       apiStatus: [
         {
           name: "Authentication API",
-          status: dbTest.error ? "error" : dbResponseTime > 1000 ? "degraded" : "healthy",
+          status: dbTest.error
+            ? "error"
+            : dbResponseTime > 1000
+            ? "degraded"
+            : "healthy",
           responseTime: `${dbResponseTime}ms`,
           uptime: "99.9%",
           lastCheck: new Date().toISOString(),
-          endpoint: "/api/auth"
+          endpoint: "/api/auth",
         },
         {
           name: "Reports API",
@@ -1552,7 +1686,7 @@ export const getSystemHealth = async () => {
           responseTime: `${Math.floor(Math.random() * 200) + 50}ms`,
           uptime: "99.8%",
           lastCheck: new Date().toISOString(),
-          endpoint: "/api/reports"
+          endpoint: "/api/reports",
         },
         {
           name: "Alerts API",
@@ -1560,7 +1694,7 @@ export const getSystemHealth = async () => {
           responseTime: `${Math.floor(Math.random() * 300) + 100}ms`,
           uptime: "99.7%",
           lastCheck: new Date().toISOString(),
-          endpoint: "/api/alerts"
+          endpoint: "/api/alerts",
         },
         {
           name: "Maps API",
@@ -1568,7 +1702,7 @@ export const getSystemHealth = async () => {
           responseTime: `${Math.floor(Math.random() * 150) + 80}ms`,
           uptime: "99.9%",
           lastCheck: new Date().toISOString(),
-          endpoint: "/api/maps"
+          endpoint: "/api/maps",
         },
         {
           name: "User Management API",
@@ -1576,8 +1710,8 @@ export const getSystemHealth = async () => {
           responseTime: `${Math.floor(Math.random() * 100) + 40}ms`,
           uptime: "99.9%",
           lastCheck: new Date().toISOString(),
-          endpoint: "/api/users"
-        }
+          endpoint: "/api/users",
+        },
       ],
       databaseStatus: {
         status: dbTest.error ? "error" : "healthy",
@@ -1587,26 +1721,28 @@ export const getSystemHealth = async () => {
         storageTotal: "10 GB",
         connections: Math.floor(Math.random() * 30) + 15,
         maxConnections: 100,
-        lastBackup: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString()
+        lastBackup: new Date(
+          Date.now() - Math.random() * 24 * 60 * 60 * 1000
+        ).toISOString(),
       },
       serverStatus: {
         cpu: {
           usage: Math.floor(Math.random() * 40) + 20,
           cores: 8,
           temperature: Math.floor(Math.random() * 20) + 45,
-          load: [0.8, 1.2, 0.9, 1.1, 0.7, 1.0, 0.6, 0.8]
+          load: [0.8, 1.2, 0.9, 1.1, 0.7, 1.0, 0.6, 0.8],
         },
         memory: {
           used: Math.floor(Math.random() * 8) + 4,
           total: 16,
           available: Math.floor(Math.random() * 8) + 4,
-          percentage: Math.floor(Math.random() * 40) + 30
+          percentage: Math.floor(Math.random() * 40) + 30,
         },
         disk: {
           used: Math.floor(Math.random() * 200) + 200,
           total: 500,
           available: Math.floor(Math.random() * 200) + 200,
-          percentage: Math.floor(Math.random() * 30) + 40
+          percentage: Math.floor(Math.random() * 30) + 40,
         },
         network: {
           upload: Math.floor(Math.random() * 50) + 10,
@@ -1614,21 +1750,21 @@ export const getSystemHealth = async () => {
           latency: Math.floor(Math.random() * 20) + 5,
           in: Math.floor(Math.random() * 100) + 50,
           out: Math.floor(Math.random() * 50) + 10,
-          connections: Math.floor(Math.random() * 100) + 50
-        }
+          connections: Math.floor(Math.random() * 100) + 50,
+        },
       },
       systemMetrics: {
         totalResponseTime: totalResponseTime,
         activeConnections: Math.floor(Math.random() * 20) + 10,
         errorRate: Math.random() * 0.5,
-        throughput: Math.floor(Math.random() * 1000) + 500
-      }
+        throughput: Math.floor(Math.random() * 1000) + 500,
+      },
     };
 
-    console.log('System health data:', systemHealth);
+    console.log("System health data:", systemHealth);
     return systemHealth;
   } catch (error) {
-    console.error('Error fetching system health:', error);
+    console.error("Error fetching system health:", error);
     return {
       apiStatus: [],
       databaseStatus: {
@@ -1639,37 +1775,45 @@ export const getSystemHealth = async () => {
         storageTotal: "0 GB",
         connections: 0,
         maxConnections: 0,
-        lastBackup: new Date().toISOString()
+        lastBackup: new Date().toISOString(),
       },
       serverStatus: {
         cpu: { usage: 0, cores: 0, temperature: 0, load: [] },
         memory: { used: 0, total: 0, available: 0, percentage: 0 },
         disk: { used: 0, total: 0, available: 0, percentage: 0 },
-        network: { upload: 0, download: 0, latency: 0, in: 0, out: 0, connections: 0 }
+        network: {
+          upload: 0,
+          download: 0,
+          latency: 0,
+          in: 0,
+          out: 0,
+          connections: 0,
+        },
       },
       systemMetrics: {
         totalResponseTime: 0,
         activeConnections: 0,
         errorRate: 0,
-        throughput: 0
-      }
+        throughput: 0,
+      },
     };
   }
 };
 
-
 export const subscribeToSystemLogs = (callback: (payload: any) => void) => {
   return supabase
-    .channel('admin_system_logs_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_system_logs' }, callback)
+    .channel("admin_system_logs_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "admin_system_logs" },
+      callback
+    )
     .subscribe();
 };
 
 // Real-time Count Functions for Red Popups
 export const getRealTimeCounts = async () => {
   try {
-    console.log('Fetching real-time counts from Supabase...');
-    
     // Get all counts in parallel for maximum performance
     const [
       pendingReportsResult,
@@ -1677,14 +1821,29 @@ export const getRealTimeCounts = async () => {
       activeAlertsResult,
       pendingMissionsResult,
       activeSheltersResult,
-      totalUsersResult
+      totalUsersResult,
     ] = await Promise.all([
-      supabase.from('flood_reports').select('id', { count: 'exact' }).eq('status', 'pending'),
-      supabase.from('flood_reports').select('id', { count: 'exact' }).eq('severity', 'critical'),
-      supabase.from('admin_alerts').select('id', { count: 'exact' }).eq('status', 'active'),
-      supabase.from('admin_missions').select('id', { count: 'exact' }).eq('status', 'pending'),
-      supabase.from('admin_shelters').select('id', { count: 'exact' }).eq('is_active', true),
-      supabase.from('user_profiles').select('id', { count: 'exact' })
+      supabase
+        .from("flood_reports")
+        .select("id", { count: "exact" })
+        .eq("status", "pending"),
+      supabase
+        .from("flood_reports")
+        .select("id", { count: "exact" })
+        .eq("severity", "critical"),
+      supabase
+        .from("admin_alerts")
+        .select("id", { count: "exact" })
+        .eq("status", "active"),
+      supabase
+        .from("admin_missions")
+        .select("id", { count: "exact" })
+        .eq("status", "pending"),
+      supabase
+        .from("admin_shelters")
+        .select("id", { count: "exact" })
+        .eq("is_active", true),
+      supabase.from("user_profiles").select("id", { count: "exact" }),
     ]);
 
     const counts = {
@@ -1693,20 +1852,18 @@ export const getRealTimeCounts = async () => {
       activeAlerts: activeAlertsResult.count || 0,
       pendingMissions: pendingMissionsResult.count || 0,
       activeShelters: activeSheltersResult.count || 0,
-      totalUsers: totalUsersResult.count || 0
+      totalUsers: totalUsersResult.count || 0,
     };
 
-    console.log('Real-time counts:', counts);
     return counts;
   } catch (error) {
-    console.error('Error fetching real-time counts:', error);
     return {
       pendingReports: 0,
       criticalReports: 0,
       activeAlerts: 0,
       pendingMissions: 0,
       activeShelters: 0,
-      totalUsers: 0
+      totalUsers: 0,
     };
   }
 };
@@ -1715,12 +1872,12 @@ export const getRealTimeCounts = async () => {
 export const getPendingReportsCount = async () => {
   try {
     const result = await supabase
-      .from('flood_reports')
-      .select('id', { count: 'exact' })
-      .eq('status', 'pending');
+      .from("flood_reports")
+      .select("id", { count: "exact" })
+      .eq("status", "pending");
     return result.count || 0;
   } catch (error) {
-    console.error('Error fetching pending reports count:', error);
+    console.error("Error fetching pending reports count:", error);
     return 0;
   }
 };
@@ -1728,12 +1885,12 @@ export const getPendingReportsCount = async () => {
 export const getCriticalReportsCount = async () => {
   try {
     const result = await supabase
-      .from('flood_reports')
-      .select('id', { count: 'exact' })
-      .eq('severity', 'critical');
+      .from("flood_reports")
+      .select("id", { count: "exact" })
+      .eq("severity", "critical");
     return result.count || 0;
   } catch (error) {
-    console.error('Error fetching critical reports count:', error);
+    console.error("Error fetching critical reports count:", error);
     return 0;
   }
 };
@@ -1741,12 +1898,12 @@ export const getCriticalReportsCount = async () => {
 export const getActiveAlertsCount = async () => {
   try {
     const result = await supabase
-      .from('admin_alerts')
-      .select('id', { count: 'exact' })
-      .eq('status', 'active');
+      .from("admin_alerts")
+      .select("id", { count: "exact" })
+      .eq("status", "active");
     return result.count || 0;
   } catch (error) {
-    console.error('Error fetching active alerts count:', error);
+    console.error("Error fetching active alerts count:", error);
     return 0;
   }
 };
@@ -1754,12 +1911,12 @@ export const getActiveAlertsCount = async () => {
 export const getPendingMissionsCount = async () => {
   try {
     const result = await supabase
-      .from('admin_missions')
-      .select('id', { count: 'exact' })
-      .eq('status', 'pending');
+      .from("admin_missions")
+      .select("id", { count: "exact" })
+      .eq("status", "pending");
     return result.count || 0;
   } catch (error) {
-    console.error('Error fetching pending missions count:', error);
+    console.error("Error fetching pending missions count:", error);
     return 0;
   }
 };
@@ -1767,12 +1924,12 @@ export const getPendingMissionsCount = async () => {
 export const getActiveSheltersCount = async () => {
   try {
     const result = await supabase
-      .from('admin_shelters')
-      .select('id', { count: 'exact' })
-      .eq('is_active', true);
+      .from("admin_shelters")
+      .select("id", { count: "exact" })
+      .eq("is_active", true);
     return result.count || 0;
   } catch (error) {
-    console.error('Error fetching active shelters count:', error);
+    console.error("Error fetching active shelters count:", error);
     return 0;
   }
 };
@@ -1780,11 +1937,11 @@ export const getActiveSheltersCount = async () => {
 export const getTotalUsersCount = async () => {
   try {
     const result = await supabase
-      .from('user_profiles')
-      .select('id', { count: 'exact' });
+      .from("user_profiles")
+      .select("id", { count: "exact" });
     return result.count || 0;
   } catch (error) {
-    console.error('Error fetching total users count:', error);
+    console.error("Error fetching total users count:", error);
     return 0;
   }
 };
@@ -1792,52 +1949,54 @@ export const getTotalUsersCount = async () => {
 // Emergency Contacts Functions
 export const createEmergencyContactsTable = async () => {
   try {
-    console.log('Creating emergency_contacts table...');
-    
-    const { error } = await supabase.rpc('create_emergency_contacts_table');
-    
+    console.log("Creating emergency_contacts table...");
+
+    const { error } = await supabase.rpc("create_emergency_contacts_table");
+
     if (error) {
-      console.error('Error creating emergency_contacts table:', error);
+      console.error("Error creating emergency_contacts table:", error);
       return false;
     }
-    
-    console.log('emergency_contacts table created successfully');
+
+    console.log("emergency_contacts table created successfully");
     return true;
   } catch (error) {
-    console.error('Error creating emergency_contacts table:', error);
+    console.error("Error creating emergency_contacts table:", error);
     return false;
   }
 };
 
 export const createEmergencyMessagesTable = async () => {
   try {
-    console.log('Creating emergency_messages table...');
-    
-    const { error } = await supabase.rpc('create_emergency_messages_table');
-    
+    console.log("Creating emergency_messages table...");
+
+    const { error } = await supabase.rpc("create_emergency_messages_table");
+
     if (error) {
-      console.error('Error creating emergency_messages table:', error);
+      console.error("Error creating emergency_messages table:", error);
       return false;
     }
-    
-    console.log('emergency_messages table created successfully');
+
+    console.log("emergency_messages table created successfully");
     return true;
   } catch (error) {
-    console.error('Error creating emergency_messages table:', error);
+    console.error("Error creating emergency_messages table:", error);
     return false;
   }
 };
 
 // Notification Management Functions
-export const getAdminNotifications = async (userId?: string): Promise<AdminNotification[]> => {
+export const getAdminNotifications = async (
+  userId?: string
+): Promise<AdminNotification[]> => {
   try {
     let query = supabase
-      .from('admin_notifications')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("admin_notifications")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (userId) {
-      query = query.eq('user_id', userId);
+      query = query.eq("user_id", userId);
     }
 
     const { data, error } = await query;
@@ -1845,15 +2004,17 @@ export const getAdminNotifications = async (userId?: string): Promise<AdminNotif
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching admin notifications:', error);
+    console.error("Error fetching admin notifications:", error);
     return [];
   }
 };
 
-export const createNotification = async (notification: Omit<AdminNotification, 'id' | 'sent_at' | 'created_at'>): Promise<AdminNotification | null> => {
+export const createNotification = async (
+  notification: Omit<AdminNotification, "id" | "sent_at" | "created_at">
+): Promise<AdminNotification | null> => {
   try {
     const { data, error } = await supabase
-      .from('admin_notifications')
+      .from("admin_notifications")
       .insert([notification])
       .select()
       .single();
@@ -1861,32 +2022,38 @@ export const createNotification = async (notification: Omit<AdminNotification, '
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error creating notification:', error);
+    console.error("Error creating notification:", error);
     return null;
   }
 };
 
-export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
+export const markNotificationAsRead = async (
+  notificationId: string
+): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('admin_notifications')
-      .update({ 
-        status: 'read',
-        read_at: new Date().toISOString()
+      .from("admin_notifications")
+      .update({
+        status: "read",
+        read_at: new Date().toISOString(),
       })
-      .eq('id', notificationId);
+      .eq("id", notificationId);
 
     return !error;
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    console.error("Error marking notification as read:", error);
     return false;
   }
 };
 
 export const subscribeToNotifications = (callback: (payload: any) => void) => {
   return supabase
-    .channel('admin_notifications_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_notifications' }, callback)
+    .channel("admin_notifications_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "admin_notifications" },
+      callback
+    )
     .subscribe();
 };
 
@@ -1894,72 +2061,79 @@ export const subscribeToNotifications = (callback: (payload: any) => void) => {
 export const getFloodReports = async () => {
   try {
     const { data, error } = await supabase
-      .from('flood_reports')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("flood_reports")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error('Supabase error fetching flood reports:', error);
+      console.error("Supabase error fetching flood reports:", error);
       throw error;
     }
-    
-    console.log('Fetched flood reports from Supabase:', data);
+
+    console.log("Fetched flood reports from Supabase:", data);
     return data || [];
   } catch (error) {
-    console.error('Error fetching flood reports:', error);
+    console.error("Error fetching flood reports:", error);
     return [];
   }
 };
 
-export const updateFloodReportStatus = async (reportId: string, status: string): Promise<boolean> => {
+export const updateFloodReportStatus = async (
+  reportId: string,
+  status: string
+): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('flood_reports')
-      .update({ 
-        status, 
-        updated_at: new Date().toISOString() 
+      .from("flood_reports")
+      .update({
+        status,
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', reportId);
+      .eq("id", reportId);
 
     if (error) {
-      console.error('Supabase error updating flood report:', error);
+      console.error("Supabase error updating flood report:", error);
       return false;
     }
-    
-    console.log('Flood report status updated successfully');
+
+    console.log("Flood report status updated successfully");
     return true;
   } catch (error) {
-    console.error('Error updating flood report status:', error);
+    console.error("Error updating flood report status:", error);
     return false;
   }
 };
 
 export const deleteFloodReport = async (reportId: string): Promise<boolean> => {
   try {
-    console.log('Deleting flood report:', reportId);
-    
+    console.log("Deleting flood report:", reportId);
+
     const { error } = await supabase
-      .from('flood_reports')
+      .from("flood_reports")
       .delete()
-      .eq('id', reportId);
+      .eq("id", reportId);
 
     if (error) {
-      console.error('Error deleting report:', error);
+      console.error("Error deleting report:", error);
       return false;
     }
 
-    console.log('Report deleted successfully');
+    console.log("Report deleted successfully");
     return true;
   } catch (error) {
-    console.error('Exception deleting report:', error);
+    console.error("Exception deleting report:", error);
     return false;
   }
 };
 
 export const subscribeToFloodReports = (callback: (payload: any) => void) => {
   return supabase
-    .channel('flood_reports_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'flood_reports' }, callback)
+    .channel("flood_reports_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "flood_reports" },
+      callback
+    )
     .subscribe();
 };
 
@@ -1967,27 +2141,31 @@ export const subscribeToFloodReports = (callback: (payload: any) => void) => {
 export const getLocationData = async () => {
   try {
     const { data, error } = await supabase
-      .from('location_data')
-      .select('*')
-      .order('last_updated', { ascending: false });
+      .from("location_data")
+      .select("*")
+      .order("last_updated", { ascending: false });
 
     if (error) {
-      console.error('Supabase error fetching location data:', error);
+      console.error("Supabase error fetching location data:", error);
       throw error;
     }
-    
-    console.log('Fetched location data from Supabase:', data);
+
+    console.log("Fetched location data from Supabase:", data);
     return data || [];
   } catch (error) {
-    console.error('Error fetching location data:', error);
+    console.error("Error fetching location data:", error);
     return [];
   }
 };
 
 export const subscribeToLocationData = (callback: (payload: any) => void) => {
   return supabase
-    .channel('location_data_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'location_data' }, callback)
+    .channel("location_data_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "location_data" },
+      callback
+    )
     .subscribe();
 };
 
@@ -2026,27 +2204,30 @@ export interface SupabaseAdminUser {
 
 export const getSupabaseAdminUsers = async (): Promise<SupabaseAdminUser[]> => {
   try {
-    console.log('Fetching Supabase auth admin users...');
-    
+    console.log("Fetching Supabase auth admin users...");
+
     // Since we can't use admin.listUsers() on client side, we'll get the current user
     // and create a mock list of admins based on the current session
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
     if (error) {
-      console.error('Error fetching current Supabase user:', error);
+      console.error("Error fetching current Supabase user:", error);
       throw error;
     }
-    
-    console.log('Current Supabase user:', user);
-    
+
+    console.log("Current Supabase user:", user);
+
     // If we have a current user, treat them as an admin
     // In a real app, you'd have a separate admins table or use RLS policies
     const adminUsers: SupabaseAdminUser[] = [];
-    
+
     if (user) {
       adminUsers.push({
         id: user.id,
-        email: user.email || 'unknown@example.com',
+        email: user.email || "unknown@example.com",
         created_at: user.created_at,
         updated_at: user.updated_at,
         last_sign_in_at: user.last_sign_in_at,
@@ -2073,59 +2254,76 @@ export const getSupabaseAdminUsers = async (): Promise<SupabaseAdminUser[]> => {
         app_metadata: user.app_metadata,
         user_metadata: user.user_metadata,
         aud: user.aud,
-        role: user.user_metadata?.role || 'admin'
+        role: user.user_metadata?.role || "admin",
       });
     }
-    
+
     // Only show real Supabase users, no mock data
-    
-    console.log('Processed Supabase admin users:', adminUsers);
+
+    console.log("Processed Supabase admin users:", adminUsers);
     return adminUsers;
   } catch (error) {
-    console.error('Error fetching Supabase admin users:', error);
+    console.error("Error fetching Supabase admin users:", error);
     return [];
   }
 };
 
-export const createSupabaseAdminUser = async (email: string, password: string, userData?: any): Promise<{ success: boolean; user?: any; error?: string }> => {
+export const createSupabaseAdminUser = async (
+  email: string,
+  password: string,
+  userData?: any
+): Promise<{ success: boolean; user?: any; error?: string }> => {
   try {
-    console.log('Creating Supabase admin user:', email);
-    
+    console.log("Creating Supabase admin user:", email);
+
     // Admin user creation requires server-side implementation
     // This would typically be handled by a Supabase Edge Function or server-side API
-    console.log('Admin user creation requires server-side implementation');
-    return { success: false, error: 'Admin user creation requires server-side implementation' };
+    console.log("Admin user creation requires server-side implementation");
+    return {
+      success: false,
+      error: "Admin user creation requires server-side implementation",
+    };
   } catch (error) {
-    console.error('Error creating Supabase admin user:', error);
-    return { success: false, error: 'Failed to create admin user' };
+    console.error("Error creating Supabase admin user:", error);
+    return { success: false, error: "Failed to create admin user" };
   }
 };
 
-export const updateSupabaseAdminUser = async (userId: string, updates: any): Promise<{ success: boolean; error?: string }> => {
+export const updateSupabaseAdminUser = async (
+  userId: string,
+  updates: any
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    console.log('Updating Supabase admin user:', userId, updates);
-    
+    console.log("Updating Supabase admin user:", userId, updates);
+
     // Admin user updates require server-side implementation
     // This would typically be handled by a Supabase Edge Function or server-side API
-    console.log('Admin user update requires server-side implementation');
-    return { success: false, error: 'Admin user update requires server-side implementation' };
+    console.log("Admin user update requires server-side implementation");
+    return {
+      success: false,
+      error: "Admin user update requires server-side implementation",
+    };
   } catch (error) {
-    console.error('Error updating Supabase admin user:', error);
-    return { success: false, error: 'Failed to update admin user' };
+    console.error("Error updating Supabase admin user:", error);
+    return { success: false, error: "Failed to update admin user" };
   }
 };
 
-export const deleteSupabaseAdminUser = async (userId: string): Promise<{ success: boolean; error?: string }> => {
+export const deleteSupabaseAdminUser = async (
+  userId: string
+): Promise<{ success: boolean; error?: string }> => {
   try {
-    console.log('Deleting Supabase admin user:', userId);
-    
+    console.log("Deleting Supabase admin user:", userId);
+
     // Admin user deletion requires server-side implementation
     // This would typically be handled by a Supabase Edge Function or server-side API
-    console.log('Admin user deletion requires server-side implementation');
-    return { success: false, error: 'Admin user deletion requires server-side implementation' };
+    console.log("Admin user deletion requires server-side implementation");
+    return {
+      success: false,
+      error: "Admin user deletion requires server-side implementation",
+    };
   } catch (error) {
-    console.error('Error deleting Supabase admin user:', error);
-    return { success: false, error: 'Failed to delete admin user' };
+    console.error("Error deleting Supabase admin user:", error);
+    return { success: false, error: "Failed to delete admin user" };
   }
 };
-

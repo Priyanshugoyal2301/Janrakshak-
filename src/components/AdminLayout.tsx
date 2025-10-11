@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useSupabaseAuthMinimal } from '@/contexts/SupabaseAuthContextMinimal';
-import { getRealTimeCounts } from '@/lib/adminSupabase';
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useSupabaseAuthMinimal } from "@/contexts/SupabaseAuthContextMinimal";
+import { getRealTimeCounts } from "@/lib/adminSupabase";
 import {
   Menu,
   X,
@@ -27,8 +34,8 @@ import {
   Plus,
   RefreshCw,
   CloudRain,
-  Shield,
-} from 'lucide-react';
+  BookOpen,
+} from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -42,7 +49,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     activeAlerts: 0,
     pendingMissions: 0,
     activeShelters: 0,
-    totalUsers: 0
+    totalUsers: 0,
   });
   const location = useLocation();
   const navigate = useNavigate();
@@ -51,7 +58,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   // Load real-time counts
   useEffect(() => {
     loadRealTimeCounts();
-    
+
     // Update counts every 30 seconds
     const interval = setInterval(loadRealTimeCounts, 30000);
     return () => clearInterval(interval);
@@ -62,26 +69,76 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       const counts = await getRealTimeCounts();
       setRealTimeCounts(counts);
     } catch (error) {
-      console.error('Error loading real-time counts:', error);
+      console.error("Error loading real-time counts:", error);
     }
   };
 
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: Home, badge: null },
-    { name: "Alerts", href: "/admin/alerts", icon: AlertTriangle, badge: realTimeCounts.activeAlerts > 0 ? realTimeCounts.activeAlerts.toString() : null },
-    { name: "Reports", href: "/admin/reports", icon: FileText, badge: realTimeCounts.pendingReports > 0 ? realTimeCounts.pendingReports.toString() : null },
+    {
+      name: "Alerts",
+      href: "/admin/alerts",
+      icon: AlertTriangle,
+      badge:
+        realTimeCounts.activeAlerts > 0
+          ? realTimeCounts.activeAlerts.toString()
+          : null,
+    },
+    {
+      name: "Reports",
+      href: "/admin/reports",
+      icon: FileText,
+      badge:
+        realTimeCounts.pendingReports > 0
+          ? realTimeCounts.pendingReports.toString()
+          : null,
+    },
     { name: "Users", href: "/admin/users", icon: Users, badge: null },
-    { name: "Shelters", href: "/admin/shelters", icon: MapPin, badge: realTimeCounts.activeShelters > 0 ? realTimeCounts.activeShelters.toString() : null },
-    { name: "Risk Assessment", href: "/admin/risk-assessment", icon: Shield, badge: null },
-    { name: "Flood Prediction", href: "/admin/flood-prediction", icon: CloudRain, badge: null },
+    {
+      name: "Shelters",
+      href: "/admin/shelters",
+      icon: MapPin,
+      badge:
+        realTimeCounts.activeShelters > 0
+          ? realTimeCounts.activeShelters.toString()
+          : null,
+    },
+    {
+      name: "Damage Assessment",
+      href: "/admin/risk-assessment",
+      icon: Shield,
+      badge: null,
+    },
+    {
+      name: "Flood Prediction",
+      href: "/admin/flood-prediction",
+      icon: CloudRain,
+      badge: null,
+    },
+    {
+      name: "Training Management",
+      href: "/admin/training",
+      icon: BookOpen,
+      badge: null,
+    },
     { name: "Route Planning", href: "/admin/routes", icon: Route, badge: null },
-    { name: "Analytics", href: "/admin/analytics", icon: BarChart3, badge: null },
-    { name: "System Health", href: "/admin/system", icon: Activity, badge: null },
+    {
+      name: "Analytics",
+      href: "/admin/analytics",
+      icon: BarChart3,
+      badge: null,
+    },
+    {
+      name: "System Health",
+      href: "/admin/system",
+      icon: Activity,
+      badge: null,
+    },
   ];
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -95,10 +152,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-teal-100 to-blue-200 text-gray-700 backdrop-blur-xl shadow-lg border-r border-teal-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}>
-        
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-teal-100 to-blue-200 text-gray-700 backdrop-blur-xl shadow-2xl border border-teal-200 rounded-r-2xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:left-4 lg:top-4 lg:bottom-4 lg:rounded-2xl ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-teal-200">
           <div className="flex items-center space-x-2">
@@ -123,9 +181,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               return (
                 <Button
                   key={item.name}
-                  variant={isActive ? 'default' : 'ghost'}
+                  variant={isActive ? "default" : "ghost"}
                   className={`w-full justify-start text-teal-700 ${
-                    isActive ? 'bg-teal-600 text-white' : 'hover:bg-teal-200'
+                    isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -158,9 +216,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       </div>
 
       {/* Main content */}
-      <div className="lg:ml-64">
+      <div className="lg:ml-72">
         {/* Top bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div className="bg-white/90 backdrop-blur-sm shadow-sm border border-gray-200 rounded-xl mx-4 mt-4 px-6 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -172,10 +230,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Menu className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
-                <p className="text-sm text-gray-600">
-                  Welcome back, Admin
-                </p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Admin Panel
+                </h1>
+                <p className="text-sm text-gray-600">Welcome back, Admin</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -194,9 +252,15 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email} />
+                        <AvatarImage
+                          src={user?.user_metadata?.avatar_url}
+                          alt={user?.email}
+                        />
                         <AvatarFallback>
                           {user?.email?.charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -206,7 +270,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">Admin</p>
+                        <p className="text-sm font-medium leading-none">
+                          Admin
+                        </p>
                         <p className="text-xs leading-none text-muted-foreground">
                           {user?.email}
                         </p>
@@ -225,9 +291,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         </div>
 
         {/* Page content */}
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="p-6 pt-4">{children}</div>
       </div>
     </div>
   );
