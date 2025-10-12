@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { isAdmin } from "@/lib/firebase";
 import {
   Home,
   TrendingUp,
@@ -292,7 +293,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Bell className="w-4 h-4 mr-2 text-blue-600" />
                 Notifications
               </DropdownMenuItem>
-              {isAdmin && (
+              {isAdmin(currentUser?.email) && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

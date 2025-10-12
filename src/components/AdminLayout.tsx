@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSupabaseAuthMinimal } from "@/contexts/SupabaseAuthContextMinimal";
+import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
 import { getRealTimeCounts } from "@/lib/adminSupabase";
 import {
   Menu,
@@ -53,7 +53,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   });
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useSupabaseAuthMinimal();
+  const { user, signOut } = useRoleAwareAuth();
 
   // Load real-time counts
   useEffect(() => {
@@ -73,10 +73,13 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     }
   };
 
+  // ADMIN PORTAL - Comprehensive access to ALL features
   const navigation = [
-    { name: "Dashboard", href: "/admin", icon: Home, badge: null },
+    { name: "Admin Dashboard", href: "/admin", icon: Home, badge: null },
+
+    // REAL-TIME MONITORING & ALERTS
     {
-      name: "Alerts",
+      name: "Emergency Alerts",
       href: "/admin/alerts",
       icon: AlertTriangle,
       badge:
@@ -85,7 +88,43 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           : null,
     },
     {
-      name: "Reports",
+      name: "System Health",
+      href: "/admin/system",
+      icon: Activity,
+      badge: null,
+    },
+
+    // USER & ROLE MANAGEMENT
+    {
+      name: "User Management",
+      href: "/admin/users",
+      icon: Users,
+      badge: null,
+    },
+
+    // GIS & INTELLIGENCE SYSTEMS
+    {
+      name: "GIS Intelligence",
+      href: "/admin/gis-mapping",
+      icon: MapPin,
+      badge: null,
+    },
+    {
+      name: "Route Planning",
+      href: "/admin/routes",
+      icon: Route,
+      badge: null,
+    },
+
+    // ANALYTICS & IMPACT TRACKING
+    {
+      name: "Analytics Dashboard",
+      href: "/admin/analytics",
+      icon: BarChart3,
+      badge: null,
+    },
+    {
+      name: "Impact Reports",
       href: "/admin/reports",
       icon: FileText,
       badge:
@@ -93,22 +132,28 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           ? realTimeCounts.pendingReports.toString()
           : null,
     },
-    { name: "Users", href: "/admin/users", icon: Users, badge: null },
     {
-      name: "Shelters",
-      href: "/admin/shelters",
-      icon: MapPin,
-      badge:
-        realTimeCounts.activeShelters > 0
-          ? realTimeCounts.activeShelters.toString()
-          : null,
+      name: "Report Generation",
+      href: "/admin/report-system",
+      icon: FileText,
+      badge: null,
+    },
+
+    // CAPACITY BUILDING & TRAINING
+    {
+      name: "Training Management",
+      href: "/admin/training",
+      icon: BookOpen,
+      badge: null,
     },
     {
-      name: "Damage Assessment",
-      href: "/admin/risk-assessment",
+      name: "Resilience Index",
+      href: "/admin/resilience",
       icon: Shield,
       badge: null,
     },
+
+    // PREDICTION & ASSESSMENT
     {
       name: "Flood Prediction",
       href: "/admin/flood-prediction",
@@ -116,23 +161,21 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       badge: null,
     },
     {
-      name: "Training Management",
-      href: "/admin/training",
-      icon: BookOpen,
+      name: "Risk Assessment",
+      href: "/admin/risk-assessment",
+      icon: Shield,
       badge: null,
     },
-    { name: "Route Planning", href: "/admin/routes", icon: Route, badge: null },
+
+    // RESOURCE MANAGEMENT
     {
-      name: "Analytics",
-      href: "/admin/analytics",
-      icon: BarChart3,
-      badge: null,
-    },
-    {
-      name: "System Health",
-      href: "/admin/system",
-      icon: Activity,
-      badge: null,
+      name: "Shelter Management",
+      href: "/admin/shelters",
+      icon: MapPin,
+      badge:
+        realTimeCounts.activeShelters > 0
+          ? realTimeCounts.activeShelters.toString()
+          : null,
     },
   ];
 
@@ -217,23 +260,59 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
       {/* Main content */}
       <div className="lg:ml-72">
-        {/* Top bar */}
-        <div className="bg-white/90 backdrop-blur-sm shadow-sm border border-gray-200 rounded-xl mx-4 mt-4 px-6 py-3">
+        {/* Admin Header Bar */}
+        <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-lg mx-4 mt-4 px-6 py-4 rounded-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden text-gray-600"
+                className="lg:hidden text-white hover:bg-white/20"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Admin Panel
-                </h1>
-                <p className="text-sm text-gray-600">Welcome back, Admin</p>
+                <div className="flex items-center space-x-3">
+                  <h1 className="text-2xl font-bold">JanRakshak Master Console</h1>
+                  <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
+                    <Shield className="w-3 h-3 mr-1" />
+                    ADMIN CONTROL
+                  </Badge>
+                </div>
+                <p className="text-sm opacity-90">
+                  Comprehensive Disaster Management Administration
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 flex-wrap">
+              <div className="text-xs text-white/80 hidden md:block">
+                Last updated: {new Date().toLocaleTimeString()}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-white border-white/50 hover:bg-white/30 bg-white/20 font-medium"
+                  onClick={loadRealTimeCounts}
+                >
+                  <RefreshCw className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Refresh</span>
+                </Button>
+              </div>
+              <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
+                {realTimeCounts.pendingReports} Pending Reports
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Top bar */}
+        <div className="bg-white/90 backdrop-blur-sm shadow-sm border border-gray-200 rounded-xl mx-4 mt-4 px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-gray-600">
+                System Status: All Services Operational
               </div>
             </div>
             <div className="flex items-center space-x-2">
