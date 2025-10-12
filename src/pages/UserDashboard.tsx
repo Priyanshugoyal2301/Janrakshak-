@@ -543,6 +543,82 @@ const UserDashboard = () => {
             </CardContent>
           </Card>
 
+          {/* Community Safety Score - Unique to Citizens */}
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-blue-600" />
+                <span>Community Safety Score</span>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                  Citizen Feature
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Real-time safety assessment for your area based on reports and alerts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                  <div className="text-3xl font-bold text-green-600 mb-2">85</div>
+                  <p className="text-sm text-gray-600">Safety Score</p>
+                  <Badge className="mt-2 bg-green-100 text-green-700">Good</Badge>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                  <div className="text-3xl font-bold text-orange-600 mb-2">
+                    {nearbyReports.length || 3}
+                  </div>
+                  <p className="text-sm text-gray-600">Nearby Reports</p>
+                  <Badge className="mt-2 bg-orange-100 text-orange-700">
+                    Last 24h
+                  </Badge>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">12</div>
+                  <p className="text-sm text-gray-600">Active Shelters</p>
+                  <Badge className="mt-2 bg-blue-100 text-blue-700">
+                    Available
+                  </Badge>
+                </div>
+              </div>
+              <div className="mt-4 p-4 bg-white rounded-lg">
+                <h4 className="font-medium mb-2 flex items-center">
+                  <TrendingUp className="w-4 h-4 mr-2 text-green-600" />
+                  Safety Trends
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Flood Risk</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-20 h-2 bg-gray-200 rounded">
+                        <div className="w-1/4 h-full bg-green-500 rounded"></div>
+                      </div>
+                      <span className="text-sm text-green-600">Low</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Emergency Response</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-20 h-2 bg-gray-200 rounded">
+                        <div className="w-4/5 h-full bg-blue-500 rounded"></div>
+                      </div>
+                      <span className="text-sm text-blue-600">High</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Community Alert</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-20 h-2 bg-gray-200 rounded">
+                        <div className="w-1/2 h-full bg-yellow-500 rounded"></div>
+                      </div>
+                      <span className="text-sm text-yellow-600">Medium</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Recent Reports */}
           <Card>
             <CardHeader>

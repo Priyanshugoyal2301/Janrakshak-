@@ -161,6 +161,19 @@ const LandingPage = () => {
                 </Button>
               </motion.div>
               <motion.div
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/admin/signin")}
+                  className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 border-teal-200 hover:border-teal-300 transition-all duration-300 px-6 py-2 rounded-full"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Role Login
+                </Button>
+              </motion.div>
+              <motion.div
                 whileHover={{
                   scale: 1.05,
                   y: -2,
@@ -174,7 +187,7 @@ const LandingPage = () => {
                 >
                   <Zap className="w-4 h-4 mr-2" />
                   Get Started
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 w-4 ml-2" />
                 </Button>
               </motion.div>
             </motion.div>
@@ -281,19 +294,22 @@ const LandingPage = () => {
                 whileTap={{ scale: 0.95 }}
                 className="relative"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
                 <Button
                   size="lg"
-                  onClick={() => navigate("/auth?mode=register")}
-                  className="relative bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-4 text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-2xl border border-white/20"
+                  onClick={() => navigate("/admin/signin")}
+                  className="relative bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-12 py-4 text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-2xl border border-white/20"
                 >
                   <motion.div
-                    animate={{ y: [0, -3, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      rotateY: [0, 180, 360],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
                   >
-                    <Users className="w-6 h-6 mr-3" />
+                    <Shield className="w-6 h-6 mr-3" />
                   </motion.div>
-                  Get Started as User
+                  Access JalRakshak
                   <motion.div
                     className="ml-3"
                     whileHover={{ x: 8 }}
@@ -312,22 +328,19 @@ const LandingPage = () => {
                 whileTap={{ scale: 0.95 }}
                 className="relative"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
                 <Button
                   size="lg"
-                  onClick={() => navigate("/admin/signin")}
-                  className="relative bg-gradient-to-r from-purple-100 to-pink-100 backdrop-blur-xl text-purple-800 px-8 py-4 text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-2xl border border-purple-300 hover:bg-gradient-to-r hover:from-purple-200 hover:to-pink-200"
+                  onClick={() => navigate("/auth?mode=login")}
+                  className="relative bg-gradient-to-r from-blue-100 to-cyan-100 backdrop-blur-xl text-blue-800 px-8 py-4 text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-2xl border border-blue-300 hover:bg-gradient-to-r hover:from-blue-200 hover:to-cyan-200"
                 >
                   <motion.div
-                    animate={{
-                      scale: [1, 1.2, 1],
-                      rotate: [0, 5, -5, 0],
-                    }}
+                    animate={{ y: [0, -3, 0] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <Crown className="w-6 h-6 mr-3" />
+                    <Users className="w-6 h-6 mr-3" />
                   </motion.div>
-                  Admin Access
+                  Citizen Dashboard
                   <motion.div
                     className="ml-3"
                     whileHover={{ x: 8 }}
@@ -515,6 +528,233 @@ const LandingPage = () => {
               </motion.div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Role-Based Access Section */}
+      <section className="py-16 bg-gradient-to-br from-slate-50 via-white to-teal-50 relative overflow-hidden">
+        <div className="w-full px-6 lg:px-8 relative">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <motion.div
+              className="inline-flex items-center bg-gradient-to-r from-teal-100 to-emerald-100 text-teal-800 px-6 py-3 rounded-full text-sm font-semibold mb-6 border border-teal-200"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Role-Based Access Control
+            </motion.div>
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6">
+              Secure Access for Every{" "}
+              <motion.span
+                className="bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent"
+                animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                Stakeholder
+              </motion.span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Different roles, different dashboards, same mission. Access the
+              right tools and data based on your responsibility in disaster
+              management.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+            {/* ADMIN Role */}
+            <motion.div
+              className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-red-100 hover:shadow-2xl transition-all duration-300"
+              initial={{ y: 50, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              whileHover={{
+                y: -10,
+                scale: 1.02,
+                boxShadow: "0 25px 50px rgba(239, 68, 68, 0.15)",
+              }}
+              viewport={{ once: true }}
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">ADMIN</h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  National oversight, system configuration, user management, and
+                  full analytics access
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+                    National Dashboard
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+                    User Management
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+                    System Analytics
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* NDMA/SDMA Role */}
+            <motion.div
+              className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-blue-100 hover:shadow-2xl transition-all duration-300"
+              initial={{ y: 50, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              whileHover={{
+                y: -10,
+                scale: 1.02,
+                boxShadow: "0 25px 50px rgba(59, 130, 246, 0.15)",
+              }}
+              viewport={{ once: true }}
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <MapPin className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  NDMA/SDMA
+                </h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  State and national disaster management with training
+                  coordination and resource allocation
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                    Training Analytics
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                    State Operations
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                    Partner Management
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* NGO Role */}
+            <motion.div
+              className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-green-100 hover:shadow-2xl transition-all duration-300"
+              initial={{ y: 50, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              whileHover={{
+                y: -10,
+                scale: 1.02,
+                boxShadow: "0 25px 50px rgba(34, 197, 94, 0.15)",
+              }}
+              viewport={{ once: true }}
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Heart className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">NGO</h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  District-focused operations, volunteer management, and
+                  community program coordination
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                    Volunteer Management
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                    Local Programs
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                    Impact Analytics
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* VOLUNTEER Role */}
+            <motion.div
+              className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-purple-100 hover:shadow-2xl transition-all duration-300"
+              initial={{ y: 50, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              whileHover={{
+                y: -10,
+                scale: 1.02,
+                boxShadow: "0 25px 50px rgba(147, 51, 234, 0.15)",
+              }}
+              viewport={{ once: true }}
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  VOLUNTEER
+                </h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Field operations, training participation, emergency response
+                  coordination and reporting
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+                    Field Operations
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+                    Training Records
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+                    Response Reports
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Call to Action */}
+          <motion.div
+            className="text-center mt-16"
+            initial={{ y: 50, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <motion.div
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                size="lg"
+                onClick={() => navigate("/role-login")}
+                className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-12 py-6 text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-2xl border border-white/20"
+              >
+                <Shield className="w-6 h-6 mr-3" />
+                Access Your Dashboard
+                <ArrowRight className="w-6 h-6 ml-3" />
+              </Button>
+            </motion.div>
+            <p className="text-gray-500 mt-4 text-sm">
+              Secure login with role-based authentication • Real database
+              integration
+            </p>
+          </motion.div>
         </div>
       </section>
 
