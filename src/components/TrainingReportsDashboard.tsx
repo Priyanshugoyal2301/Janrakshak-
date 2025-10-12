@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   FileText,
   Download,
@@ -231,17 +231,17 @@ const TrainingReportsDashboard: React.FC = () => {
 
   const exportToPDF = async () => {
     setIsGeneratingReport(true);
-    
+
     try {
       // Fetch comprehensive training data
       const [analytics, coverage, participantDemographics] = await Promise.all([
         getTrainingAnalytics(),
-        getCoverageAnalytics(), 
-        getParticipantDemographics?.() || Promise.resolve(null)
+        getCoverageAnalytics(),
+        getParticipantDemographics?.() || Promise.resolve(null),
       ]);
 
       // Create new jsPDF instance
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
       let currentY = 20;
@@ -257,61 +257,90 @@ const TrainingReportsDashboard: React.FC = () => {
       // === PAGE 1: COVER PAGE ===
       // JanRakshak Header
       pdf.setFillColor(37, 99, 235); // Blue background
-      pdf.rect(0, 0, pageWidth, 60, 'F');
-      
+      pdf.rect(0, 0, pageWidth, 60, "F");
+
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(32);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('JanRakshak', pageWidth / 2, 30, { align: 'center' });
-      
+      pdf.setFont("helvetica", "bold");
+      pdf.text("JanRakshak", pageWidth / 2, 30, { align: "center" });
+
       pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('National Disaster Management Training System', pageWidth / 2, 45, { align: 'center' });
+      pdf.setFont("helvetica", "normal");
+      pdf.text(
+        "National Disaster Management Training System",
+        pageWidth / 2,
+        45,
+        { align: "center" }
+      );
 
       currentY = 80;
       pdf.setTextColor(0, 0, 0);
 
       // Report Title
       pdf.setFontSize(24);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Comprehensive Training Analytics Report', pageWidth / 2, currentY, { align: 'center' });
+      pdf.setFont("helvetica", "bold");
+      pdf.text(
+        "Comprehensive Training Analytics Report",
+        pageWidth / 2,
+        currentY,
+        { align: "center" }
+      );
       currentY += 20;
 
       // Report Details
       pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'normal');
-      const reportDate = new Date().toLocaleDateString('en-IN');
-      const reportTime = new Date().toLocaleTimeString('en-IN');
-      
-      pdf.text(`Generated on: ${reportDate} at ${reportTime}`, pageWidth / 2, currentY, { align: 'center' });
+      pdf.setFont("helvetica", "normal");
+      const reportDate = new Date().toLocaleDateString("en-IN");
+      const reportTime = new Date().toLocaleTimeString("en-IN");
+
+      pdf.text(
+        `Generated on: ${reportDate} at ${reportTime}`,
+        pageWidth / 2,
+        currentY,
+        { align: "center" }
+      );
       currentY += 10;
-      pdf.text(`Report Period: ${new Date().getFullYear()}`, pageWidth / 2, currentY, { align: 'center' });
+      pdf.text(
+        `Report Period: ${new Date().getFullYear()}`,
+        pageWidth / 2,
+        currentY,
+        { align: "center" }
+      );
       currentY += 30;
 
       // Executive Summary Box
       pdf.setFillColor(240, 245, 255);
-      pdf.rect(20, currentY, pageWidth - 40, 60, 'F');
+      pdf.rect(20, currentY, pageWidth - 40, 60, "F");
       pdf.setDrawColor(37, 99, 235);
-      pdf.rect(20, currentY, pageWidth - 40, 60, 'S');
+      pdf.rect(20, currentY, pageWidth - 40, 60, "S");
 
       currentY += 15;
       pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Executive Summary', pageWidth / 2, currentY, { align: 'center' });
-      
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Executive Summary", pageWidth / 2, currentY, {
+        align: "center",
+      });
+
       currentY += 12;
       pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont("helvetica", "normal");
       const summaryText = [
         `• Total Training Sessions Conducted: ${analytics.totalSessions}`,
         `• Total Participants Trained: ${analytics.totalParticipants?.toLocaleString()}`,
         `• States/UTs Covered: ${coverage.statesCovered?.length || 28}`,
-        `• Completion Rate: ${((analytics.completedSessions / analytics.totalSessions) * 100).toFixed(1)}%`,
-        `• Average Session Duration: ${analytics.averageDuration?.toFixed(1) || 'N/A'} hours`,
-        `• Budget Utilization: ${metrics?.budgetUtilization?.toFixed(1) || 'N/A'}%`
+        `• Completion Rate: ${(
+          (analytics.completedSessions / analytics.totalSessions) *
+          100
+        ).toFixed(1)}%`,
+        `• Average Session Duration: ${
+          analytics.averageDuration?.toFixed(1) || "N/A"
+        } hours`,
+        `• Budget Utilization: ${
+          metrics?.budgetUtilization?.toFixed(1) || "N/A"
+        }%`,
       ];
 
-      summaryText.forEach(text => {
+      summaryText.forEach((text) => {
         pdf.text(text, 25, currentY);
         currentY += 5;
       });
@@ -322,24 +351,51 @@ const TrainingReportsDashboard: React.FC = () => {
 
       // Page Header
       pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Training Analytics Overview', 20, currentY);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Training Analytics Overview", 20, currentY);
       currentY += 15;
 
       // Training Sessions Analysis
       pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('1. Training Sessions Analysis', 20, currentY);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("1. Training Sessions Analysis", 20, currentY);
       currentY += 10;
 
       // Create table data for sessions
       const sessionData = [
-        ['Metric', 'Value', 'Percentage'],
-        ['Total Sessions', analytics.totalSessions.toString(), '100%'],
-        ['Completed Sessions', analytics.completedSessions.toString(), `${((analytics.completedSessions / analytics.totalSessions) * 100).toFixed(1)}%`],
-        ['Ongoing Sessions', (analytics.totalSessions - analytics.completedSessions).toString(), `${(((analytics.totalSessions - analytics.completedSessions) / analytics.totalSessions) * 100).toFixed(1)}%`],
-        ['Average Participants per Session', Math.round(analytics.totalParticipants / analytics.totalSessions).toString(), '-'],
-        ['Total Training Hours', (analytics.totalSessions * (analytics.averageDuration || 24)).toFixed(0), '-']
+        ["Metric", "Value", "Percentage"],
+        ["Total Sessions", analytics.totalSessions.toString(), "100%"],
+        [
+          "Completed Sessions",
+          analytics.completedSessions.toString(),
+          `${(
+            (analytics.completedSessions / analytics.totalSessions) *
+            100
+          ).toFixed(1)}%`,
+        ],
+        [
+          "Ongoing Sessions",
+          (analytics.totalSessions - analytics.completedSessions).toString(),
+          `${(
+            ((analytics.totalSessions - analytics.completedSessions) /
+              analytics.totalSessions) *
+            100
+          ).toFixed(1)}%`,
+        ],
+        [
+          "Average Participants per Session",
+          Math.round(
+            analytics.totalParticipants / analytics.totalSessions
+          ).toString(),
+          "-",
+        ],
+        [
+          "Total Training Hours",
+          (analytics.totalSessions * (analytics.averageDuration || 24)).toFixed(
+            0
+          ),
+          "-",
+        ],
       ];
 
       // Draw table
@@ -354,7 +410,7 @@ const TrainingReportsDashboard: React.FC = () => {
           if (rowIndex === 0) {
             pdf.setFillColor(37, 99, 235);
             pdf.setTextColor(255, 255, 255);
-            pdf.setFont('helvetica', 'bold');
+            pdf.setFont("helvetica", "bold");
           } else {
             if (rowIndex % 2 === 0) {
               pdf.setFillColor(248, 250, 252);
@@ -362,10 +418,10 @@ const TrainingReportsDashboard: React.FC = () => {
               pdf.setFillColor(255, 255, 255);
             }
             pdf.setTextColor(0, 0, 0);
-            pdf.setFont('helvetica', 'normal');
+            pdf.setFont("helvetica", "normal");
           }
-          
-          pdf.rect(cellX, tableY, colWidths[colIndex], rowHeight, 'FD');
+
+          pdf.rect(cellX, tableY, colWidths[colIndex], rowHeight, "FD");
           pdf.setFontSize(9);
           pdf.text(cell, cellX + 2, tableY + 5);
           cellX += colWidths[colIndex];
@@ -378,25 +434,30 @@ const TrainingReportsDashboard: React.FC = () => {
       // Geographic Coverage
       checkPageBreak(60);
       pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont("helvetica", "bold");
       pdf.setTextColor(0, 0, 0);
-      pdf.text('2. Geographic Coverage Analysis', 20, currentY);
+      pdf.text("2. Geographic Coverage Analysis", 20, currentY);
       currentY += 10;
 
       // States coverage data
       const topStates = coverage.statesCovered?.slice(0, 8) || [];
       if (topStates.length > 0) {
         pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        
-        const stateTableData = [['State', 'Sessions', 'Participants', 'Coverage %']];
-        topStates.forEach(state => {
-          const coveragePercent = ((state.sessionCount / analytics.totalSessions) * 100).toFixed(1);
+        pdf.setFont("helvetica", "normal");
+
+        const stateTableData = [
+          ["State", "Sessions", "Participants", "Coverage %"],
+        ];
+        topStates.forEach((state) => {
+          const coveragePercent = (
+            (state.sessionCount / analytics.totalSessions) *
+            100
+          ).toFixed(1);
           stateTableData.push([
             state.state,
             state.sessionCount.toString(),
             state.participantCount.toString(),
-            `${coveragePercent}%`
+            `${coveragePercent}%`,
           ]);
         });
 
@@ -410,7 +471,7 @@ const TrainingReportsDashboard: React.FC = () => {
             if (rowIndex === 0) {
               pdf.setFillColor(37, 99, 235);
               pdf.setTextColor(255, 255, 255);
-              pdf.setFont('helvetica', 'bold');
+              pdf.setFont("helvetica", "bold");
             } else {
               if (rowIndex % 2 === 0) {
                 pdf.setFillColor(248, 250, 252);
@@ -418,10 +479,10 @@ const TrainingReportsDashboard: React.FC = () => {
                 pdf.setFillColor(255, 255, 255);
               }
               pdf.setTextColor(0, 0, 0);
-              pdf.setFont('helvetica', 'normal');
+              pdf.setFont("helvetica", "normal");
             }
-            
-            pdf.rect(cellX, tableY, stateColWidths[colIndex], rowHeight, 'FD');
+
+            pdf.rect(cellX, tableY, stateColWidths[colIndex], rowHeight, "FD");
             pdf.setFontSize(8);
             pdf.text(cell, cellX + 2, tableY + 5);
             cellX += stateColWidths[colIndex];
@@ -435,35 +496,42 @@ const TrainingReportsDashboard: React.FC = () => {
       // === PAGE 3: PARTNER ANALYSIS ===
       checkPageBreak(100);
       pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('3. Training Partners Analysis', 20, currentY);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("3. Training Partners Analysis", 20, currentY);
       currentY += 10;
 
-      const partnerTypes = coverage.partnersCovered?.reduce((acc: any, partner) => {
-        acc[partner.partnerType] = (acc[partner.partnerType] || 0) + partner.sessionCount;
-        return acc;
-      }, {}) || {};
+      const partnerTypes =
+        coverage.partnersCovered?.reduce((acc: any, partner) => {
+          acc[partner.partnerType] =
+            (acc[partner.partnerType] || 0) + partner.sessionCount;
+          return acc;
+        }, {}) || {};
 
       pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      
-      const partnerTableData = [['Partner Type', 'Sessions', 'Percentage']];
-      Object.entries(partnerTypes).forEach(([type, sessions]: [string, any]) => {
-        const percentage = ((sessions / analytics.totalSessions) * 100).toFixed(1);
-        partnerTableData.push([type, sessions.toString(), `${percentage}%`]);
-      });
+      pdf.setFont("helvetica", "normal");
+
+      const partnerTableData = [["Partner Type", "Sessions", "Percentage"]];
+      Object.entries(partnerTypes).forEach(
+        ([type, sessions]: [string, any]) => {
+          const percentage = (
+            (sessions / analytics.totalSessions) *
+            100
+          ).toFixed(1);
+          partnerTableData.push([type, sessions.toString(), `${percentage}%`]);
+        }
+      );
 
       // Draw partner table
       tableY = currentY;
       const partnerColWidths = [60, 30, 30];
 
-        partnerTableData.forEach((row, rowIndex) => {
+      partnerTableData.forEach((row, rowIndex) => {
         let cellX = 20;
         row.forEach((cell, colIndex) => {
           if (rowIndex === 0) {
             pdf.setFillColor(37, 99, 235);
             pdf.setTextColor(255, 255, 255);
-            pdf.setFont('helvetica', 'bold');
+            pdf.setFont("helvetica", "bold");
           } else {
             if (rowIndex % 2 === 0) {
               pdf.setFillColor(248, 250, 252);
@@ -471,8 +539,9 @@ const TrainingReportsDashboard: React.FC = () => {
               pdf.setFillColor(255, 255, 255);
             }
             pdf.setTextColor(0, 0, 0);
-            pdf.setFont('helvetica', 'normal');
-          }          pdf.rect(cellX, tableY, partnerColWidths[colIndex], rowHeight, 'FD');
+            pdf.setFont("helvetica", "normal");
+          }
+          pdf.rect(cellX, tableY, partnerColWidths[colIndex], rowHeight, "FD");
           pdf.setFontSize(9);
           pdf.text(cell, cellX + 2, tableY + 5);
           cellX += partnerColWidths[colIndex];
@@ -485,17 +554,33 @@ const TrainingReportsDashboard: React.FC = () => {
       // === PAGE 4: BUDGET AND PERFORMANCE ===
       checkPageBreak(100);
       pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('4. Budget Utilization and Performance Metrics', 20, currentY);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("4. Budget Utilization and Performance Metrics", 20, currentY);
       currentY += 10;
 
       // Budget analysis
       const budgetData = [
-        ['Metric', 'Amount (INR)', 'Status'],
-        ['Total Allocated Budget', '₹ 2,50,00,000', '100%'],
-        ['Amount Utilized', `₹ ${(analytics.totalBudget || 2.1e7).toLocaleString()}`, `${metrics?.budgetUtilization?.toFixed(1) || 84}%`],
-        ['Average Cost per Session', `₹ ${Math.round((analytics.totalBudget || 2.1e7) / analytics.totalSessions).toLocaleString()}`, '-'],
-        ['Cost per Participant', `₹ ${Math.round((analytics.totalBudget || 2.1e7) / analytics.totalParticipants).toLocaleString()}`, '-']
+        ["Metric", "Amount (INR)", "Status"],
+        ["Total Allocated Budget", "₹ 2,50,00,000", "100%"],
+        [
+          "Amount Utilized",
+          `₹ ${(analytics.totalBudget || 2.1e7).toLocaleString()}`,
+          `${metrics?.budgetUtilization?.toFixed(1) || 84}%`,
+        ],
+        [
+          "Average Cost per Session",
+          `₹ ${Math.round(
+            (analytics.totalBudget || 2.1e7) / analytics.totalSessions
+          ).toLocaleString()}`,
+          "-",
+        ],
+        [
+          "Cost per Participant",
+          `₹ ${Math.round(
+            (analytics.totalBudget || 2.1e7) / analytics.totalParticipants
+          ).toLocaleString()}`,
+          "-",
+        ],
       ];
 
       // Draw budget table
@@ -508,7 +593,7 @@ const TrainingReportsDashboard: React.FC = () => {
           if (rowIndex === 0) {
             pdf.setFillColor(37, 99, 235);
             pdf.setTextColor(255, 255, 255);
-            pdf.setFont('helvetica', 'bold');
+            pdf.setFont("helvetica", "bold");
           } else {
             if (rowIndex % 2 === 0) {
               pdf.setFillColor(248, 250, 252);
@@ -516,10 +601,10 @@ const TrainingReportsDashboard: React.FC = () => {
               pdf.setFillColor(255, 255, 255);
             }
             pdf.setTextColor(0, 0, 0);
-            pdf.setFont('helvetica', 'normal');
+            pdf.setFont("helvetica", "normal");
           }
-          
-          pdf.rect(cellX, tableY, budgetColWidths[colIndex], rowHeight, 'FD');
+
+          pdf.rect(cellX, tableY, budgetColWidths[colIndex], rowHeight, "FD");
           pdf.setFontSize(9);
           pdf.text(cell, cellX + 2, tableY + 5);
           cellX += budgetColWidths[colIndex];
@@ -532,25 +617,25 @@ const TrainingReportsDashboard: React.FC = () => {
       // === PAGE 5: RECOMMENDATIONS ===
       checkPageBreak(80);
       pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('5. Key Insights and Recommendations', 20, currentY);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("5. Key Insights and Recommendations", 20, currentY);
       currentY += 15;
 
       pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      
+      pdf.setFont("helvetica", "normal");
+
       const recommendations = [
-        '• Excellent training completion rate indicates strong program effectiveness',
-        '• Geographic distribution shows good national coverage across states',
-        '• Budget utilization is within acceptable parameters and cost-effective',
-        '• Partner diversity ensures comprehensive expertise and reach',
-        '• Recommend expanding online training programs for broader accessibility',
-        '• Consider increasing focus on high-risk disaster-prone regions',
-        '• Strengthen partnerships with private sector for enhanced resources',
-        '• Implement advanced analytics for predictive training needs assessment'
+        "• Excellent training completion rate indicates strong program effectiveness",
+        "• Geographic distribution shows good national coverage across states",
+        "• Budget utilization is within acceptable parameters and cost-effective",
+        "• Partner diversity ensures comprehensive expertise and reach",
+        "• Recommend expanding online training programs for broader accessibility",
+        "• Consider increasing focus on high-risk disaster-prone regions",
+        "• Strengthen partnerships with private sector for enhanced resources",
+        "• Implement advanced analytics for predictive training needs assessment",
       ];
 
-      recommendations.forEach(recommendation => {
+      recommendations.forEach((recommendation) => {
         checkPageBreak(10);
         pdf.text(recommendation, 20, currentY, { maxWidth: pageWidth - 40 });
         currentY += 8;
@@ -559,23 +644,35 @@ const TrainingReportsDashboard: React.FC = () => {
       // === FOOTER ON LAST PAGE ===
       currentY = pageHeight - 30;
       pdf.setFillColor(37, 99, 235);
-      pdf.rect(0, currentY, pageWidth, 30, 'F');
-      
+      pdf.rect(0, currentY, pageWidth, 30, "F");
+
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('© 2024 JanRakshak - National Disaster Management Training System', pageWidth / 2, currentY + 15, { align: 'center' });
-      pdf.text('This report contains confidential information for authorized personnel only', pageWidth / 2, currentY + 22, { align: 'center' });
+      pdf.setFont("helvetica", "normal");
+      pdf.text(
+        "© 2024 JanRakshak - National Disaster Management Training System",
+        pageWidth / 2,
+        currentY + 15,
+        { align: "center" }
+      );
+      pdf.text(
+        "This report contains confidential information for authorized personnel only",
+        pageWidth / 2,
+        currentY + 22,
+        { align: "center" }
+      );
 
       // Generate filename with timestamp
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const timestamp = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/:/g, "-");
       const filename = `JanRakshak_Comprehensive_Training_Report_${timestamp}.pdf`;
-      
-      pdf.save(filename);
 
+      pdf.save(filename);
     } catch (error) {
-      console.error('Error generating comprehensive PDF:', error);
-      alert('Error generating report. Please try again.');
+      console.error("Error generating comprehensive PDF:", error);
+      alert("Error generating report. Please try again.");
     } finally {
       setIsGeneratingReport(false);
     }
@@ -583,13 +680,13 @@ const TrainingReportsDashboard: React.FC = () => {
 
   const exportDetailedSessionReport = async () => {
     setIsGeneratingReport(true);
-    
+
     try {
       // Fetch session data
-      const sessions = await getTrainingSessions?.() || [];
-      const partners = await getTrainingPartners?.() || [];
-      
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const sessions = (await getTrainingSessions?.()) || [];
+      const partners = (await getTrainingPartners?.()) || [];
+
+      const pdf = new jsPDF("p", "mm", "a4");
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
       let currentY = 20;
@@ -603,60 +700,77 @@ const TrainingReportsDashboard: React.FC = () => {
 
       // Header
       pdf.setFillColor(37, 99, 235);
-      pdf.rect(0, 0, pageWidth, 50, 'F');
-      
+      pdf.rect(0, 0, pageWidth, 50, "F");
+
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(28);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('JanRakshak', pageWidth / 2, 25, { align: 'center' });
-      
+      pdf.setFont("helvetica", "bold");
+      pdf.text("JanRakshak", pageWidth / 2, 25, { align: "center" });
+
       pdf.setFontSize(12);
-      pdf.text('Detailed Training Sessions Report', pageWidth / 2, 38, { align: 'center' });
+      pdf.text("Detailed Training Sessions Report", pageWidth / 2, 38, {
+        align: "center",
+      });
 
       currentY = 65;
       pdf.setTextColor(0, 0, 0);
 
       // Report Info
       pdf.setFontSize(10);
-      pdf.text(`Generated: ${new Date().toLocaleDateString('en-IN')} ${new Date().toLocaleTimeString('en-IN')}`, 20, currentY);
+      pdf.text(
+        `Generated: ${new Date().toLocaleDateString(
+          "en-IN"
+        )} ${new Date().toLocaleTimeString("en-IN")}`,
+        20,
+        currentY
+      );
       pdf.text(`Total Sessions: ${sessions.length}`, pageWidth - 60, currentY);
       currentY += 15;
 
       // Sessions Details
       sessions.slice(0, 20).forEach((session, index) => {
         checkPageBreak(50);
-        
+
         // Session header
         pdf.setFillColor(240, 245, 255);
-        pdf.rect(20, currentY - 5, pageWidth - 40, 35, 'F');
-        
+        pdf.rect(20, currentY - 5, pageWidth - 40, 35, "F");
+
         pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'bold');
+        pdf.setFont("helvetica", "bold");
         pdf.text(`${index + 1}. ${session.title}`, 25, currentY + 5);
-        
+
         currentY += 12;
         pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'normal');
-        
-        const partner = partners.find(p => p.id === session.partner_id);
+        pdf.setFont("helvetica", "normal");
+
+        const partner = partners.find((p) => p.id === session.partner_id);
         const sessionDetails = [
-          `Partner: ${partner?.name || 'N/A'}`,
+          `Partner: ${partner?.name || "N/A"}`,
           `Location: ${session.district}, ${session.state}`,
-          `Venue: ${session.venue || 'N/A'}`,
-          `Duration: ${new Date(session.start_date).toLocaleDateString()} - ${new Date(session.end_date).toLocaleDateString()}`,
+          `Venue: ${session.venue || "N/A"}`,
+          `Duration: ${new Date(
+            session.start_date
+          ).toLocaleDateString()} - ${new Date(
+            session.end_date
+          ).toLocaleDateString()}`,
           `Mode: ${session.training_mode} | Status: ${session.status}`,
-          `Participants: ${session.actual_participants || session.expected_participants || 0} | Budget: ₹${(session.budget_allocated || 0).toLocaleString()}`
+          `Participants: ${
+            session.actual_participants || session.expected_participants || 0
+          } | Budget: ₹${(session.budget_allocated || 0).toLocaleString()}`,
         ];
 
-        sessionDetails.forEach(detail => {
+        sessionDetails.forEach((detail) => {
           pdf.text(detail, 25, currentY);
           currentY += 4;
         });
 
         if (session.description) {
           currentY += 2;
-          pdf.setFont('helvetica', 'italic');
-          const splitDescription = pdf.splitTextToSize(session.description, pageWidth - 50);
+          pdf.setFont("helvetica", "italic");
+          const splitDescription = pdf.splitTextToSize(
+            session.description,
+            pageWidth - 50
+          );
           pdf.text(splitDescription, 25, currentY);
           currentY += splitDescription.length * 4;
         }
@@ -667,17 +781,24 @@ const TrainingReportsDashboard: React.FC = () => {
       // Footer
       const footerY = pageHeight - 15;
       pdf.setFillColor(37, 99, 235);
-      pdf.rect(0, footerY, pageWidth, 15, 'F');
+      pdf.rect(0, footerY, pageWidth, 15, "F");
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(8);
-      pdf.text('© 2024 JanRakshak - Confidential Training Sessions Report', pageWidth / 2, footerY + 8, { align: 'center' });
+      pdf.text(
+        "© 2024 JanRakshak - Confidential Training Sessions Report",
+        pageWidth / 2,
+        footerY + 8,
+        { align: "center" }
+      );
 
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const timestamp = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/:/g, "-");
       pdf.save(`JanRakshak_Detailed_Sessions_Report_${timestamp}.pdf`);
-
     } catch (error) {
-      console.error('Error generating detailed session report:', error);
-      alert('Error generating detailed report. Please try again.');
+      console.error("Error generating detailed session report:", error);
+      alert("Error generating detailed report. Please try again.");
     } finally {
       setIsGeneratingReport(false);
     }

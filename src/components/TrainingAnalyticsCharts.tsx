@@ -248,7 +248,9 @@ const TrainingAnalyticsCharts: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-lg font-bold text-blue-600">JanRakshak</div>
-              <div className="text-xs text-gray-500">Disaster Management Training System</div>
+              <div className="text-xs text-gray-500">
+                Disaster Management Training System
+              </div>
             </div>
           </CardTitle>
         </CardHeader>
