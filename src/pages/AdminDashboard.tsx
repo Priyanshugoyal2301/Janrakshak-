@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminLayout from "@/components/AdminLayout";
 import {
   Users,
   FileText,
@@ -400,14 +401,15 @@ const AdminDashboard = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Real-time Status Bar */}
-      <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-teal-200 rounded-lg p-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                isLive ? "bg-green-500 animate-pulse" : "bg-gray-400"
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Real-time Status Bar */}
+        <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-teal-200 rounded-lg p-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  isLive ? "bg-green-500 animate-pulse" : "bg-gray-400"
               }`}
             ></div>
             <span className="text-sm font-medium text-gray-700">
@@ -1434,7 +1436,8 @@ const AdminDashboard = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

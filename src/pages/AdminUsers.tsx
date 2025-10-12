@@ -73,10 +73,14 @@ import { toast } from 'sonner';
 // Static data for dropdowns
 const staticData = {
   roles: [
-    { value: "user", label: "User" },
-    { value: "volunteer", label: "Volunteer" },
-    { value: "rescue_team", label: "Rescue Team" },
-    { value: "admin", label: "Admin" }
+    { value: "CITIZEN", label: "Citizen" },
+    { value: "VOLUNTEER", label: "Volunteer" },
+    { value: "NGO", label: "NGO" },
+    { value: "DMA", label: "DMA" },
+    { value: "ADMIN", label: "Admin" },
+    // Legacy roles for backward compatibility
+    { value: "user", label: "User (Legacy)" },
+    { value: "rescue_team", label: "Rescue Team (Legacy)" }
   ],
   regions: [
     "All Regions",
@@ -111,6 +115,7 @@ const AdminUsers = () => {
   // Real data state
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [volunteers, setVolunteers] = useState<AdminUser[]>([]);
+  const [ngos, setNgos] = useState<AdminUser[]>([]);
   const [supabaseAdmins, setSupabaseAdmins] = useState<SupabaseAdminUser[]>([]);
 
   // Load initial data
@@ -135,17 +140,26 @@ const AdminUsers = () => {
         );
         setVolunteers(prevVolunteers => 
           prevVolunteers.map(user => 
-            user.id === payload.new.id ? { ...user, ...payload.new } : user
+            user.id === payload.new.id ? payload.new : user
+          )
+        );
+        setNgos(prevNgos => 
+          prevNgos.map(user => 
+            user.id === payload.new.id ? payload.new : user
           )
         );
       } else if (payload.eventType === 'INSERT' && payload.new) {
         setUsers(prevUsers => [payload.new, ...prevUsers]);
-        if (payload.new.role === 'volunteer' || payload.new.role === 'rescue_team') {
+        if (payload.new.role === 'VOLUNTEER' || payload.new.role === 'volunteer' || payload.new.role === 'rescue_team') {
           setVolunteers(prevVolunteers => [payload.new, ...prevVolunteers]);
+        }
+        if (payload.new.role === 'NGO') {
+          setNgos(prevNgos => [payload.new, ...prevNgos]);
         }
       } else if (payload.eventType === 'DELETE' && payload.old) {
         setUsers(prevUsers => prevUsers.filter(user => user.id !== payload.old.id));
         setVolunteers(prevVolunteers => prevVolunteers.filter(user => user.id !== payload.old.id));
+        setNgos(prevNgos => prevNgos.filter(user => user.id !== payload.old.id));
       }
       
       setLastUpdate(new Date());
@@ -163,7 +177,8 @@ const AdminUsers = () => {
       const userData = await getAdminUsers();
       console.log('Loaded users:', userData);
       setUsers(userData);
-      setVolunteers(userData.filter(user => user.role === 'volunteer' || user.role === 'rescue_team'));
+      setVolunteers(userData.filter(user => user.role === 'VOLUNTEER' || user.role === 'volunteer' || user.role === 'rescue_team'));
+      setNgos(userData.filter(user => user.role === 'NGO'));
       setLastUpdate(new Date());
       console.log('Users state updated:', userData.length, 'users loaded');
     } catch (error) {
@@ -250,11 +265,15 @@ const AdminUsers = () => {
 
 
   const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800 border-red-200';
-      case 'rescue_team': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'volunteer': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'user': return 'bg-green-100 text-green-800 border-green-200';
+    switch (role?.toUpperCase()) {
+      case 'ADMIN': return 'bg-red-100 text-red-800 border-red-200';
+      case 'DMA': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'NGO': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'VOLUNTEER': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'CITIZEN': return 'bg-green-100 text-green-800 border-green-200';
+      // Legacy role support
+      case 'RESCUE_TEAM': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'USER': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -270,11 +289,15 @@ const AdminUsers = () => {
   };
 
   const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'admin': return <Crown className="h-4 w-4" />;
-      case 'rescue_team': return <Shield className="h-4 w-4" />;
-      case 'volunteer': return <Heart className="h-4 w-4" />;
-      case 'user': return <User className="h-4 w-4" />;
+    switch (role?.toUpperCase()) {
+      case 'ADMIN': return <Crown className="h-4 w-4" />;
+      case 'DMA': return <Shield className="h-4 w-4" />;
+      case 'NGO': return <Heart className="h-4 w-4" />;
+      case 'VOLUNTEER': return <Users className="h-4 w-4" />;
+      case 'CITIZEN': return <User className="h-4 w-4" />;
+      // Legacy role support
+      case 'RESCUE_TEAM': return <Shield className="h-4 w-4" />;
+      case 'USER': return <User className="h-4 w-4" />;
       default: return <User className="h-4 w-4" />;
     }
   };
@@ -410,7 +433,8 @@ const AdminUsers = () => {
 
   const totalUsers = users.length;
   const activeUsers = users.filter(u => u.status === 'active').length;
-  const volunteerCount = users.filter(u => u.role === 'volunteer' || u.role === 'rescue_team').length;
+  const volunteerCount = users.filter(u => u.role?.toUpperCase() === 'VOLUNTEER' || u.role === 'volunteer' || u.role === 'rescue_team').length;
+  const ngoCount = users.filter(u => u.role?.toUpperCase() === 'NGO').length;
   const admins = supabaseAdmins.length;
 
   return (
@@ -492,7 +516,7 @@ const AdminUsers = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-5">
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
@@ -528,6 +552,17 @@ const AdminUsers = () => {
         
         <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">NGOs</CardTitle>
+            <Heart className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{ngoCount}</div>
+            <p className="text-xs text-muted-foreground">NGO Partners</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Admins</CardTitle>
             <Crown className="h-4 w-4 text-red-600" />
           </CardHeader>
@@ -540,7 +575,7 @@ const AdminUsers = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
           <TabsTrigger value="users" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
             <Users className="h-4 w-4 mr-2" />
             All Users
@@ -548,6 +583,10 @@ const AdminUsers = () => {
           <TabsTrigger value="volunteers" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
             <Heart className="h-4 w-4 mr-2" />
             Volunteers
+          </TabsTrigger>
+          <TabsTrigger value="ngos" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
+            <Heart className="h-4 w-4 mr-2" />
+            NGOs
           </TabsTrigger>
           <TabsTrigger value="admins" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-900">
             <Crown className="h-4 w-4 mr-2" />
@@ -857,6 +896,80 @@ const AdminUsers = () => {
                     </CardContent>
                   </Card>
                   ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* NGOs Tab */}
+        <TabsContent value="ngos" className="space-y-6">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center">
+                    <Heart className="h-5 w-5 mr-2 text-purple-600" />
+                    NGO Directory
+                  </CardTitle>
+                  <CardDescription>Manage NGO partners and their operations</CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>Showing {ngos.length} NGO partners</span>
+                </div>
+                {ngos.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No NGO Partners Found</h3>
+                    <p className="text-gray-600 mb-4">NGO partners will appear here once they register</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {ngos.map((ngo) => (
+                      <Card key={ngo.id} className="border border-purple-100 hover:border-purple-300 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={ngo.avatar || ''} alt={ngo.name || ngo.email} />
+                                <AvatarFallback className="bg-purple-100 text-purple-700">
+                                  {(ngo.name || ngo.email || 'N').charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">{ngo.name || ngo.email}</h4>
+                                <p className="text-sm text-gray-600">{ngo.organization || 'NGO Organization'}</p>
+                                <p className="text-xs text-gray-500">{ngo.district}, {ngo.state}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between">
+                            <Badge className={getRoleColor(ngo.role)} variant="outline">
+                              {getRoleIcon(ngo.role)}
+                              <span className="ml-1">{ngo.role}</span>
+                            </Badge>
+                            <span className="text-xs text-gray-500">
+                              Joined {formatDate(ngo.created_at)}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </div>
             </CardContent>
