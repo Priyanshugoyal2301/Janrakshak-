@@ -257,7 +257,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   <strong>JanRakshak - Protecting Communities, One Drop at a Time</strong>
   <br><br>
   <img src="https://img.shields.io/badge/Made%20with-Love-red?style=for-the-badge" alt="Made with Love">
-  <img src="https://img.shields.io/badge/For-Smart%20India%20Hackathon-orange?style=for-the-badge" alt="For SIH">
+  <img src="https://img.shields.io/badge/Made%20by%20Bharatiya%2C%20Made%20in%20Bharat%2C%20Made%20for%20the%20World-orange?style=for-the-badge" alt="Made by Bharatiya, Made in Bharat, Made for the World">
 </div>
 
 ### Acknowledgments
