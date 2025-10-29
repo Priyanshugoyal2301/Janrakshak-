@@ -1,11 +1,11 @@
-import React from 'react';
-import AdminLayout from '@/components/AdminLayout';
-import AdminDashboard from '@/pages/AdminDashboard';
+import React from "react";
+import AdminLayout from "@/components/AdminLayout";
+import AdminDashboardContent from "@/components/AdminDashboardContent";
 
 const Admin = () => {
   return (
     <AdminLayout>
-      <AdminDashboard />
+      <AdminDashboardContent />
     </AdminLayout>
   );
 };

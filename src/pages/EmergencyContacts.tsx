@@ -42,6 +42,7 @@ import {
   Send,
   CheckCircle,
   X,
+  FileText,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import JanRakshakChatbot from "@/components/JanRakshakChatbot";

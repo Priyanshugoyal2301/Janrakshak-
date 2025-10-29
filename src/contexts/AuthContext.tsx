@@ -24,7 +24,8 @@ interface AuthContextType {
   register: (
     email: string,
     password: string,
-    displayName: string
+    displayName: string,
+    role?: string
   ) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -128,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Sync user to Supabase
       try {
-        await syncFirebaseUserToSupabase(result.user, "user");
+        await syncFirebaseUserToSupabase(result.user);
         await updateUserLastLogin(result.user.uid);
       } catch (syncError) {
         console.error("Error syncing user to Supabase:", syncError);
@@ -148,7 +149,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const register = async (
     email: string,
     password: string,
-    displayName: string
+    displayName: string,
+    role?: string
   ) => {
     try {
       setLoading(true);
@@ -160,9 +162,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await updateProfile(result.user, { displayName });
       await createUserProfile(result.user, { displayName });
 
-      // Sync user to Supabase
+      // Sync user to Supabase with chosen role
       try {
-        await syncFirebaseUserToSupabase(result.user, "user");
+        await syncFirebaseUserToSupabase(result.user, role);
       } catch (syncError) {
         console.error("Error syncing user to Supabase:", syncError);
         // Don't fail registration if sync fails
@@ -186,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Sync user to Supabase
       try {
-        await syncFirebaseUserToSupabase(result.user, "user");
+        await syncFirebaseUserToSupabase(result.user);
         await updateUserLastLogin(result.user.uid);
       } catch (syncError) {
         console.error("Error syncing user to Supabase:", syncError);

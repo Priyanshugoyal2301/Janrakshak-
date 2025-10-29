@@ -51,9 +51,29 @@ const RoleBasedLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect if already logged in
-  if (user && userProfile) {
+  // Redirect if already logged in and profile is loaded
+  // Wait for loading to complete to avoid race conditions
+  if (!loading && user && userProfile) {
+    console.log("🔄 Redirecting authenticated user to dashboard:", {
+      userEmail: user.email,
+      userRole: userProfile.role,
+    });
     return <Navigate to="/dashboard-router" replace />;
+  }
+
+  // Show loading if user is present but profile is still loading
+  if (!loading && user && !userProfile) {
+    console.log("⏳ User authenticated, waiting for profile...", {
+      userEmail: user.email,
+    });
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-teal-50">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -61,12 +81,20 @@ const RoleBasedLogin: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
+    console.log("🔑 Attempting login for:", formData.email);
+
     try {
       const result = await signIn(formData.email, formData.password);
       if (!result.success) {
+        console.log("❌ Login failed:", result.error);
         setError(result.error || "Login failed");
+      } else {
+        console.log("✅ Login successful, waiting for profile...");
+        // Don't set loading to false immediately, let the auth state change handle redirect
+        return;
       }
     } catch (error) {
+      console.error("❌ Login error:", error);
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);

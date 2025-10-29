@@ -72,7 +72,7 @@ import {
   Legend,
 } from "recharts";
 import { supabase } from "@/lib/supabase";
-import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 
 // Sample data for DMA analytics
 const dmaMetricsData = [
@@ -99,7 +99,8 @@ const responseTimeData = [
 ];
 
 const DMAAnalytics = () => {
-  const { userProfile } = useRoleAwareAuth();
+  const { user } = useSupabaseAuth();
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState("last_30_days");
   const [selectedMetric, setSelectedMetric] = useState("response_efficiency");
@@ -123,11 +124,11 @@ const DMAAnalytics = () => {
     setLoading(true);
     try {
       // Simulate API call for DMA-specific analytics
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // In a real implementation, this would fetch data from Supabase
       // filtered by DMA district/state jurisdiction
-      
+
       setAnalyticsData({
         totalReports: Math.floor(Math.random() * 500) + 400,
         resolvedReports: Math.floor(Math.random() * 400) + 350,
@@ -149,7 +150,9 @@ const DMAAnalytics = () => {
     loadAnalyticsData();
   };
 
-  const resolutionRate = Math.round((analyticsData.resolvedReports / analyticsData.totalReports) * 100);
+  const resolutionRate = Math.round(
+    (analyticsData.resolvedReports / analyticsData.totalReports) * 100
+  );
 
   return (
     <NDMALayout>
@@ -162,7 +165,8 @@ const DMAAnalytics = () => {
               DMA Response Analytics
             </h1>
             <p className="text-gray-600 mt-2">
-              Comprehensive analysis of disaster management operations and response metrics
+              Comprehensive analysis of disaster management operations and
+              response metrics
             </p>
           </div>
           <div className="flex items-center space-x-4">
@@ -178,7 +182,9 @@ const DMAAnalytics = () => {
               </SelectContent>
             </Select>
             <Button onClick={refreshData} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
           </div>
@@ -188,11 +194,15 @@ const DMAAnalytics = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Reports</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Reports
+              </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{analyticsData.totalReports}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {analyticsData.totalReports}
+              </div>
               <p className="text-xs text-muted-foreground">
                 <span className="text-green-600 flex items-center">
                   <ArrowUpRight className="w-3 h-3 mr-1" />
@@ -204,11 +214,15 @@ const DMAAnalytics = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Resolution Rate</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Resolution Rate
+              </CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{resolutionRate}%</div>
+              <div className="text-2xl font-bold text-green-600">
+                {resolutionRate}%
+              </div>
               <p className="text-xs text-muted-foreground">
                 <span className="text-green-600 flex items-center">
                   <ArrowUpRight className="w-3 h-3 mr-1" />
@@ -220,7 +234,9 @@ const DMAAnalytics = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Avg Response Time
+              </CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -238,11 +254,15 @@ const DMAAnalytics = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Resources</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Active Resources
+              </CardTitle>
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{analyticsData.resourcesDeployed}</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {analyticsData.resourcesDeployed}
+              </div>
               <p className="text-xs text-muted-foreground">
                 <span className="text-green-600 flex items-center">
                   <ArrowUpRight className="w-3 h-3 mr-1" />
@@ -340,7 +360,8 @@ const DMAAnalytics = () => {
               <CardHeader>
                 <CardTitle>GIS Response Mapping</CardTitle>
                 <CardDescription>
-                  Geographic distribution of emergency responses and resource deployment
+                  Geographic distribution of emergency responses and resource
+                  deployment
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -369,8 +390,16 @@ const DMAAnalytics = () => {
                         <XAxis dataKey="name" />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="avg_time" fill="#f97316" name="Actual Time (min)" />
-                        <Bar dataKey="target" fill="#94a3b8" name="Target Time (min)" />
+                        <Bar
+                          dataKey="avg_time"
+                          fill="#f97316"
+                          name="Actual Time (min)"
+                        />
+                        <Bar
+                          dataKey="target"
+                          fill="#94a3b8"
+                          name="Target Time (min)"
+                        />
                       </RechartsBarChart>
                     </ResponsiveContainer>
                   </div>
@@ -387,10 +416,15 @@ const DMAAnalytics = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Emergency Shelters</span>
+                      <span className="text-sm font-medium">
+                        Emergency Shelters
+                      </span>
                       <div className="flex items-center space-x-2">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
-                          <div className="bg-green-500 h-2 rounded-full" style={{ width: '80%' }}></div>
+                          <div
+                            className="bg-green-500 h-2 rounded-full"
+                            style={{ width: "80%" }}
+                          ></div>
                         </div>
                         <span className="text-sm text-gray-600">24/30</span>
                       </div>
@@ -399,7 +433,10 @@ const DMAAnalytics = () => {
                       <span className="text-sm font-medium">Rescue Teams</span>
                       <div className="flex items-center space-x-2">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-500 h-2 rounded-full" style={{ width: '95%' }}></div>
+                          <div
+                            className="bg-blue-500 h-2 rounded-full"
+                            style={{ width: "95%" }}
+                          ></div>
                         </div>
                         <span className="text-sm text-gray-600">19/20</span>
                       </div>
@@ -408,16 +445,24 @@ const DMAAnalytics = () => {
                       <span className="text-sm font-medium">Medical Units</span>
                       <div className="flex items-center space-x-2">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
-                          <div className="bg-red-500 h-2 rounded-full" style={{ width: '60%' }}></div>
+                          <div
+                            className="bg-red-500 h-2 rounded-full"
+                            style={{ width: "60%" }}
+                          ></div>
                         </div>
                         <span className="text-sm text-gray-600">12/20</span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Communication Systems</span>
+                      <span className="text-sm font-medium">
+                        Communication Systems
+                      </span>
                       <div className="flex items-center space-x-2">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
-                          <div className="bg-purple-500 h-2 rounded-full" style={{ width: '90%' }}></div>
+                          <div
+                            className="bg-purple-500 h-2 rounded-full"
+                            style={{ width: "90%" }}
+                          ></div>
                         </div>
                         <span className="text-sm text-gray-600">18/20</span>
                       </div>
@@ -434,7 +479,8 @@ const DMAAnalytics = () => {
               <CardHeader>
                 <CardTitle>Response Efficiency Trends</CardTitle>
                 <CardDescription>
-                  Long-term trends in disaster response efficiency and resource optimization
+                  Long-term trends in disaster response efficiency and resource
+                  optimization
                 </CardDescription>
               </CardHeader>
               <CardContent>

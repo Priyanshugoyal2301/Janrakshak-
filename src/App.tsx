@@ -33,6 +33,7 @@ import AdminBasic from "./pages/AdminBasic";
 import AdminMinimalTest from "./pages/AdminMinimalTest";
 import NDMADashboard from "./pages/NDMADashboard";
 import NGODashboard from "./pages/NGODashboard";
+import SimplifiedNGODashboard from "./pages/SimplifiedNGODashboard";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
 import DMADashboard from "./pages/DMADashboard";
 import DMAAnalytics from "./pages/DMAAnalytics";
@@ -72,6 +73,9 @@ import Profile from "./pages/Profile";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 import JanRakshakChatbot from "./components/JanRakshakChatbot";
+import ReliefAllocation from "./components/ReliefAllocation";
+import FoodResources from "./components/FoodResources";
+import VolunteerManagement from "./components/VolunteerManagement";
 
 const queryClient = new QueryClient();
 
@@ -276,169 +280,128 @@ const App = () => (
               <Route
                 path="/dma/alerts"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <AlertProvider isAdminContext={true}>
                       <DMAAlerts />
                     </AlertProvider>
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/dma/reports"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <DMAReports />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/dma/training"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <DMATraining />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/dma/gis-mapping"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <DMAGISMapping />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/dma/flood-prediction"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <DMAFloodPrediction />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/dma/risk-assessment"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <DMARiskAssessment />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/dma/shelters"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <DMAShelters />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/dma/analytics"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <DMAAnalytics />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/dma/system"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.ADMIN, UserRole.DMA]}
-                  >
+                  <SupabaseAuthProvider>
                     <DMASystem />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
 
-              {/* NGO Routes */}
-              <Route
-                path="/ngo/alerts"
-                element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
-                  >
-                    <AlertProvider isAdminContext={true}>
-                      <NGOAlerts />
-                    </AlertProvider>
-                  </RoleAwareProtectedRoute>
-                }
-              />
-              <Route
-                path="/ngo/users"
-                element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
-                  >
-                    <NGOUsers />
-                  </RoleAwareProtectedRoute>
-                }
-              />
-              <Route
-                path="/ngo/training"
-                element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
-                  >
-                    <NGOTraining />
-                  </RoleAwareProtectedRoute>
-                }
-              />
+              {/* NGO Routes - Essential Features with Dedicated Components */}
               <Route
                 path="/ngo/shelters"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
-                  >
-                    <NGOShelters />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute
+                      requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
+                    >
+                      <NGOShelters />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
-                path="/ngo/reports"
+                path="/ngo/relief"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
-                  >
-                    <NGOReports />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute
+                      requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
+                    >
+                      <ReliefAllocation />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
-                path="/ngo/analytics"
+                path="/ngo/food-resources"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
-                  >
-                    <NGOAnalytics />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute
+                      requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
+                    >
+                      <FoodResources />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
-                path="/ngo/gis-mapping"
+                path="/ngo/volunteers"
                 element={
-                  <RoleAwareProtectedRoute
-                    requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
-                  >
-                    <NGOGISMapping />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute
+                      requiredRoles={[UserRole.NGO, UserRole.VOLUNTEER]}
+                    >
+                      <VolunteerManagement />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
+
               <Route
                 path="/ndma-dashboard"
                 element={
@@ -450,17 +413,21 @@ const App = () => (
               <Route
                 path="/ngo-dashboard"
                 element={
-                  <RoleAwareProtectedRoute requiredRoles={UserRole.NGO}>
-                    <NGODashboard />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute requiredRoles={UserRole.NGO}>
+                      <SimplifiedNGODashboard />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/volunteer-dashboard"
                 element={
-                  <RoleAwareProtectedRoute requiredRoles={UserRole.VOLUNTEER}>
-                    <VolunteerDashboard />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute requiredRoles={UserRole.VOLUNTEER}>
+                      <VolunteerDashboard />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
 
@@ -468,34 +435,40 @@ const App = () => (
               <Route
                 path="/volunteer/activities"
                 element={
-                  <RoleAwareProtectedRoute requiredRoles={UserRole.VOLUNTEER}>
-                    <VolunteerActivities />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute requiredRoles={UserRole.VOLUNTEER}>
+                      <VolunteerActivities />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/volunteer/training"
                 element={
-                  <RoleAwareProtectedRoute requiredRoles={UserRole.VOLUNTEER}>
-                    <VolunteerTraining />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute requiredRoles={UserRole.VOLUNTEER}>
+                      <VolunteerTraining />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
               <Route
                 path="/volunteer/reports"
                 element={
-                  <RoleAwareProtectedRoute requiredRoles={UserRole.VOLUNTEER}>
-                    <VolunteerReports />
-                  </RoleAwareProtectedRoute>
+                  <SupabaseAuthProvider>
+                    <RoleAwareProtectedRoute requiredRoles={UserRole.VOLUNTEER}>
+                      <VolunteerReports />
+                    </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
 
               <Route
                 path="/dma-dashboard"
                 element={
-                  <RoleAwareProtectedRoute requiredRoles={UserRole.DMA}>
+                  <SupabaseAuthProvider>
                     <DMADashboard />
-                  </RoleAwareProtectedRoute>
+                  </SupabaseAuthProvider>
                 }
               />
 

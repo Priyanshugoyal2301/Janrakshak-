@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import UserLayout from "@/components/UserLayout";
-import { useAuth } from "@/contexts/AuthContext";
+import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -87,7 +87,7 @@ import {
 import NearbySheltersMap from "@/components/NearbySheltersMap";
 
 const UserDashboard = () => {
-  const { currentUser, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading } = useRoleAwareAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -137,10 +137,10 @@ const UserDashboard = () => {
 
   // Load user data
   useEffect(() => {
-    if (currentUser) {
+    if (user) {
       loadUserData();
     }
-  }, [currentUser]);
+  }, [user]);
 
   // Handle tab changes from navigation
   useEffect(() => {
@@ -174,13 +174,13 @@ const UserDashboard = () => {
       setUserLocation(defaultLocation);
 
       // Load user reports and stats
-      if (currentUser?.uid) {
+      if (user?.id) {
         try {
           // Use direct Supabase queries
           const { data: reports, error: reportsError } = await supabase
             .from("flood_reports")
             .select("*")
-            .eq("user_id", currentUser.uid)
+            .eq("user_id", user.id)
             .order("created_at", { ascending: false });
 
           if (reportsError) {
@@ -393,7 +393,7 @@ const UserDashboard = () => {
     );
   }
 
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -549,20 +549,28 @@ const UserDashboard = () => {
               <CardTitle className="flex items-center space-x-2">
                 <Shield className="w-5 h-5 text-blue-600" />
                 <span>Community Safety Score</span>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-700"
+                >
                   Citizen Feature
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Real-time safety assessment for your area based on reports and alerts
+                Real-time safety assessment for your area based on reports and
+                alerts
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-green-600 mb-2">85</div>
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    85
+                  </div>
                   <p className="text-sm text-gray-600">Safety Score</p>
-                  <Badge className="mt-2 bg-green-100 text-green-700">Good</Badge>
+                  <Badge className="mt-2 bg-green-100 text-green-700">
+                    Good
+                  </Badge>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-sm">
                   <div className="text-3xl font-bold text-orange-600 mb-2">
@@ -574,7 +582,9 @@ const UserDashboard = () => {
                   </Badge>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-blue-600 mb-2">12</div>
+                  <div className="text-3xl font-bold text-blue-600 mb-2">
+                    12
+                  </div>
                   <p className="text-sm text-gray-600">Active Shelters</p>
                   <Badge className="mt-2 bg-blue-100 text-blue-700">
                     Available

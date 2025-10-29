@@ -6,6 +6,9 @@ import {
   UserRole,
   RoleBasedAuthService,
 } from "@/lib/roleBasedAuth";
+import { isAdmin, getFirebase } from "@/lib/firebase";
+import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
+import { syncFirebaseUserToSupabase } from "@/lib/userSync";
 
 interface RoleAwareAuthContextType {
   user: User | null;
@@ -66,6 +69,62 @@ export const RoleAwareAuthProvider: React.FC<RoleAwareAuthProviderProps> = ({
         role: profile?.role,
         email: profile?.email,
       });
+
+      // If no profile found but user is authenticated, create fallback profile
+      if (!profile && user?.email) {
+        if (isAdmin(user.email)) {
+          console.log(
+            "🔑 Admin user detected, creating temporary admin profile"
+          );
+
+          // Create temporary admin profile for routing
+          const adminProfile: UserProfile = {
+            id: userId,
+            email: user.email,
+            name: user.user_metadata?.full_name || user.email.split("@")[0],
+            role: UserRole.ADMIN,
+            district: "National",
+            state: "All States",
+            organization: "JanRakshak Administration",
+            isActive: true,
+            permissions: RoleBasedAuthService.getRolePermissions(
+              UserRole.ADMIN
+            ),
+            createdAt: new Date(),
+            lastLogin: new Date(),
+          };
+
+          console.log("🚀 Using temporary admin profile for:", user.email);
+          setUserProfile(adminProfile);
+          return;
+        } else {
+          // Create fallback citizen profile for regular users when RLS blocks access
+          console.log(
+            "🔧 No profile found due to RLS/406 error, creating fallback citizen profile"
+          );
+
+          const fallbackProfile: UserProfile = {
+            id: userId,
+            email: user.email,
+            name: user.user_metadata?.full_name || user.email.split("@")[0],
+            role: UserRole.CITIZEN,
+            district: "Unknown",
+            state: "Unknown",
+            organization: undefined,
+            isActive: true,
+            permissions: RoleBasedAuthService.getRolePermissions(
+              UserRole.CITIZEN
+            ),
+            createdAt: new Date(),
+            lastLogin: new Date(),
+          };
+
+          console.log("⚡ Using temporary citizen profile for:", user.email);
+          setUserProfile(fallbackProfile);
+          return;
+        }
+      }
+
       setUserProfile(profile);
 
       // Update last login
@@ -74,6 +133,35 @@ export const RoleAwareAuthProvider: React.FC<RoleAwareAuthProviderProps> = ({
       }
     } catch (error) {
       console.error("❌ Error fetching user profile:", error);
+
+      // If error and user is admin, create temporary profile
+      if (user?.email) {
+        if (isAdmin(user.email)) {
+          console.log(
+            "🔑 Admin user detected (error case), creating temporary admin profile"
+          );
+
+          const adminProfile: UserProfile = {
+            id: userId,
+            email: user.email,
+            name: user.user_metadata?.full_name || user.email.split("@")[0],
+            role: UserRole.ADMIN,
+            district: "National",
+            state: "All States",
+            organization: "JanRakshak Administration",
+            isActive: true,
+            permissions: RoleBasedAuthService.getRolePermissions(
+              UserRole.ADMIN
+            ),
+            createdAt: new Date(),
+            lastLogin: new Date(),
+          };
+
+          setUserProfile(adminProfile);
+          return;
+        }
+      }
+
       setUserProfile(null);
     }
   };
@@ -81,48 +169,128 @@ export const RoleAwareAuthProvider: React.FC<RoleAwareAuthProviderProps> = ({
   // Initialize auth state
   useEffect(() => {
     console.log("🚀 RoleAwareAuthContext initializing...");
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (error) {
-        console.error("Session error:", error);
+
+    const { auth } = getFirebase();
+    let mounted = true;
+
+    // Listen to Firebase auth changes (this is the primary auth system)
+    const unsubscribeFirebase = onAuthStateChanged(
+      auth,
+      async (firebaseUser) => {
+        if (!mounted) return;
+
+        console.log("🔄 Firebase auth state change:", {
+          hasUser: !!firebaseUser,
+          userEmail: firebaseUser?.email,
+          uid: firebaseUser?.uid,
+        });
+
+        if (firebaseUser) {
+          console.log("👤 Firebase user authenticated, syncing to Supabase...");
+          setLoading(true);
+
+          // Convert Firebase user to Supabase user format for compatibility
+          const supabaseUser: User = {
+            id: firebaseUser.uid,
+            aud: "authenticated",
+            role: "authenticated",
+            email: firebaseUser.email,
+            email_confirmed_at: firebaseUser.emailVerified
+              ? new Date().toISOString()
+              : null,
+            phone: firebaseUser.phoneNumber,
+            confirmed_at: firebaseUser.emailVerified
+              ? new Date().toISOString()
+              : null,
+            last_sign_in_at: new Date().toISOString(),
+            app_metadata: {},
+            user_metadata: {
+              full_name: firebaseUser.displayName,
+              avatar_url: firebaseUser.photoURL,
+            },
+            identities: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
+          // Set user immediately so ProtectedRoute works
+          setUser(supabaseUser);
+
+          try {
+            // Ensure user is synced to Supabase
+            const syncResult = await syncFirebaseUserToSupabase(firebaseUser);
+
+            if (syncResult) {
+              console.log("✅ Sync successful, fetching profile...");
+              // Now fetch the profile using Firebase UID
+              await fetchUserProfile(firebaseUser.uid);
+            } else {
+              console.warn("⚠️ Sync failed, creating fallback profile...");
+              // Create fallback profile if sync fails
+              const fallbackProfile: UserProfile = {
+                id: firebaseUser.uid,
+                email: firebaseUser.email || "",
+                name:
+                  firebaseUser.displayName ||
+                  firebaseUser.email?.split("@")[0] ||
+                  "User",
+                role: UserRole.CITIZEN,
+                district: "Unknown",
+                state: "Unknown",
+                organization: undefined,
+                isActive: true,
+                permissions: RoleBasedAuthService.getRolePermissions(
+                  UserRole.CITIZEN
+                ),
+                createdAt: new Date(),
+                lastLogin: new Date(),
+              };
+              setUserProfile(fallbackProfile);
+            }
+          } catch (error) {
+            console.error("❌ Error during Firebase→Supabase sync:", error);
+
+            // Create fallback profile on error
+            const fallbackProfile: UserProfile = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email || "",
+              name:
+                firebaseUser.displayName ||
+                firebaseUser.email?.split("@")[0] ||
+                "User",
+              role: isAdmin(firebaseUser.email || "")
+                ? UserRole.ADMIN
+                : UserRole.CITIZEN,
+              district: "Unknown",
+              state: "Unknown",
+              organization: undefined,
+              isActive: true,
+              permissions: RoleBasedAuthService.getRolePermissions(
+                isAdmin(firebaseUser.email || "")
+                  ? UserRole.ADMIN
+                  : UserRole.CITIZEN
+              ),
+              createdAt: new Date(),
+              lastLogin: new Date(),
+            };
+            setUserProfile(fallbackProfile);
+          }
+
+          setLoading(false);
+        } else {
+          console.log("👋 Firebase user logged out, clearing profile");
+          setUser(null);
+          setSession(null);
+          setUserProfile(null);
+          setLoading(false);
+        }
       }
+    );
 
-      console.log("🔄 RoleAwareAuthContext session check:", {
-        hasSession: !!session,
-        userEmail: session?.user?.email,
-        userConfirmed: session?.user?.email_confirmed_at,
-        pathname: window.location.pathname,
-      });
-
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-      } else {
-        setUserProfile(null);
-      }
-
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-      } else {
-        setUserProfile(null);
-      }
-
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribeFirebase();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -208,12 +376,32 @@ export const RoleAwareAuthProvider: React.FC<RoleAwareAuthProviderProps> = ({
   const signOut = async () => {
     try {
       setLoading(true);
+      console.log("🔄 Starting sign out process...");
+
+      // Sign out from Firebase (primary auth)
+      console.log("🔄 Signing out from Firebase...");
+      const { auth } = getFirebase();
+      await firebaseSignOut(auth);
+      console.log("✅ Firebase signout completed");
+
+      // Sign out from Supabase (secondary auth/data layer)
+      console.log("🔄 Signing out from Supabase...");
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error("Sign out error:", error);
+        console.error("❌ Supabase sign out error:", error);
+      } else {
+        console.log("✅ Supabase signout completed");
       }
+
+      // Clear local state
+      console.log("🔄 Clearing local state...");
+      setUser(null);
+      setSession(null);
+      setUserProfile(null);
+
+      console.log("✅ Successfully signed out from both Firebase and Supabase");
     } catch (error) {
-      console.error("Sign out error:", error);
+      console.error("❌ Sign out error:", error);
     } finally {
       setLoading(false);
     }

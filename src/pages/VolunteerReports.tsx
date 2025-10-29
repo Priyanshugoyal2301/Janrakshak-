@@ -11,7 +11,9 @@ const VolunteerReports = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">My Reports</h1>
-            <p className="text-gray-600 mt-1">View and submit activity reports</p>
+            <p className="text-gray-600 mt-1">
+              View and submit activity reports
+            </p>
           </div>
           <Button className="bg-green-600 hover:bg-green-700">
             <FileText className="w-4 h-4 mr-2" />
@@ -25,7 +27,9 @@ const VolunteerReports = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600">Submitted Reports</p>
+                  <p className="text-sm font-medium text-green-600">
+                    Submitted Reports
+                  </p>
                   <p className="text-3xl font-bold text-green-800">18</p>
                 </div>
                 <FileText className="w-8 h-8 text-green-600" />
@@ -37,7 +41,9 @@ const VolunteerReports = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600">People Reached</p>
+                  <p className="text-sm font-medium text-blue-600">
+                    People Reached
+                  </p>
                   <p className="text-3xl font-bold text-blue-800">245</p>
                 </div>
                 <Users className="w-8 h-8 text-blue-600" />
@@ -49,7 +55,9 @@ const VolunteerReports = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-purple-600">Activities</p>
+                  <p className="text-sm font-medium text-purple-600">
+                    Activities
+                  </p>
                   <p className="text-3xl font-bold text-purple-800">24</p>
                 </div>
                 <Calendar className="w-8 h-8 text-purple-600" />
@@ -71,33 +79,38 @@ const VolunteerReports = () => {
                   location: "District Center",
                   date: "Dec 10, 2024",
                   participants: "45 families",
-                  status: "Approved"
+                  status: "Approved",
                 },
                 {
                   title: "Community Training Session",
                   location: "Community Hall",
                   date: "Dec 8, 2024",
                   participants: "32 participants",
-                  status: "Under Review"
+                  status: "Under Review",
                 },
                 {
                   title: "Emergency Shelter Setup",
                   location: "School Ground",
                   date: "Dec 5, 2024",
                   participants: "15 volunteers",
-                  status: "Approved"
+                  status: "Approved",
                 },
                 {
                   title: "Health Camp Organization",
                   location: "Village Center",
                   date: "Dec 3, 2024",
                   participants: "67 beneficiaries",
-                  status: "Approved"
-                }
+                  status: "Approved",
+                },
               ].map((report, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+                >
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-2">{report.title}</h3>
+                    <h3 className="font-medium text-gray-900 mb-2">
+                      {report.title}
+                    </h3>
                     <div className="flex items-center gap-6 text-sm text-gray-500">
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
@@ -114,11 +127,15 @@ const VolunteerReports = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      report.status === 'Approved' ? 'bg-green-100 text-green-800' : 
-                      report.status === 'Under Review' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        report.status === "Approved"
+                          ? "bg-green-100 text-green-800"
+                          : report.status === "Under Review"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
                       {report.status}
                     </span>
                     <div className="flex gap-1">

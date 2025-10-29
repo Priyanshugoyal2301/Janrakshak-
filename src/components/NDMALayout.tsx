@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/lib/supabase";
 import {
   Menu,
@@ -53,7 +53,15 @@ const NDMALayout = ({ children }: NDMALayoutProps) => {
   });
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, userProfile, signOut } = useRoleAwareAuth();
+  const { user, signOut } = useSupabaseAuth();
+  const [userProfile, setUserProfile] = useState(null);
+
+  // Fetch user profile from Supabase
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
 
   // Load real-time counts for NDMA dashboard
   useEffect(() => {
@@ -61,6 +69,23 @@ const NDMALayout = ({ children }: NDMALayoutProps) => {
     const interval = setInterval(loadRealTimeCounts, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      setUserProfile(data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
 
   const loadRealTimeCounts = async () => {
     try {
@@ -261,7 +286,10 @@ const NDMALayout = ({ children }: NDMALayoutProps) => {
               <div>
                 <div className="flex items-center space-x-3">
                   <h1 className="text-2xl font-bold">DMA Control Center</h1>
-                  <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-white/20 border-white/30 text-white"
+                  >
                     <Shield className="w-3 h-3 mr-1" />
                     DMA AUTHORITY
                   </Badge>
@@ -286,7 +314,10 @@ const NDMALayout = ({ children }: NDMALayoutProps) => {
                   <span className="hidden md:inline">Refresh</span>
                 </Button>
               </div>
-              <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
+              <Badge
+                variant="outline"
+                className="text-xs bg-white/20 border-white/30 text-white"
+              >
                 {realTimeCounts.pendingReports || 0} Critical Alerts
               </Badge>
             </div>

@@ -12,13 +12,8 @@
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Quick Start](#quick-start)
 - [Project Structure](#project-structure)
-- [Configuration](#configuration)
-- [Deployment](#deployment)
 - [API Documentation](#api-documentation)
-- [Testing](#testing)
-- [Contributing](#contributing)
 - [License](#license)
 - [Team](#team)
 
@@ -115,57 +110,6 @@
 - **Mapbox** - Routing and navigation services
 - **Push Notifications** - Web push notification service
 
-## Quick Start
-
-### Prerequisites
-- **Node.js** 18+ 
-- **pnpm** 8+ (recommended) or npm/yarn
-- **Git** for version control
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Laksh718/janrakshak.git
-cd janrakshak
-```
-
-### 2. Install Dependencies
-```bash
-pnpm install
-```
-
-### 3. Environment Setup
-Create a `.env` file in the root directory:
-
-```env
-# Firebase Configuration
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_firebase_app_id
-
-# Supabase Configuration
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# API Configuration
-VITE_API_URL=https://janrakshak-pre-alert-model.onrender.com
-WINDY_API=your_windy_api_key
-```
-
-### 4. Start Development Server
-```bash
-pnpm dev
-```
-
-The application will be available at `http://localhost:5173`
-
-### 5. Build for Production
-```bash
-pnpm build
-```
-
 ## Project Structure
 
 ```
@@ -232,50 +176,6 @@ janrakshak/
 └── tsconfig.json             # TypeScript configuration
 ```
 
-## Configuration
-
-### Firebase Setup
-1. Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
-2. Enable Authentication (Google, Email/Password)
-3. Create a Firestore database
-4. Copy configuration to `.env` file
-
-### Supabase Setup
-1. Create a new Supabase project at [Supabase Dashboard](https://supabase.com/dashboard)
-2. Run the SQL schema from `supabase_setup.sql`
-3. Configure Row Level Security (RLS) policies
-4. Copy project URL and anon key to `.env` file
-
-### Environment Variables
-All environment variables should be prefixed with `VITE_` for Vite to include them in the build.
-
-## Deployment
-
-### Firebase Hosting (Recommended)
-```bash
-# Install Firebase CLI
-npm install -g firebase-tools
-
-# Login to Firebase
-firebase login
-
-# Deploy to Firebase Hosting
-firebase deploy --only hosting
-```
-
-### Alternative Deployment Options
-- **Vercel**: Connect your GitHub repository for automatic deployments
-- **Netlify**: Drag and drop the `dist` folder after building
-- **GitHub Pages**: Use GitHub Actions for automated deployment
-
-### Production Checklist
-- [ ] Environment variables configured
-- [ ] Firebase/Supabase projects set up
-- [ ] Security rules properly configured
-- [ ] SSL certificate enabled
-- [ ] Performance optimization completed
-- [ ] Error tracking configured
-
 ## API Documentation
 
 ### JanRakshak Pre-Alert Model API
@@ -336,44 +236,6 @@ const report = await submitFloodReport({
 const locationData = await getLocationData('Delhi', 'Central Delhi');
 ```
 
-## Testing
-
-Run the test suite:
-```bash
-pnpm test
-```
-
-Run specific test files:
-```bash
-pnpm test src/components/Layout.test.tsx
-```
-
-For detailed testing information, see [TESTING_GUIDE.md](TESTING_GUIDE.md)
-
-## Contributing
-
-We welcome contributions to JanRakshak! Please read our contributing guidelines:
-
-### Development Workflow
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-### Code Standards
-- Follow TypeScript best practices
-- Use ESLint and Prettier for code formatting
-- Write meaningful commit messages
-- Add tests for new features
-- Update documentation as needed
-
-### Reporting Issues
-- Use the GitHub issue tracker
-- Provide detailed reproduction steps
-- Include screenshots for UI issues
-- Specify your environment (OS, browser, etc.)
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -382,7 +244,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **JanRakshak Development Team**
 - **Lead Developer**: [Laksh Baweja](https://github.com/Laksh718)
-- **Project**: Smart India Hackathon Entry
 - **Category**: Disaster Management & Emergency Response
 
 ### Connect With Us
@@ -401,10 +262,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Acknowledgments
 
-- **Smart India Hackathon** for providing the platform
 - **Firebase & Supabase** for excellent backend services
 - **React & Vite** communities for outstanding developer tools
-- **Open Source Community** for inspiration and resources
 
 ### Project Stats
 
@@ -415,7 +274,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **API Endpoints**: 12
 - **Test Coverage**: 85%
 - **Map Features**: Dynamic centering, density clustering, real-time updates
-
----
-
-**If you find JanRakshak useful, please consider giving it a star on GitHub!**

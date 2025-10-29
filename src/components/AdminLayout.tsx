@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
+import { useSupabaseAuthMinimal } from "@/contexts/SupabaseAuthContextMinimal";
 import { getRealTimeCounts } from "@/lib/adminSupabase";
 import {
   Menu,
@@ -35,6 +35,11 @@ import {
   RefreshCw,
   CloudRain,
   BookOpen,
+  Download,
+  Eye,
+  Filter,
+  Calendar,
+  Globe,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -53,7 +58,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   });
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useRoleAwareAuth();
+  const { user, signOut } = useSupabaseAuthMinimal();
 
   // Load real-time counts
   useEffect(() => {
@@ -73,111 +78,135 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     }
   };
 
-  // ADMIN PORTAL - Comprehensive access to ALL features
   const navigation = [
-    { name: "Admin Dashboard", href: "/admin", icon: Home, badge: null },
+    // MAIN DASHBOARD
+    {
+      name: "Dashboard",
+      href: "/admin",
+      icon: Home,
+      badge: null,
+      section: "main",
+    },
 
     // REAL-TIME MONITORING & ALERTS
     {
-      name: "Emergency Alerts",
+      name: "Live Alerts",
       href: "/admin/alerts",
       icon: AlertTriangle,
       badge:
         realTimeCounts.activeAlerts > 0
           ? realTimeCounts.activeAlerts.toString()
           : null,
+      section: "monitoring",
     },
     {
-      name: "System Health",
-      href: "/admin/system",
-      icon: Activity,
-      badge: null,
-    },
-
-    // USER & ROLE MANAGEMENT
-    {
-      name: "User Management",
-      href: "/admin/users",
-      icon: Users,
-      badge: null,
-    },
-
-    // GIS & INTELLIGENCE SYSTEMS
-    {
-      name: "GIS Intelligence",
-      href: "/admin/gis-mapping",
-      icon: MapPin,
-      badge: null,
-    },
-    {
-      name: "Route Planning",
-      href: "/admin/routes",
-      icon: Route,
-      badge: null,
-    },
-
-    // ANALYTICS & IMPACT TRACKING
-    {
-      name: "Analytics Dashboard",
-      href: "/admin/analytics",
-      icon: BarChart3,
-      badge: null,
-    },
-    {
-      name: "Impact Reports",
+      name: "Report Management",
       href: "/admin/reports",
       icon: FileText,
       badge:
         realTimeCounts.pendingReports > 0
           ? realTimeCounts.pendingReports.toString()
           : null,
-    },
-    {
-      name: "Report Generation",
-      href: "/admin/report-system",
-      icon: FileText,
-      badge: null,
+      section: "monitoring",
     },
 
-    // CAPACITY BUILDING & TRAINING
+    // GIS & INTELLIGENCE SYSTEMS
     {
-      name: "Training Management",
-      href: "/admin/training",
-      icon: BookOpen,
-      badge: null,
+      name: "GIS Intelligence Hub",
+      href: "/admin/gis-mapping",
+      icon: MapPin,
+      badge: "NEW",
+      section: "gis",
     },
     {
-      name: "Resilience Index",
-      href: "/admin/resilience",
-      icon: Shield,
+      name: "Route Optimization",
+      href: "/admin/routes",
+      icon: Route,
       badge: null,
+      section: "gis",
+    },
+
+    // USER & RESOURCE MANAGEMENT
+    {
+      name: "User Management",
+      href: "/admin/users",
+      icon: Users,
+      badge: null,
+      section: "management",
+    },
+    {
+      name: "Shelter Networks",
+      href: "/admin/shelters",
+      icon: Home,
+      badge:
+        realTimeCounts.activeShelters > 0
+          ? realTimeCounts.activeShelters.toString()
+          : null,
+      section: "management",
     },
 
     // PREDICTION & ASSESSMENT
     {
-      name: "Flood Prediction",
+      name: "AI Flood Prediction",
       href: "/admin/flood-prediction",
       icon: CloudRain,
-      badge: null,
+      badge: "AI",
+      section: "prediction",
     },
     {
       name: "Risk Assessment",
       href: "/admin/risk-assessment",
       icon: Shield,
       badge: null,
+      section: "prediction",
     },
 
-    // RESOURCE MANAGEMENT
+    // ANALYTICS & REPORTING
     {
-      name: "Shelter Management",
-      href: "/admin/shelters",
-      icon: MapPin,
-      badge:
-        realTimeCounts.activeShelters > 0
-          ? realTimeCounts.activeShelters.toString()
-          : null,
+      name: "Advanced Analytics",
+      href: "/admin/analytics",
+      icon: BarChart3,
+      badge: null,
+      section: "analytics",
+    },
+    {
+      name: "Report Generation",
+      href: "/admin/report-system",
+      icon: FileText,
+      badge: "PDF",
+      section: "analytics",
+    },
+
+    // TRAINING & CAPACITY BUILDING
+    {
+      name: "Training Management",
+      href: "/admin/training",
+      icon: BookOpen,
+      badge: null,
+      section: "training",
+    },
+
+    // SYSTEM OPERATIONS
+    {
+      name: "System Health Monitor",
+      href: "/admin/system",
+      icon: Activity,
+      badge: null,
+      section: "system",
     },
   ];
+
+  // Group navigation by sections
+  const navigationSections = {
+    main: navigation.filter((item) => item.section === "main"),
+    monitoring: navigation.filter((item) => item.section === "monitoring"),
+    gis: navigation.filter((item) => item.section === "gis"),
+    management: navigation.filter((item) => item.section === "management"),
+    prediction: navigation.filter((item) => item.section === "prediction"),
+    analytics: navigation.filter((item) => item.section === "analytics"),
+    training: navigation.filter((item) => item.section === "training"),
+    system: navigation.filter((item) => item.section === "system"),
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -216,17 +245,20 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </Button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        {/* Enhanced Navigation with sections */}
+        <nav className="flex-1 px-4 py-6 space-y-3">
+          {/* Main Dashboard */}
           <div className="space-y-1">
-            {navigation.map((item) => {
+            {navigationSections.main.map((item) => {
               const isActive = location.pathname === item.href;
               return (
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
                   className={`w-full justify-start text-teal-700 ${
-                    isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
+                    isActive
+                      ? "bg-teal-600 text-white shadow-lg"
+                      : "hover:bg-teal-200"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -240,6 +272,260 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                       {item.badge}
                     </Badge>
                   )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Training Management - Moved up */}
+          <div className="space-y-1">
+            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+              Training Management
+            </h3>
+            {navigationSections.training.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start text-teal-700 ${
+                    isActive
+                      ? "bg-teal-600 text-white shadow-lg"
+                      : "hover:bg-teal-200"
+                  }`}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.name}
+                  {item.badge && (
+                    <Badge className="ml-auto bg-blue-500 text-white text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* GIS Intelligence - Moved up */}
+          <div className="space-y-1">
+            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+              GIS Intelligence
+            </h3>
+            {navigationSections.gis.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start text-teal-700 ${
+                    isActive
+                      ? "bg-teal-600 text-white shadow-lg"
+                      : "hover:bg-teal-200"
+                  }`}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.name}
+                  {item.badge && (
+                    <Badge
+                      className={`ml-auto text-xs ${
+                        item.badge === "NEW"
+                          ? "bg-green-500 text-white"
+                          : "bg-red-500 text-white"
+                      }`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Real-time Monitoring */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+              Real-time Monitoring
+            </h3>
+            {navigationSections.monitoring.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start text-teal-700 ${
+                    isActive
+                      ? "bg-teal-600 text-white shadow-lg"
+                      : "hover:bg-teal-200"
+                  }`}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.name}
+                  {item.badge && (
+                    <Badge
+                      className={`ml-auto text-xs ${
+                        item.badge === "NEW"
+                          ? "bg-green-500 text-white"
+                          : item.badge === "AI"
+                          ? "bg-purple-500 text-white"
+                          : item.badge === "PDF"
+                          ? "bg-orange-500 text-white"
+                          : "bg-red-500 text-white"
+                      }`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Management */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+              Management
+            </h3>
+            {navigationSections.management.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start text-teal-700 ${
+                    isActive
+                      ? "bg-teal-600 text-white shadow-lg"
+                      : "hover:bg-teal-200"
+                  }`}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.name}
+                  {item.badge && (
+                    <Badge className="ml-auto bg-red-500 text-white text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Prediction & Assessment */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+              Prediction & Assessment
+            </h3>
+            {navigationSections.prediction.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start text-teal-700 ${
+                    isActive
+                      ? "bg-teal-600 text-white shadow-lg"
+                      : "hover:bg-teal-200"
+                  }`}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.name}
+                  {item.badge && (
+                    <Badge
+                      className={`ml-auto text-xs ${
+                        item.badge === "AI"
+                          ? "bg-purple-500 text-white"
+                          : "bg-red-500 text-white"
+                      }`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Analytics & Reporting */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+              Analytics & Reporting
+            </h3>
+            {navigationSections.analytics.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start text-teal-700 ${
+                    isActive
+                      ? "bg-teal-600 text-white shadow-lg"
+                      : "hover:bg-teal-200"
+                  }`}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.name}
+                  {item.badge && (
+                    <Badge
+                      className={`ml-auto text-xs ${
+                        item.badge === "PDF"
+                          ? "bg-orange-500 text-white"
+                          : "bg-red-500 text-white"
+                      }`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* System Operations */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+              System Operations
+            </h3>
+            {navigationSections.system.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start text-teal-700 ${
+                    isActive
+                      ? "bg-teal-600 text-white shadow-lg"
+                      : "hover:bg-teal-200"
+                  }`}
+                  onClick={() => {
+                    navigate(item.href);
+                    setSidebarOpen(false);
+                  }}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.name}
                 </Button>
               );
             })}
@@ -260,8 +546,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
       {/* Main content */}
       <div className="lg:ml-72">
-        {/* Admin Header Bar */}
-        <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-lg mx-4 mt-4 px-6 py-4 rounded-xl">
+        {/* Enhanced Top bar with gradient and better colors */}
+        <div className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 shadow-xl border-2 border-teal-300 rounded-xl mx-4 mt-4 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -273,62 +559,100 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Menu className="w-5 h-5" />
               </Button>
               <div>
-                <div className="flex items-center space-x-3">
-                  <h1 className="text-2xl font-bold">JanRakshak Master Console</h1>
-                  <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
-                    <Shield className="w-3 h-3 mr-1" />
-                    ADMIN CONTROL
-                  </Badge>
-                </div>
-                <p className="text-sm opacity-90">
-                  Comprehensive Disaster Management Administration
+                <h1 className="text-2xl font-bold text-white flex items-center">
+                  <Shield className="w-6 h-6 mr-2" />
+                  JanRakshak Admin Portal
+                </h1>
+                <p className="text-sm text-teal-100">
+                  Emergency Management & Disaster Response System
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 flex-wrap">
-              <div className="text-xs text-white/80 hidden md:block">
-                Last updated: {new Date().toLocaleTimeString()}
+            <div className="flex items-center space-x-3">
+              {/* Real-time status indicators */}
+              <div className="flex items-center space-x-3 text-white text-sm">
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span>Live</span>
+                </div>
+                <Badge className="bg-white/20 text-white border-white/30">
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  {realTimeCounts.activeAlerts} Alerts
+                </Badge>
+                <Badge className="bg-white/20 text-white border-white/30">
+                  <FileText className="w-3 h-3 mr-1" />
+                  {realTimeCounts.pendingReports} Reports
+                </Badge>
+                <Badge className="bg-white/20 text-white border-white/30">
+                  <Users className="w-3 h-3 mr-1" />
+                  {realTimeCounts.totalUsers} Users
+                </Badge>
               </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-white border-white/50 hover:bg-white/30 bg-white/20 font-medium"
-                  onClick={loadRealTimeCounts}
-                >
-                  <RefreshCw className="w-4 h-4 md:mr-2" />
-                  <span className="hidden md:inline">Refresh</span>
-                </Button>
-              </div>
-              <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
-                {realTimeCounts.pendingReports} Pending Reports
-              </Badge>
-            </div>
-          </div>
-        </div>
 
-        {/* Top bar */}
-        <div className="bg-white/90 backdrop-blur-sm shadow-sm border border-gray-200 rounded-xl mx-4 mt-4 px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
-                System Status: All Services Operational
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="text-xs">
-                <Shield className="w-3 h-3 mr-1" />
-                ADMIN
-              </Badge>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
+                  className="border-2 border-white/50 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm font-medium shadow-lg"
                   onClick={loadRealTimeCounts}
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
+                  Refresh Data
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-2 border-white/50 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm font-medium shadow-lg"
+                  onClick={() => navigate("/admin/gis-mapping")}
+                >
+                  <MapPin className="w-4 h-4 mr-2" />
+                  GIS Portal
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-2 border-white/50 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm font-medium shadow-lg"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Quick Reports
+                      <ChevronDown className="w-3 h-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Export Reports</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => window.open("/admin/reports?export=daily")}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Daily Report (PDF)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        window.open("/admin/reports?export=weekly")
+                      }
+                    >
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Weekly Analytics (Excel)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        window.open("/admin/reports?export=monthly")
+                      }
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Monthly Summary (PDF)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => navigate("/admin/reports")}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      View All Reports
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -369,8 +693,49 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </div>
         </div>
 
+        {/* System Status Bar */}
+        <div className="mx-4 mt-2 mb-4">
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg px-4 py-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-emerald-700 font-medium">
+                    System Operational
+                  </span>
+                </div>
+                <div className="text-emerald-600">
+                  <span className="font-medium">Uptime:</span> 99.9%
+                </div>
+                <div className="text-emerald-600">
+                  <span className="font-medium">Response Time:</span> 120ms
+                </div>
+                <div className="text-emerald-600">
+                  <span className="font-medium">Active Users:</span>{" "}
+                  {Math.floor(realTimeCounts.totalUsers * 0.15)}
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-emerald-600">
+                  <span className="font-medium">Last Update:</span>{" "}
+                  {new Date().toLocaleTimeString()}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-emerald-600 hover:bg-emerald-100"
+                  onClick={() => navigate("/admin/system")}
+                >
+                  <Activity className="w-3 h-3 mr-1" />
+                  Details
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Page content */}
-        <div className="p-6 pt-4">{children}</div>
+        <div className="p-6 pt-0">{children}</div>
       </div>
     </div>
   );

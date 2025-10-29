@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { diagnoseRLSIssues } from "./lib/adminSupabase.ts";
 
 // Health check function to ping the API on app load/refresh
 const performHealthCheck = async () => {
@@ -27,5 +28,17 @@ const healthCheckInterval = setInterval(performHealthCheck, 40000);
 window.addEventListener("beforeunload", () => {
   clearInterval(healthCheckInterval);
 });
+
+// Add diagnostic function to global scope for debugging
+(window as any).diagnoseRLS = diagnoseRLSIssues;
+
+console.log(`
+🔧 JanRakshak Database Diagnostics Available!
+
+If you're experiencing 406 errors or profile loading issues, run:
+  diagnoseRLS()
+
+This will check your database setup and provide specific fixes.
+`);
 
 createRoot(document.getElementById("root")!).render(<App />);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import NDMALayout from "@/components/NDMALayout";
-import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { UserRole } from "@/lib/roleBasedAuth";
 import { supabase } from "@/lib/supabase";
 import {
@@ -57,7 +57,8 @@ interface DMAMetrics {
 }
 
 const DMADashboard = () => {
-  const { user, userProfile, loading } = useRoleAwareAuth();
+  const { user, loading } = useSupabaseAuth();
+  const [userProfile, setUserProfile] = useState(null);
   const [metrics, setMetrics] = useState<DMAMetrics>({
     totalOperationalAreas: 0,
     activeOperations: 0,
@@ -69,10 +70,45 @@ const DMADashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  // Redirect unauthorized users
+  if (!loading && !user) {
+    window.location.href = "/admin/signin";
+    return null;
+  }
+
+  // Check if user has DMA role
+  if (userProfile && userProfile.role !== "DMA") {
+    window.location.href = "/admin/signin";
+    return null;
+  }
+
+  useEffect(() => {
     if (user && userProfile) {
       fetchDMAMetrics();
     }
   }, [user, userProfile]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      setUserProfile(data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
 
   const fetchDMAMetrics = async () => {
     setIsLoading(true);

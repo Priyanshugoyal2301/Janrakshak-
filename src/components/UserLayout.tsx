@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
+import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
 import {
   Menu,
   X,
@@ -43,7 +43,7 @@ const UserLayout = ({
 }: UserLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<string>("");
-  const { currentUser, userProfile, logout, updateUserProfile } = useAuth();
+  const { user, userProfile, signOut } = useRoleAwareAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,48 +51,48 @@ const UserLayout = ({
   const getRoleHeaderColors = () => {
     const role = userProfile?.role?.toUpperCase();
     switch (role) {
-      case 'CITIZEN':
-      case 'USER':
+      case "CITIZEN":
+      case "USER":
         return {
-          headerBg: 'bg-gradient-to-r from-blue-500 to-indigo-600',
-          headerText: 'text-white',
-          roleLabel: 'CITIZEN',
-          roleIcon: 'Users'
+          headerBg: "bg-gradient-to-r from-blue-500 to-indigo-600",
+          headerText: "text-white",
+          roleLabel: "CITIZEN",
+          roleIcon: "Users",
         };
-      case 'VOLUNTEER':
+      case "VOLUNTEER":
         return {
-          headerBg: 'bg-gradient-to-r from-green-500 to-teal-600',
-          headerText: 'text-white',
-          roleLabel: 'VOLUNTEER',
-          roleIcon: 'Heart'
+          headerBg: "bg-gradient-to-r from-green-500 to-teal-600",
+          headerText: "text-white",
+          roleLabel: "VOLUNTEER",
+          roleIcon: "Heart",
         };
-      case 'NGO':
+      case "NGO":
         return {
-          headerBg: 'bg-gradient-to-r from-purple-500 to-pink-600',
-          headerText: 'text-white',
-          roleLabel: 'NGO PARTNER',
-          roleIcon: 'Heart'
+          headerBg: "bg-gradient-to-r from-purple-500 to-pink-600",
+          headerText: "text-white",
+          roleLabel: "NGO PARTNER",
+          roleIcon: "Heart",
         };
-      case 'DMA':
+      case "DMA":
         return {
-          headerBg: 'bg-gradient-to-r from-orange-500 to-red-600',
-          headerText: 'text-white',
-          roleLabel: 'DMA OFFICER',
-          roleIcon: 'Shield'
+          headerBg: "bg-gradient-to-r from-orange-500 to-red-600",
+          headerText: "text-white",
+          roleLabel: "DMA OFFICER",
+          roleIcon: "Shield",
         };
-      case 'ADMIN':
+      case "ADMIN":
         return {
-          headerBg: 'bg-gradient-to-r from-red-600 to-rose-700',
-          headerText: 'text-white',
-          roleLabel: 'ADMIN',
-          roleIcon: 'Shield'
+          headerBg: "bg-gradient-to-r from-red-600 to-rose-700",
+          headerText: "text-white",
+          roleLabel: "ADMIN",
+          roleIcon: "Shield",
         };
       default:
         return {
-          headerBg: 'bg-gradient-to-r from-teal-500 to-blue-600',
-          headerText: 'text-white',
-          roleLabel: 'USER',
-          roleIcon: 'Users'
+          headerBg: "bg-gradient-to-r from-teal-500 to-blue-600",
+          headerText: "text-white",
+          roleLabel: "USER",
+          roleIcon: "Users",
         };
     }
   };
@@ -101,10 +101,12 @@ const UserLayout = ({
 
   const handleSignOut = async () => {
     try {
-      await logout();
+      console.log("🚪 UserLayout: Sign out button clicked");
+      await signOut();
+      console.log("🏠 UserLayout: Navigating to home page");
       navigate("/");
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("❌ UserLayout: Error signing out:", error);
     }
   };
 
@@ -113,8 +115,8 @@ const UserLayout = ({
     const detectLocation = async () => {
       // Only detect if user doesn't have location set
       if (
-        !userProfile?.location?.state &&
-        !userProfile?.location?.district &&
+        !userProfile?.state &&
+        !userProfile?.district &&
         navigator.geolocation
       ) {
         try {
@@ -143,19 +145,8 @@ const UserLayout = ({
                 : data.principalSubdivision || "India";
               setDetectedLocation(locationString);
 
-              // Auto-update user profile with detected location
-              if (currentUser && userProfile) {
-                await updateUserProfile({
-                  location: {
-                    state: data.principalSubdivision || "",
-                    district: data.locality || "",
-                    coordinates: {
-                      lat: latitude,
-                      lng: longitude,
-                    },
-                  },
-                });
-              }
+              // Location detected and stored locally
+              // Note: Auto-profile update removed for now
             }
           } catch (geocodeError) {
             console.error("Error with reverse geocoding:", geocodeError);
@@ -168,24 +159,28 @@ const UserLayout = ({
       }
     };
 
-    if (currentUser && userProfile) {
+    if (user && userProfile) {
       detectLocation();
     }
-  }, [currentUser, userProfile, updateUserProfile]);
+  }, [user, userProfile]);
 
   // Role-aware navigation
   const getNavigationItems = () => {
     const role = userProfile?.role?.toUpperCase();
-    
-    if (role === 'VOLUNTEER') {
+
+    if (role === "VOLUNTEER") {
       return [
         { name: "Dashboard", href: "/volunteer-dashboard", icon: Home },
-        { name: "My Activities", href: "/volunteer/activities", icon: Activity },
+        {
+          name: "My Activities",
+          href: "/volunteer/activities",
+          icon: Activity,
+        },
         { name: "Training", href: "/volunteer/training", icon: GraduationCap },
         { name: "Community", href: "/community", icon: Users },
         { name: "Reports", href: "/volunteer/reports", icon: FileText },
       ];
-    } else if (role === 'NGO') {
+    } else if (role === "NGO") {
       return [
         { name: "Dashboard", href: "/ngo-dashboard", icon: Home },
         { name: "Active Alerts", href: "/ngo/alerts", icon: AlertTriangle },
@@ -199,7 +194,11 @@ const UserLayout = ({
         { name: "Dashboard", href: "/dashboard", icon: Home },
         { name: "My Reports", href: "/reports", icon: FileText },
         { name: "Community", href: "/community", icon: Users },
-        { name: "Flood Prediction", href: "/flood-prediction", icon: CloudRain },
+        {
+          name: "Flood Prediction",
+          href: "/flood-prediction",
+          icon: CloudRain,
+        },
         { name: "Analytics", href: "/analytics", icon: BarChart3 },
       ];
     }
@@ -365,7 +364,9 @@ const UserLayout = ({
       {/* Main Content */}
       <div className="lg:ml-72">
         {/* Role-based Header Bar */}
-        <div className={`${roleColors.headerBg} ${roleColors.headerText} shadow-lg mx-4 mt-4 px-6 py-4 rounded-xl`}>
+        <div
+          className={`${roleColors.headerBg} ${roleColors.headerText} shadow-lg mx-4 mt-4 px-6 py-4 rounded-xl`}
+        >
           <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
             <div className="flex items-center space-x-4">
               <Button
@@ -379,23 +380,40 @@ const UserLayout = ({
               <div>
                 <div className="flex items-center space-x-3">
                   <h1 className="text-2xl font-bold">{title}</h1>
-                  <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white flex items-center gap-1">
-                    {roleColors.roleIcon === 'User' && <Users className="w-3 h-3" />}
-                    {roleColors.roleIcon === 'Users' && <Users className="w-3 h-3" />}
-                    {roleColors.roleIcon === 'Heart' && <Heart className="w-3 h-3" />}
-                    {roleColors.roleIcon === 'Shield' && <Shield className="w-3 h-3" />}
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-white/20 border-white/30 text-white flex items-center gap-1"
+                  >
+                    {roleColors.roleIcon === "User" && (
+                      <Users className="w-3 h-3" />
+                    )}
+                    {roleColors.roleIcon === "Users" && (
+                      <Users className="w-3 h-3" />
+                    )}
+                    {roleColors.roleIcon === "Heart" && (
+                      <Heart className="w-3 h-3" />
+                    )}
+                    {roleColors.roleIcon === "Shield" && (
+                      <Shield className="w-3 h-3" />
+                    )}
                     {roleColors.roleLabel}
                   </Badge>
                 </div>
                 <p className="text-sm opacity-90">
-                  {userProfile?.role?.toUpperCase() === 'CITIZEN' && 'Community Member'}
-                  {userProfile?.role?.toUpperCase() === 'USER' && 'Community Member'}
-                  {userProfile?.role?.toUpperCase() === 'VOLUNTEER' && 'Community Volunteer'}
-                  {userProfile?.role?.toUpperCase() === 'NGO' && 'NGO Partner Organization'}
-                  {userProfile?.role?.toUpperCase() === 'DMA' && 'District Magistrate Office'}
-                  {userProfile?.role?.toUpperCase() === 'ADMIN' && 'System Administrator'}
-                  {!userProfile?.role && 'Welcome to JanRakshak'}
-                  {currentUser?.email && ` • ${currentUser.email}`}
+                  {userProfile?.role?.toUpperCase() === "CITIZEN" &&
+                    "Community Member"}
+                  {userProfile?.role?.toUpperCase() === "USER" &&
+                    "Community Member"}
+                  {userProfile?.role?.toUpperCase() === "VOLUNTEER" &&
+                    "Community Volunteer"}
+                  {userProfile?.role?.toUpperCase() === "NGO" &&
+                    "NGO Partner Organization"}
+                  {userProfile?.role?.toUpperCase() === "DMA" &&
+                    "District Magistrate Office"}
+                  {userProfile?.role?.toUpperCase() === "ADMIN" &&
+                    "System Administrator"}
+                  {!userProfile?.role && "Welcome to JanRakshak"}
+                  {user?.email && ` • ${user.email}`}
                 </p>
               </div>
             </div>
@@ -409,7 +427,7 @@ const UserLayout = ({
                   size="sm"
                   className="text-white border-white/50 hover:bg-white/30 bg-white/20 font-medium"
                   onClick={async () => {
-                    if (navigator.geolocation && currentUser && userProfile) {
+                    if (navigator.geolocation && user && userProfile) {
                       try {
                         const position = await new Promise<GeolocationPosition>(
                           (resolve, reject) => {
@@ -433,17 +451,12 @@ const UserLayout = ({
                         const data = await response.json();
 
                         if (data.countryName === "India") {
-                          await updateUserProfile({
-                            location: {
-                              state: data.principalSubdivision || "",
-                              district: data.locality || "",
-                              coordinates: {
-                                lat: latitude,
-                                lng: longitude,
-                              },
-                            },
-                          });
-                          setDetectedLocation("");
+                          setDetectedLocation(
+                            `${data.locality || ""}, ${
+                              data.principalSubdivision || ""
+                            }`
+                          );
+                          // Note: Profile update functionality removed for now
                         }
                       } catch (error) {
                         console.error("Error updating location:", error);
@@ -464,12 +477,15 @@ const UserLayout = ({
                   <span className="hidden md:inline">Refresh</span>
                 </Button>
               </div>
-              <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white hidden lg:flex">
+              <Badge
+                variant="outline"
+                className="text-xs bg-white/20 border-white/30 text-white hidden lg:flex"
+              >
                 <MapPin className="w-3 h-3 mr-1" />
-                {userProfile?.location?.district && userProfile?.location?.state
-                  ? `${userProfile.location.district}, ${userProfile.location.state}`
-                  : userProfile?.location?.state
-                  ? userProfile.location.state
+                {userProfile?.district && userProfile?.state
+                  ? `${userProfile.district}, ${userProfile.state}`
+                  : userProfile?.state
+                  ? userProfile.state
                   : detectedLocation || "Location not set"}
               </Badge>
             </div>

@@ -31,6 +31,8 @@ import {
   Loader2,
   Sparkles,
   Zap,
+  Building2,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,19 +59,21 @@ const AuthPage = () => {
     displayName: "",
   });
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - USE ROLE-BASED ROUTING
   useEffect(() => {
-    if (currentUser) {
-      console.log("Firebase user authenticated, redirecting to dashboard");
-      navigate("/dashboard");
-    } else if (supabaseUser && userProfile) {
+    if (supabaseUser && userProfile) {
       console.log(
-        "Supabase user authenticated, redirecting to role-based dashboard"
+        "User authenticated, redirecting to role-based dashboard:",
+        userProfile.role
       );
       const dashboardRoute = RoleBasedAuthService.getDashboardRoute(
         userProfile.role
       );
       navigate(dashboardRoute);
+    } else if (currentUser) {
+      // Firebase user but no Supabase profile yet - use router to determine role
+      console.log("Firebase user authenticated, using role-based router");
+      navigate("/dashboard-router");
     }
   }, [currentUser, supabaseUser, userProfile, navigate]);
 
@@ -90,7 +94,8 @@ const AuthPage = () => {
     setLoading(true);
     try {
       await login(formData.email, formData.password);
-      navigate("/dashboard");
+      // Use role-based router instead of hardcoded /dashboard
+      navigate("/dashboard-router");
     } catch (error) {
       // Error is handled in the auth context
     } finally {
@@ -117,8 +122,10 @@ const AuthPage = () => {
 
     setLoading(true);
     try {
+      // Regular citizen signup - no role selection, defaults to CITIZEN
       await register(formData.email, formData.password, formData.displayName);
-      navigate("/dashboard");
+      // Use role-based router for new signups too
+      navigate("/dashboard-router");
     } catch (error) {
       // Error is handled in the auth context
     } finally {
@@ -130,7 +137,8 @@ const AuthPage = () => {
     setLoading(true);
     try {
       await loginWithGoogle();
-      navigate("/dashboard");
+      // Use role-based router for Google login too
+      navigate("/dashboard-router");
     } catch (error) {
       // Error is handled in the auth context
     } finally {
@@ -616,6 +624,36 @@ const AuthPage = () => {
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
+
+          {/* Organization Access */}
+          <motion.div
+            className="mt-6 text-center"
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-center justify-center space-x-2 mb-2">
+                <Building2 className="w-4 h-4 text-purple-600" />
+                <span className="text-sm font-semibold text-purple-800">
+                  Organization Access
+                </span>
+              </div>
+              <p className="text-xs text-purple-700 mb-3">
+                NGO, Volunteer, DMA, or Admin access? Use our role-based
+                authentication
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/supabase-auth")}
+                className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                <Users className="w-3 h-3 mr-2" />
+                Access Organization Portal
+              </Button>
+            </div>
           </motion.div>
 
           {/* Emergency Access */}

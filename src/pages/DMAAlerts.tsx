@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from "react";
 import NDMALayout from "@/components/NDMALayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  AlertTriangle, 
-  Plus, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Clock, 
-  MapPin, 
+import {
+  AlertTriangle,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Clock,
+  MapPin,
   Users,
   Filter,
   RefreshCw,
@@ -22,18 +28,18 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Activity
+  Activity,
 } from "lucide-react";
-import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { toast } from "sonner";
-import { 
-  getAdminAlerts, 
-  createAlert, 
+import {
+  getAdminAlerts,
+  createAlert,
   updateAlertStatus,
   deleteAlert,
   subscribeToAlerts,
-  AdminAlert 
-} from '@/lib/adminSupabase';
+  AdminAlert,
+} from "@/lib/adminSupabase";
 
 const DMAAlerts = () => {
   const [alerts, setAlerts] = useState<AdminAlert[]>([]);
@@ -44,7 +50,7 @@ const DMAAlerts = () => {
   const [filterSeverity, setFilterSeverity] = useState("all");
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  const { user } = useRoleAwareAuth();
+  const { user } = useSupabaseAuth();
 
   // Load initial data
   useEffect(() => {
@@ -56,20 +62,22 @@ const DMAAlerts = () => {
     if (!isLive) return;
 
     const subscription = subscribeToAlerts((payload) => {
-      console.log('Alert update received:', payload);
-      
-      if (payload.eventType === 'UPDATE' && payload.new) {
-        setAlerts(prevAlerts => 
-          prevAlerts.map(alert => 
+      console.log("Alert update received:", payload);
+
+      if (payload.eventType === "UPDATE" && payload.new) {
+        setAlerts((prevAlerts) =>
+          prevAlerts.map((alert) =>
             alert.id === payload.new.id ? { ...alert, ...payload.new } : alert
           )
         );
-      } else if (payload.eventType === 'INSERT' && payload.new) {
-        setAlerts(prevAlerts => [payload.new, ...prevAlerts]);
-      } else if (payload.eventType === 'DELETE' && payload.old) {
-        setAlerts(prevAlerts => prevAlerts.filter(alert => alert.id !== payload.old.id));
+      } else if (payload.eventType === "INSERT" && payload.new) {
+        setAlerts((prevAlerts) => [payload.new, ...prevAlerts]);
+      } else if (payload.eventType === "DELETE" && payload.old) {
+        setAlerts((prevAlerts) =>
+          prevAlerts.filter((alert) => alert.id !== payload.old.id)
+        );
       }
-      
+
       setLastUpdate(new Date());
     });
 
@@ -81,9 +89,9 @@ const DMAAlerts = () => {
   const loadAlerts = async () => {
     setLoading(true);
     try {
-      console.log('Loading alerts from Supabase...');
+      console.log("Loading alerts from Supabase...");
       const alertData = await getAdminAlerts();
-      console.log('Loaded alerts:', alertData);
+      console.log("Loaded alerts:", alertData);
       setAlerts(alertData);
       setLastUpdate(new Date());
     } catch (error) {
@@ -94,7 +102,9 @@ const DMAAlerts = () => {
     }
   };
 
-  const handleCreateAlert = async (alertData: Omit<AdminAlert, "id" | "created_at" | "updated_at">) => {
+  const handleCreateAlert = async (
+    alertData: Omit<AdminAlert, "id" | "created_at" | "updated_at">
+  ) => {
     try {
       const newAlert = await createAlert(alertData);
       if (newAlert) {
@@ -139,39 +149,53 @@ const DMAAlerts = () => {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case "critical": return "bg-red-500 text-white";
-      case "high": return "bg-orange-500 text-white";
-      case "medium": return "bg-yellow-500 text-white";
-      case "low": return "bg-blue-500 text-white";
-      default: return "bg-gray-500 text-white";
+      case "critical":
+        return "bg-red-500 text-white";
+      case "high":
+        return "bg-orange-500 text-white";
+      case "medium":
+        return "bg-yellow-500 text-white";
+      case "low":
+        return "bg-blue-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-red-100 text-red-800 border-red-200";
-      case "delivered": return "bg-green-100 text-green-800 border-green-200";
-      case "dismissed": return "bg-gray-100 text-gray-800 border-gray-200";
-      default: return "bg-gray-100 text-gray-800 border-gray-200";
+      case "active":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "delivered":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "dismissed":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const filteredAlerts = alerts.filter(alert => {
-    const matchesSearch = alert.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         alert.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         alert.region.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || alert.status === filterStatus;
-    const matchesSeverity = filterSeverity === "all" || alert.severity === filterSeverity;
-    
+  const filteredAlerts = alerts.filter((alert) => {
+    const matchesSearch =
+      alert.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      alert.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      alert.region.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      filterStatus === "all" || alert.status === filterStatus;
+    const matchesSeverity =
+      filterSeverity === "all" || alert.severity === filterSeverity;
+
     return matchesSearch && matchesStatus && matchesSeverity;
   });
 
   const stats = {
     total: alerts.length,
-    active: alerts.filter(a => a.status === "active").length,
-    delivered: alerts.filter(a => a.status === "delivered").length,
-    dismissed: alerts.filter(a => a.status === "dismissed").length,
-    critical: alerts.filter(a => a.severity === "critical" && a.status === "active").length
+    active: alerts.filter((a) => a.status === "active").length,
+    delivered: alerts.filter((a) => a.status === "delivered").length,
+    dismissed: alerts.filter((a) => a.status === "dismissed").length,
+    critical: alerts.filter(
+      (a) => a.severity === "critical" && a.status === "active"
+    ).length,
   };
 
   return (
@@ -180,20 +204,26 @@ const DMAAlerts = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">DMA Emergency Alerts</h1>
-            <p className="text-gray-600 mt-1">Manage district-level emergency alerts and responses</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              DMA Emergency Alerts
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Manage district-level emergency alerts and responses
+            </p>
           </div>
           <div className="flex gap-2">
             <Button onClick={loadAlerts} variant="outline" disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
-            <Button 
-              variant={isLive ? "default" : "outline"} 
+            <Button
+              variant={isLive ? "default" : "outline"}
               onClick={() => setIsLive(!isLive)}
             >
               <Activity className="w-4 h-4 mr-2" />
-              Live Updates {isLive ? 'ON' : 'OFF'}
+              Live Updates {isLive ? "ON" : "OFF"}
             </Button>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
@@ -208,8 +238,12 @@ const DMAAlerts = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-orange-600">Total Alerts</p>
-                  <p className="text-3xl font-bold text-orange-800">{stats.total}</p>
+                  <p className="text-sm font-medium text-orange-600">
+                    Total Alerts
+                  </p>
+                  <p className="text-3xl font-bold text-orange-800">
+                    {stats.total}
+                  </p>
                 </div>
                 <AlertTriangle className="w-8 h-8 text-orange-600" />
               </div>
@@ -220,8 +254,12 @@ const DMAAlerts = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-red-600">Active Alerts</p>
-                  <p className="text-3xl font-bold text-red-800">{stats.active}</p>
+                  <p className="text-sm font-medium text-red-600">
+                    Active Alerts
+                  </p>
+                  <p className="text-3xl font-bold text-red-800">
+                    {stats.active}
+                  </p>
                 </div>
                 <Activity className="w-8 h-8 text-red-600" />
               </div>
@@ -232,8 +270,12 @@ const DMAAlerts = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-yellow-600">Critical Alerts</p>
-                  <p className="text-3xl font-bold text-yellow-800">{stats.critical}</p>
+                  <p className="text-sm font-medium text-yellow-600">
+                    Critical Alerts
+                  </p>
+                  <p className="text-3xl font-bold text-yellow-800">
+                    {stats.critical}
+                  </p>
                 </div>
                 <AlertCircle className="w-8 h-8 text-yellow-600" />
               </div>
@@ -244,8 +286,12 @@ const DMAAlerts = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600">Delivered</p>
-                  <p className="text-3xl font-bold text-green-800">{stats.delivered}</p>
+                  <p className="text-sm font-medium text-green-600">
+                    Delivered
+                  </p>
+                  <p className="text-3xl font-bold text-green-800">
+                    {stats.delivered}
+                  </p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
@@ -297,22 +343,34 @@ const DMAAlerts = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <AlertTriangle className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No alerts found</h3>
-                <p className="text-gray-600">No alerts match your current filters.</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No alerts found
+                </h3>
+                <p className="text-gray-600">
+                  No alerts match your current filters.
+                </p>
               </CardContent>
             </Card>
           ) : (
             filteredAlerts.map((alert) => (
-              <Card key={alert.id} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={alert.id}
+                className="hover:shadow-lg transition-shadow"
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{alert.type}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {alert.type}
+                        </h3>
                         <Badge className={getSeverityColor(alert.severity)}>
                           {alert.severity.toUpperCase()}
                         </Badge>
-                        <Badge variant="outline" className={getStatusColor(alert.status)}>
+                        <Badge
+                          variant="outline"
+                          className={getStatusColor(alert.status)}
+                        >
                           {alert.status.toUpperCase()}
                         </Badge>
                       </div>

@@ -223,22 +223,89 @@ export class RoleBasedAuthService {
    */
   static async getUserProfile(userId: string): Promise<UserProfile | null> {
     try {
+      console.log("👤 Fetching profile for Firebase UID:", userId);
+
       const { data, error } = await supabase
         .from("user_profiles")
-        .select("*")
-        .eq("id", userId)
+        .select(
+          `
+          id,
+          firebase_uid,
+          email,
+          role,
+          name,
+          organization,
+          district,
+          state,
+          is_active,
+          created_at,
+          last_login
+        `
+        )
+        .eq("firebase_uid", userId)
         .single();
 
-      if (error || !data) return null;
+      console.log("Profile query result:", { data, error });
+
+      if (error) {
+        console.error("Profile fetch error:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
+        return null;
+      }
+
+      if (!data) {
+        console.log("No profile data found for user:", userId);
+        return null;
+      }
 
       return {
-        ...data,
+        id: data.id,
+        email: data.email,
+        role: data.role as UserRole,
+        name: data.name,
+        organization: data.organization,
+        district: data.district,
+        state: data.state,
+        isActive: data.is_active,
         permissions: this.rolePermissions[data.role as UserRole] || [],
         createdAt: new Date(data.created_at),
         lastLogin: data.last_login ? new Date(data.last_login) : undefined,
       };
     } catch (error) {
       console.error("Error fetching user profile:", error);
+
+      // Handle specific error cases
+      if (error instanceof Error) {
+        console.error("Profile fetch failed with error:", {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
+
+        // If it's a 406 error or RLS issue, log specific guidance
+        if (
+          error.message.includes("406") ||
+          error.message.includes("RLS") ||
+          error.message.includes("not acceptable")
+        ) {
+          console.error(`
+🚨 RLS (Row Level Security) Error Detected!
+This is likely due to restrictive database policies on the user_profiles table.
+
+Quick Fix Options:
+1. Run the SQL from simple_no_rls_fix.sql in Supabase SQL Editor
+2. Or disable RLS: ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
+3. Or grant access: GRANT ALL ON user_profiles TO authenticated;
+
+Current Error: ${error.message}
+          `);
+        }
+      }
+
       return null;
     }
   }
@@ -271,6 +338,13 @@ export class RoleBasedAuthService {
     const userLevel = scopeHierarchy.indexOf(userScope);
     const requiredLevel = scopeHierarchy.indexOf(requiredScope);
     return userLevel >= requiredLevel;
+  }
+
+  /**
+   * Get permissions for a specific role
+   */
+  static getRolePermissions(role: UserRole): Permission[] {
+    return this.rolePermissions[role] || [];
   }
 
   /**
@@ -499,10 +573,27 @@ export function hasRoleAccess(
   userProfile: UserProfile | null,
   requiredRole: UserRole | UserRole[]
 ): boolean {
-  if (!userProfile) return false;
+  if (!userProfile) {
+    console.log("🔒 hasRoleAccess: No user profile");
+    return false;
+  }
 
   const allowedRoles = Array.isArray(requiredRole)
     ? requiredRole
     : [requiredRole];
-  return allowedRoles.includes(userProfile.role);
+
+  const hasAccess = allowedRoles.includes(userProfile.role);
+
+  console.log("🔒 hasRoleAccess: Role check", {
+    userRole: userProfile.role,
+    userRoleType: typeof userProfile.role,
+    allowedRoles,
+    allowedRolesTypes: allowedRoles.map((r) => typeof r),
+    hasAccess,
+    stringComparison: allowedRoles.map(
+      (r) => `${userProfile.role} === ${r} = ${userProfile.role === r}`
+    ),
+  });
+
+  return hasAccess;
 }

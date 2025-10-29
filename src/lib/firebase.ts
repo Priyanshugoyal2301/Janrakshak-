@@ -44,8 +44,8 @@ let auth: Auth | undefined;
 
 // Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
+googleProvider.addScope("email");
+googleProvider.addScope("profile");
 
 export const getFirebase = () => {
   if (!app) {
@@ -56,7 +56,7 @@ export const getFirebase = () => {
       storageBucket: "jalrakshak-f1d6a.firebasestorage.app",
       messagingSenderId: "170302508520",
       appId: "1:170302508520:web:f6a229ce2c7e368bbd285d",
-      measurementId: "G-LY5SLJLZT4"
+      measurementId: "G-LY5SLJLZT4",
     } as const;
 
     if (!getApps().length) {
@@ -74,17 +74,20 @@ export const getFirebase = () => {
 // Cloud Functions
 export const getSafeRouteFunction = () => {
   const { functions } = getFirebase();
-  return httpsCallable(functions, 'getSafeRoute');
+  return httpsCallable(functions, "getSafeRoute");
 };
 
 export const getNearestShelterFunction = () => {
   const { functions } = getFirebase();
-  return httpsCallable(functions, 'getNearestShelter');
+  return httpsCallable(functions, "getNearestShelter");
 };
 
 // Admin helper functions
 export const isAdmin = (userEmail?: string | null): boolean => {
-  const adminEmails = ["admin@janrakshak.com"];
+  const adminEmails = [
+    "admin@janrakshak.com",
+    "lb4397@srmist.edu.in", // Main admin user
+  ];
   return userEmail ? adminEmails.includes(userEmail) : false;
 };
 

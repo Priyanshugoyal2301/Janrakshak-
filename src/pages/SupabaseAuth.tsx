@@ -13,6 +13,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
 import { supabase } from "@/lib/supabase";
 import LoadingScreen from "@/components/LoadingScreen";
 import { motion } from "framer-motion";
@@ -52,6 +53,7 @@ const SupabaseAuthPage = () => {
   const location = useLocation();
   const { signUp, signIn, resetPassword, user, loading, isAdmin } =
     useSupabaseAuth();
+  const { refreshProfile } = useRoleAwareAuth();
 
   // Determine active tab based on URL path
   const isSignupPage = location.pathname === "/admin/signup";
@@ -146,6 +148,33 @@ const SupabaseAuthPage = () => {
 
         // Handle specific error cases
         if (
+          error?.message?.includes("406") ||
+          error?.message?.includes("Not Acceptable")
+        ) {
+          console.error("🚨 406 Error detected - likely RLS issue!");
+          console.log(`
+📋 Quick Fix Instructions:
+1. Open Supabase SQL Editor
+2. Run: ALTER TABLE user_profiles DISABLE ROW LEVEL SECURITY;
+3. Run: GRANT ALL ON user_profiles TO authenticated;
+4. Or use the console command: diagnoseRLS()
+          `);
+
+          if (isAdmin) {
+            console.log(
+              "✅ Admin user detected, redirecting to admin dashboard"
+            );
+            toast.success("Welcome Admin! (Database setup may need attention)");
+            navigate("/admin");
+            return;
+          }
+
+          toast.error(
+            "Database configuration issue detected. Please contact administrator."
+          );
+          navigate("/dashboard");
+          return;
+        } else if (
           error?.code === "PGRST116" ||
           error?.message?.includes("No rows found")
         ) {
@@ -154,6 +183,16 @@ const SupabaseAuthPage = () => {
             "IMPORTANT: Not creating fallback profile to prevent duplicates"
           );
 
+          // Check if this is an admin user first
+          if (isAdmin) {
+            console.log(
+              "✅ Admin user detected, redirecting to admin dashboard"
+            );
+            toast.success(`Welcome Admin! Redirecting to Admin Dashboard.`);
+            navigate("/admin");
+            return;
+          }
+
           // Just show error and redirect to default dashboard
           toast.error(
             "❌ No profile found! Please contact administrator. Redirecting to user dashboard."
@@ -161,14 +200,32 @@ const SupabaseAuthPage = () => {
           navigate("/dashboard");
           return;
         } else if (error?.code === "42P01") {
+          if (isAdmin) {
+            console.log(
+              "✅ Admin user detected, redirecting to admin dashboard"
+            );
+            toast.success("Welcome Admin! Redirecting to Admin Dashboard.");
+            navigate("/admin");
+            return;
+          }
           toast.error(
             "❌ Database setup incomplete. Redirecting to user dashboard."
           );
           navigate("/dashboard");
           return;
         } else {
+          if (isAdmin) {
+            console.log(
+              "✅ Admin user detected, redirecting to admin dashboard"
+            );
+            toast.success("Welcome Admin! Redirecting to Admin Dashboard.");
+            navigate("/admin");
+            return;
+          }
           toast.error(
-            `❌ Profile error: ${error?.message || "Database connection issue"}. Redirecting to user dashboard.`
+            `❌ Profile error: ${
+              error?.message || "Database connection issue"
+            }. Redirecting to user dashboard.`
           );
           navigate("/dashboard");
           return;
@@ -188,7 +245,7 @@ const SupabaseAuthPage = () => {
       // Show role detection and redirect info
       const roleMessages = {
         ADMIN: `Welcome ${userName}! Detected ADMIN role - Redirecting to Admin Dashboard`,
-        DMA: `Welcome ${userName}! Detected DMA role - Redirecting to DMA Dashboard`, 
+        DMA: `Welcome ${userName}! Detected DMA role - Redirecting to DMA Dashboard`,
         NGO: `Welcome ${userName}! Detected NGO role - Redirecting to NGO Dashboard`,
         VOLUNTEER: `Welcome ${userName}! Detected VOLUNTEER role - Redirecting to Volunteer Dashboard`,
         USER: `Welcome ${userName}! Detected USER role - Redirecting to User Dashboard`,
@@ -218,7 +275,9 @@ const SupabaseAuthPage = () => {
           navigate("/ngo-dashboard");
           break;
         case "VOLUNTEER":
-          console.log("DEBUG: Redirecting to /volunteer-dashboard for VOLUNTEER role");
+          console.log(
+            "DEBUG: Redirecting to /volunteer-dashboard for VOLUNTEER role"
+          );
           navigate("/volunteer-dashboard");
           break;
         case "USER":
@@ -449,7 +508,7 @@ const SupabaseAuthPage = () => {
 
           // Redirect to role-based dashboard after successful signup
           setTimeout(() => {
-            redirectBasedOnRole(user);
+            redirectBasedOnRole();
           }, 1500);
         }
 

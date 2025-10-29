@@ -38,6 +38,7 @@ import {
   Heart,
   HandHeart,
   Truck,
+  Package,
 } from "lucide-react";
 
 interface NGOLayoutProps {
@@ -100,35 +101,11 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
     }
   };
 
-  // NGO-specific navigation - dedicated NGO routes
+  // NGO-specific navigation - essential features with comprehensive options
   const navigation = [
-    { name: "NGO Dashboard", href: "/ngo-dashboard", icon: Home, badge: null },
+    { name: "Dashboard", href: "/ngo-dashboard", icon: Home, badge: null },
     {
-      name: "Active Alerts",
-      href: "/ngo/alerts",
-      icon: AlertTriangle,
-      badge:
-        realTimeCounts.activeAlerts > 0
-          ? realTimeCounts.activeAlerts.toString()
-          : null,
-    },
-    {
-      name: "User Management",
-      href: "/ngo/users",
-      icon: Users,
-      badge:
-        realTimeCounts.volunteers > 0
-          ? realTimeCounts.volunteers.toString()
-          : null,
-    },
-    {
-      name: "Training Programs",
-      href: "/ngo/training",
-      icon: BookOpen,
-      badge: null,
-    },
-    {
-      name: "Shelter Coordination",
+      name: "Shelter Management",
       href: "/ngo/shelters",
       icon: Shield,
       badge:
@@ -137,22 +114,25 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
           : null,
     },
     {
-      name: "Impact Reports",
-      href: "/ngo/reports",
-      icon: FileText,
+      name: "Relief Allocation",
+      href: "/ngo/relief",
+      icon: Truck,
       badge: null,
     },
     {
-      name: "Field Analytics",
-      href: "/ngo/analytics",
-      icon: BarChart3,
+      name: "Food Resources",
+      href: "/ngo/food-resources",
+      icon: Package,
       badge: null,
     },
     {
-      name: "GIS Mapping",
-      href: "/ngo/gis-mapping",
-      icon: MapPin,
-      badge: null,
+      name: "Volunteer Management",
+      href: "/ngo/volunteers",
+      icon: Users,
+      badge:
+        realTimeCounts.volunteers > 0
+          ? realTimeCounts.volunteers.toString()
+          : null,
     },
   ];
 
@@ -252,7 +232,10 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
               <div>
                 <div className="flex items-center space-x-3">
                   <h1 className="text-2xl font-bold">NGO Command Center</h1>
-                  <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-white/20 border-white/30 text-white"
+                  >
                     <Heart className="w-3 h-3 mr-1" />
                     NGO OPERATIONS
                   </Badge>
@@ -277,8 +260,11 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
                   <span className="hidden md:inline">Refresh</span>
                 </Button>
               </div>
-              <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
-                {realTimeCounts.activeVolunteers || 0} Active Volunteers
+              <Badge
+                variant="outline"
+                className="text-xs bg-white/20 border-white/30 text-white"
+              >
+                {realTimeCounts.volunteers || 0} Active Resources
               </Badge>
             </div>
           </div>

@@ -10,8 +10,12 @@ const NGOTraining = () => {
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">NGO Training Programs</h1>
-            <p className="text-gray-600 mt-1">Community education and volunteer training</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              NGO Training Programs
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Community education and volunteer training
+            </p>
           </div>
           <Button className="bg-purple-600 hover:bg-purple-700">
             <BookOpen className="w-4 h-4 mr-2" />
@@ -24,7 +28,9 @@ const NGOTraining = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-purple-600">Total Programs</p>
+                  <p className="text-sm font-medium text-purple-600">
+                    Total Programs
+                  </p>
                   <p className="text-3xl font-bold text-purple-800">18</p>
                 </div>
                 <BookOpen className="w-8 h-8 text-purple-600" />
@@ -36,7 +42,9 @@ const NGOTraining = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600">Active Sessions</p>
+                  <p className="text-sm font-medium text-blue-600">
+                    Active Sessions
+                  </p>
                   <p className="text-3xl font-bold text-blue-800">5</p>
                 </div>
                 <Calendar className="w-8 h-8 text-blue-600" />
@@ -60,7 +68,9 @@ const NGOTraining = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-yellow-600">Certifications</p>
+                  <p className="text-sm font-medium text-yellow-600">
+                    Certifications
+                  </p>
                   <p className="text-3xl font-bold text-yellow-800">156</p>
                 </div>
                 <Award className="w-8 h-8 text-yellow-600" />
@@ -79,7 +89,9 @@ const NGOTraining = () => {
           <CardContent>
             <div className="text-center py-8">
               <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">NGO training management interface will be displayed here</p>
+              <p className="text-gray-600">
+                NGO training management interface will be displayed here
+              </p>
             </div>
           </CardContent>
         </Card>

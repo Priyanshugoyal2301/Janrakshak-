@@ -2,7 +2,14 @@ import React from "react";
 import NDMALayout from "@/components/NDMALayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Activity, Server, Database, Shield, AlertTriangle, CheckCircle } from "lucide-react";
+import {
+  Activity,
+  Server,
+  Database,
+  Shield,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 
 const DMASystem = () => {
   return (
@@ -10,8 +17,12 @@ const DMASystem = () => {
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">DMA System Health</h1>
-            <p className="text-gray-600 mt-1">Monitor district system performance and health</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              DMA System Health
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Monitor district system performance and health
+            </p>
           </div>
           <Button>
             <Activity className="w-4 h-4 mr-2" />
@@ -28,8 +39,12 @@ const DMASystem = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600 mb-2">Operational</div>
-              <p className="text-gray-600 text-sm">All systems running normally</p>
+              <div className="text-2xl font-bold text-green-600 mb-2">
+                Operational
+              </div>
+              <p className="text-gray-600 text-sm">
+                All systems running normally
+              </p>
             </CardContent>
           </Card>
 
@@ -54,7 +69,9 @@ const DMASystem = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600 mb-2">Connected</div>
+              <div className="text-2xl font-bold text-blue-600 mb-2">
+                Connected
+              </div>
               <p className="text-gray-600 text-sm">Response time: 45ms</p>
             </CardContent>
           </Card>
@@ -71,13 +88,30 @@ const DMASystem = () => {
             <CardContent>
               <div className="space-y-4">
                 {[
-                  { time: "10:30 AM", action: "Alert broadcast successful", status: "success" },
-                  { time: "09:45 AM", action: "System backup completed", status: "success" },
-                  { time: "09:15 AM", action: "Database optimization", status: "success" },
+                  {
+                    time: "10:30 AM",
+                    action: "Alert broadcast successful",
+                    status: "success",
+                  },
+                  {
+                    time: "09:45 AM",
+                    action: "System backup completed",
+                    status: "success",
+                  },
+                  {
+                    time: "09:15 AM",
+                    action: "Database optimization",
+                    status: "success",
+                  },
                 ].map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
                     <div>
-                      <p className="font-medium text-gray-900">{activity.action}</p>
+                      <p className="font-medium text-gray-900">
+                        {activity.action}
+                      </p>
                       <p className="text-sm text-gray-500">{activity.time}</p>
                     </div>
                     <CheckCircle className="w-5 h-5 text-green-500" />

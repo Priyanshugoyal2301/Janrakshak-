@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NGOLayout from "@/components/NGOLayout";
 import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { UserRole } from "@/lib/roleBasedAuth";
 import { supabase } from "@/lib/supabase";
 import {
@@ -29,152 +30,153 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface NGOMetrics {
-  totalVolunteers: number;
-  activeTraining: number;
-  completedPrograms: number;
-  districtCoverage: number;
-  recentActivities: Array<{
+  totalShelters: number;
+  activeShelters: number;
+  totalCapacity: number;
+  occupiedCapacity: number;
+  recentReliefAllocations: Array<{
     id: string;
-    type: "training" | "rescue" | "awareness";
-    title: string;
+    type: "food" | "medical" | "clothing" | "shelter";
+    quantity: number;
     location: string;
     date: string;
-    participants: number;
     status: string;
   }>;
-  volunteerStats: Array<{
-    specialization: string;
-    count: number;
-    active: number;
+  foodResources: Array<{
+    type: string;
+    quantity: number;
+    unit: string;
+    expiryDate?: string;
+    status: "available" | "distributed" | "expired";
   }>;
-  impactMetrics: {
-    peopleHelped: number;
-    trainingHours: number;
-    resourcesDistributed: number;
-  };
 }
 
 const NGODashboard: React.FC = () => {
-  const { userProfile } = useRoleAwareAuth();
+  const { userProfile: firebaseUserProfile } = useRoleAwareAuth();
+  const { user: supabaseUser } = useSupabaseAuth();
   const [metrics, setMetrics] = useState<NGOMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [supabaseProfile, setSupabaseProfile] = useState<any>(null);
+
+  // Use Firebase profile if available, otherwise fetch Supabase profile
+  const userProfile = firebaseUserProfile || supabaseProfile;
 
   useEffect(() => {
+    if (!firebaseUserProfile && supabaseUser && !supabaseProfile) {
+      // Fetch Supabase profile for display
+      fetchSupabaseProfile();
+    }
     fetchNGOMetrics();
-  }, [userProfile]);
+  }, [firebaseUserProfile, supabaseUser, supabaseProfile]);
+
+  const fetchSupabaseProfile = async () => {
+    if (!supabaseUser) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("id", supabaseUser.id)
+        .single();
+
+      if (data) {
+        setSupabaseProfile(data);
+        console.log("📋 Fetched Supabase profile for NGO dashboard:", data);
+      } else if (error) {
+        console.error("❌ Error fetching Supabase profile:", error);
+      }
+    } catch (err) {
+      console.error("❌ Exception fetching Supabase profile:", err);
+    }
+  };
 
   const fetchNGOMetrics = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Apply district filter for NGO access
-      const districtFilter = userProfile?.district;
+      // For now, use mock data since tables may not exist
+      // In production, these would fetch from actual tables like:
+      // - shelters, relief_allocations, food_resources tables
 
-      // Fetch volunteer data
-      const { data: volunteers, error: volunteersError } = await supabase
-        .from("volunteers")
-        .select("*")
-        .eq("district", districtFilter)
-        .eq("is_active", true);
+      // Mock shelter data
+      const totalShelters = 12;
+      const activeShelters = 8;
+      const totalCapacity = 500;
+      const occupiedCapacity = 320;
 
-      if (volunteersError) throw volunteersError;
+      // Mock recent relief allocations
+      const recentReliefAllocations = [
+        {
+          id: "1",
+          type: "food" as const,
+          quantity: 100,
+          location: userProfile?.district || "Unknown District",
+          date: new Date().toISOString().split("T")[0],
+          status: "distributed",
+        },
+        {
+          id: "2",
+          type: "medical" as const,
+          quantity: 50,
+          location: userProfile?.district || "Unknown District",
+          date: new Date(Date.now() - 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
+          status: "pending",
+        },
+        {
+          id: "3",
+          type: "shelter" as const,
+          quantity: 25,
+          location: userProfile?.district || "Unknown District",
+          date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
+          status: "distributed",
+        },
+      ];
 
-      // Fetch training sessions specific to NGO's district
-      const { data: trainingSessions, error: trainingError } = await supabase
-        .from("training_sessions")
-        .select("*")
-        .eq("district", districtFilter)
-        .order("start_date", { ascending: false });
-
-      if (trainingError) throw trainingError;
-
-      // Fetch organization data
-      const { data: organizations, error: orgError } = await supabase
-        .from("organizations")
-        .select("*")
-        .eq("district", districtFilter)
-        .eq("organization_type", "NGO");
-
-      if (orgError) throw orgError;
-
-      // Process metrics
-      const totalVolunteers = volunteers?.length || 0;
-      const activeTraining =
-        trainingSessions?.filter((s) => s.status === "in_progress").length || 0;
-      const completedPrograms =
-        trainingSessions?.filter((s) => s.status === "completed").length || 0;
-
-      // Mock district coverage based on training sessions
-      const uniqueDistricts = new Set(
-        trainingSessions?.map((s) => s.district).filter(Boolean)
-      );
-      const districtCoverage = uniqueDistricts.size;
-
-      // Recent activities (mock data based on training sessions)
-      const recentActivities =
-        trainingSessions?.slice(0, 8).map((session) => ({
-          id: session.id,
-          type: "training" as const,
-          title: session.title,
-          location: `${session.district}, ${session.state}`,
-          date: session.start_date,
-          participants: session.actual_participants || 0,
-          status: session.status,
-        })) || [];
-
-      // Volunteer specializations stats
-      const specializationCounts =
-        volunteers?.reduce((acc, volunteer) => {
-          const specializations = volunteer.specializations || [];
-          specializations.forEach((spec: string) => {
-            if (!acc[spec]) {
-              acc[spec] = { count: 0, active: 0 };
-            }
-            acc[spec].count++;
-            if (volunteer.availability_status === "available") {
-              acc[spec].active++;
-            }
-          });
-          return acc;
-        }, {} as Record<string, { count: number; active: number }>) || {};
-
-      const volunteerStats = Object.entries(specializationCounts).map(
-        ([specialization, data]) => ({
-          specialization,
-          count: (data as { count: number; active: number }).count,
-          active: (data as { count: number; active: number }).active,
-        })
-      );
-
-      // Impact metrics (calculated from available data)
-      const impactMetrics = {
-        peopleHelped:
-          trainingSessions?.reduce(
-            (sum, session) => sum + (session.actual_participants || 0),
-            0
-          ) || 0,
-        trainingHours:
-          volunteers?.reduce(
-            (sum, vol) => sum + (vol.total_training_hours || 0),
-            0
-          ) || 0,
-        resourcesDistributed:
-          volunteers?.reduce(
-            (sum, vol) => sum + (vol.total_rescue_operations || 0),
-            0
-          ) || 0,
-      };
+      // Mock food resources data
+      const foodResources = [
+        {
+          type: "Rice",
+          quantity: 500,
+          unit: "kg",
+          expiryDate: "2025-12-31",
+          status: "available" as const,
+        },
+        {
+          type: "Wheat Flour",
+          quantity: 300,
+          unit: "kg",
+          expiryDate: "2025-11-15",
+          status: "available" as const,
+        },
+        {
+          type: "Cooking Oil",
+          quantity: 100,
+          unit: "liters",
+          expiryDate: "2025-10-30",
+          status: "available" as const,
+        },
+        {
+          type: "Canned Food",
+          quantity: 200,
+          unit: "pieces",
+          expiryDate: "2025-08-15",
+          status: "expired" as const,
+        },
+      ];
 
       setMetrics({
-        totalVolunteers,
-        activeTraining,
-        completedPrograms,
-        districtCoverage,
-        recentActivities,
-        volunteerStats,
-        impactMetrics,
+        totalShelters,
+        activeShelters,
+        totalCapacity,
+        occupiedCapacity,
+        recentReliefAllocations,
+        foodResources,
       });
     } catch (error) {
       console.error("Error fetching NGO metrics:", error);
