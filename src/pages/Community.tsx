@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import UserLayout from "@/components/UserLayout";
+import GradientCard from "@/components/GradientCard";
 import {
   Card,
   CardContent,
@@ -49,6 +51,8 @@ import {
   RefreshCw,
   ImageIcon,
   X,
+  Zap,
+  Activity,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";

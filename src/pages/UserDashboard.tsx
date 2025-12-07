@@ -426,69 +426,77 @@ const UserDashboard = () => {
         <TabsContent value="overview" className="space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
+            <Card className="bg-gradient-to-br from-blue-50 via-cyan-50 to-white border-2 border-blue-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Total Reports
                 </CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                   {reportStats.total_reports}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-600 mt-1 font-medium">
                   All your flood reports
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-to-br from-red-50 via-rose-50 to-white border-2 border-red-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Critical Reports
                 </CardTitle>
-                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
                   {reportStats.critical_reports}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-600 mt-1 font-medium">
                   High priority reports
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-to-br from-green-50 via-emerald-50 to-white border-2 border-green-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Verified Reports
                 </CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   {reportStats.verified_reports}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-600 mt-1 font-medium">
                   Confirmed by authorities
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-to-br from-yellow-50 via-amber-50 to-white border-2 border-yellow-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Pending Reports
                 </CardTitle>
-                <Clock className="h-4 w-4 text-yellow-500" />
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">
+                <div className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-amber-600 bg-clip-text text-transparent">
                   {reportStats.pending_reports}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-600 mt-1 font-medium">
                   Awaiting verification
                 </p>
               </CardContent>
@@ -496,10 +504,12 @@ const UserDashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <Card>
+          <Card className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white border-2 border-indigo-200 shadow-lg">
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Quick Actions
+              </CardTitle>
+              <CardDescription className="text-gray-600 font-medium">
                 Common tasks and emergency actions
               </CardDescription>
             </CardHeader>
@@ -507,121 +517,131 @@ const UserDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button
                   variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
+                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                   onClick={() => navigate("/reports")}
                 >
-                  <Plus className="w-6 h-6 text-blue-600" />
-                  <span className="text-sm font-medium">New Report</span>
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Plus className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">New Report</span>
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
+                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 hover:border-green-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                   onClick={() => navigate("/shelters")}
                 >
-                  <Building className="w-6 h-6 text-green-600" />
-                  <span className="text-sm font-medium">Find Shelters</span>
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Building className="w-6 h-6 text-green-600" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">Find Shelters</span>
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
+                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 hover:border-red-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                   onClick={() => navigate("/emergency-contacts")}
                 >
-                  <Phone className="w-6 h-6 text-red-600" />
-                  <span className="text-sm font-medium">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <Phone className="w-6 h-6 text-red-600" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">
                     Emergency Contacts
                   </span>
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
+                  className="h-24 flex flex-col items-center justify-center space-y-2 bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                   onClick={() => navigate("/alerts")}
                 >
-                  <Bell className="w-6 h-6 text-orange-600" />
-                  <span className="text-sm font-medium">View Alerts</span>
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Bell className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">View Alerts</span>
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Community Safety Score - Unique to Citizens */}
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
+          <Card className="bg-gradient-to-br from-blue-100 via-cyan-100 to-teal-100 border-2 border-blue-300 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Shield className="w-5 h-5 text-blue-600" />
-                <span>Community Safety Score</span>
+                <div className="p-2 bg-blue-200 rounded-lg">
+                  <Shield className="w-6 h-6 text-blue-700" />
+                </div>
+                <span className="text-xl font-bold text-gray-900">Community Safety Score</span>
                 <Badge
                   variant="secondary"
-                  className="bg-blue-100 text-blue-700"
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-md"
                 >
                   Citizen Feature
                 </Badge>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-700 font-medium">
                 Real-time safety assessment for your area based on reports and
                 alerts
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-green-600 mb-2">
+                <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-green-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <div className="text-4xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
                     85
                   </div>
-                  <p className="text-sm text-gray-600">Safety Score</p>
-                  <Badge className="mt-2 bg-green-100 text-green-700">
+                  <p className="text-sm text-gray-700 font-semibold">Safety Score</p>
+                  <Badge className="mt-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-md">
                     Good
                   </Badge>
                 </div>
-                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-orange-600 mb-2">
+                <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-orange-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <div className="text-4xl font-black bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-2">
                     {nearbyReports.length || 3}
                   </div>
-                  <p className="text-sm text-gray-600">Nearby Reports</p>
-                  <Badge className="mt-2 bg-orange-100 text-orange-700">
+                  <p className="text-sm text-gray-700 font-semibold">Nearby Reports</p>
+                  <Badge className="mt-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white border-0 shadow-md">
                     Last 24h
                   </Badge>
                 </div>
-                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                  <div className="text-3xl font-bold text-blue-600 mb-2">
+                <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <div className="text-4xl font-black bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
                     12
                   </div>
-                  <p className="text-sm text-gray-600">Active Shelters</p>
-                  <Badge className="mt-2 bg-blue-100 text-blue-700">
+                  <p className="text-sm text-gray-700 font-semibold">Active Shelters</p>
+                  <Badge className="mt-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-md">
                     Available
                   </Badge>
                 </div>
               </div>
-              <div className="mt-4 p-4 bg-white rounded-lg">
-                <h4 className="font-medium mb-2 flex items-center">
-                  <TrendingUp className="w-4 h-4 mr-2 text-green-600" />
+              <div className="mt-6 p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-blue-200">
+                <h4 className="font-bold mb-4 flex items-center text-gray-900">
+                  <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
                   Safety Trends
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Flood Risk</span>
+                    <span className="text-sm font-medium text-gray-700">Flood Risk</span>
                     <div className="flex items-center space-x-2">
-                      <div className="w-20 h-2 bg-gray-200 rounded">
-                        <div className="w-1/4 h-full bg-green-500 rounded"></div>
+                      <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-1/4 h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full shadow-md"></div>
                       </div>
-                      <span className="text-sm text-green-600">Low</span>
+                      <span className="text-sm font-bold text-green-600">Low</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Emergency Response</span>
+                    <span className="text-sm font-medium text-gray-700">Emergency Response</span>
                     <div className="flex items-center space-x-2">
-                      <div className="w-20 h-2 bg-gray-200 rounded">
-                        <div className="w-4/5 h-full bg-blue-500 rounded"></div>
+                      <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-4/5 h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full shadow-md"></div>
                       </div>
-                      <span className="text-sm text-blue-600">High</span>
+                      <span className="text-sm font-bold text-blue-600">High</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Community Alert</span>
+                    <span className="text-sm font-medium text-gray-700">Community Alert</span>
                     <div className="flex items-center space-x-2">
-                      <div className="w-20 h-2 bg-gray-200 rounded">
-                        <div className="w-1/2 h-full bg-yellow-500 rounded"></div>
+                      <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-1/2 h-full bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full shadow-md"></div>
                       </div>
-                      <span className="text-sm text-yellow-600">Medium</span>
+                      <span className="text-sm font-bold text-yellow-600">Medium</span>
                     </div>
                   </div>
                 </div>
@@ -630,10 +650,10 @@ const UserDashboard = () => {
           </Card>
 
           {/* Recent Reports */}
-          <Card>
+          <Card className="bg-gradient-to-br from-slate-50 via-gray-50 to-white border-2 border-gray-200 shadow-lg">
             <CardHeader>
-              <CardTitle>Recent Reports</CardTitle>
-              <CardDescription>Your latest flood reports</CardDescription>
+              <CardTitle className="text-xl font-bold text-gray-900">Recent Reports</CardTitle>
+              <CardDescription className="text-gray-600 font-medium">Your latest flood reports</CardDescription>
             </CardHeader>
             <CardContent>
               {userReports.length > 0 ? (
@@ -641,34 +661,35 @@ const UserDashboard = () => {
                   {userReports.slice(0, 3).map((report) => (
                     <div
                       key={report.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
+                      className="flex items-center justify-between p-5 border-2 rounded-xl bg-gradient-to-r from-white to-gray-50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                     >
                       <div className="flex items-center space-x-4">
                         <div
-                          className={`w-3 h-3 rounded-full ${
+                          className={`w-4 h-4 rounded-full shadow-lg ${
                             report.severity === "critical"
-                              ? "bg-red-500"
+                              ? "bg-gradient-to-r from-red-500 to-rose-500"
                               : report.severity === "high"
-                              ? "bg-orange-500"
+                              ? "bg-gradient-to-r from-orange-500 to-amber-500"
                               : report.severity === "medium"
-                              ? "bg-yellow-500"
-                              : "bg-green-500"
+                              ? "bg-gradient-to-r from-yellow-500 to-amber-500"
+                              : "bg-gradient-to-r from-green-500 to-emerald-500"
                           }`}
                         />
                         <div>
-                          <p className="font-medium">{report.title}</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="font-semibold text-gray-900">{report.title}</p>
+                          <p className="text-sm text-gray-600 flex items-center mt-1">
+                            <MapPin className="w-3 h-3 mr-1" />
                             {typeof report.location === "string"
                               ? report.location
                               : report.location?.address || "Unknown Location"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(report.status)}>
+                      <div className="flex items-center space-x-3">
+                        <Badge className={`${getStatusColor(report.status)} border-2 font-semibold`}>
                           {report.status}
                         </Badge>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 font-medium">
                           {new Date(report.created_at).toLocaleDateString()}
                         </span>
                       </div>
@@ -676,14 +697,17 @@ const UserDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No reports yet</p>
+                <div className="text-center py-12">
+                  <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <FileText className="w-10 h-10 text-gray-400" />
+                  </div>
+                  <p className="text-gray-600 font-medium mb-4">No reports yet</p>
                   <Button
                     variant="outline"
-                    className="mt-4"
+                    className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 hover:border-blue-300 hover:shadow-lg"
                     onClick={() => navigate("/reports")}
                   >
+                    <Plus className="w-4 h-4 mr-2" />
                     Create Your First Report
                   </Button>
                 </div>

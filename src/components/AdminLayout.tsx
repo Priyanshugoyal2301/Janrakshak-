@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSupabaseAuthMinimal } from "@/contexts/SupabaseAuthContextMinimal";
 import { getRealTimeCounts } from "@/lib/adminSupabase";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import {
   Menu,
   X,
@@ -40,6 +42,8 @@ import {
   Filter,
   Calendar,
   Globe,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -154,6 +158,13 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       section: "prediction",
     },
     {
+      name: "Model Accuracy",
+      href: "/admin/flood-accuracy",
+      icon: Activity,
+      badge: null,
+      section: "prediction",
+    },
+    {
       name: "Risk Assessment",
       href: "/admin/risk-assessment",
       icon: Shield,
@@ -214,10 +225,15 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
+    <div className="min-h-screen relative">
+      <AnimatedBackground />
+      
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -546,8 +562,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
       {/* Main content */}
       <div className="lg:ml-72">
-        {/* Enhanced Top bar with gradient and better colors */}
-        <div className="bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 shadow-xl border-2 border-teal-300 rounded-xl mx-4 mt-4 px-6 py-4">
+        {/* Enhanced Admin Top bar - Purple/Indigo Theme */}
+        <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-700 shadow-2xl border-2 border-purple-400/30 rounded-xl mx-4 mt-4 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -563,7 +579,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   <Shield className="w-6 h-6 mr-2" />
                   JanRakshak Admin Portal
                 </h1>
-                <p className="text-sm text-teal-100">
+                <p className="text-sm text-purple-200">
                   Emergency Management & Disaster Response System
                 </p>
               </div>
@@ -575,15 +591,15 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   <span>Live</span>
                 </div>
-                <Badge className="bg-white/20 text-white border-white/30">
+                <Badge className="bg-purple-500/30 text-white border-purple-300/50">
                   <AlertTriangle className="w-3 h-3 mr-1" />
                   {realTimeCounts.activeAlerts} Alerts
                 </Badge>
-                <Badge className="bg-white/20 text-white border-white/30">
+                <Badge className="bg-purple-500/30 text-white border-purple-300/50">
                   <FileText className="w-3 h-3 mr-1" />
                   {realTimeCounts.pendingReports} Reports
                 </Badge>
-                <Badge className="bg-white/20 text-white border-white/30">
+                <Badge className="bg-purple-500/30 text-white border-purple-300/50">
                   <Users className="w-3 h-3 mr-1" />
                   {realTimeCounts.totalUsers} Users
                 </Badge>
@@ -593,7 +609,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-2 border-white/50 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm font-medium shadow-lg"
+                  className="border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
                   onClick={loadRealTimeCounts}
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
@@ -602,7 +618,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-2 border-white/50 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm font-medium shadow-lg"
+                  className="border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
                   onClick={() => navigate("/admin/gis-mapping")}
                 >
                   <MapPin className="w-4 h-4 mr-2" />
@@ -613,7 +629,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-2 border-white/50 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm font-medium shadow-lg"
+                      className="border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Quick Reports

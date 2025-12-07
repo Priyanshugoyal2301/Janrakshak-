@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import {
   Menu,
   X,
@@ -249,7 +250,9 @@ const VolunteerLayout = ({ children }: VolunteerLayoutProps) => {
       .toUpperCase() || "V";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative">
+      <AnimatedBackground />
+      
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -481,8 +484,8 @@ const VolunteerLayout = ({ children }: VolunteerLayoutProps) => {
 
       {/* Main content with space for floating sidebar */}
       <div className="lg:ml-72">
-        {/* Enhanced Top bar with gradient matching AdminLayout */}
-        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-800 shadow-xl border-2 border-purple-300 rounded-xl mx-4 mt-4 px-6 py-4">
+        {/* Enhanced Volunteer Top bar - Green/Emerald Theme */}
+        <div className="bg-gradient-to-r from-green-700 via-emerald-700 to-green-700 shadow-2xl border-2 border-green-400/30 rounded-xl mx-4 mt-4 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -498,7 +501,7 @@ const VolunteerLayout = ({ children }: VolunteerLayoutProps) => {
                   <HandHeart className="w-6 h-6 mr-2" />
                   JanRakshak Volunteer Portal
                 </h1>
-                <p className="text-sm text-pink-100">
+                <p className="text-sm text-green-200">
                   Emergency Response & Community Support
                 </p>
               </div>

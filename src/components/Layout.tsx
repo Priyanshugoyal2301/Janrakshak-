@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { isAdmin } from "@/lib/firebase";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import {
   Home,
   TrendingUp,
@@ -58,7 +59,9 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
+    <div className="min-h-screen relative">
+      <AnimatedBackground />
+      
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div

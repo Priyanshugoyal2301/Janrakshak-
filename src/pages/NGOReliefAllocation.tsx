@@ -21,6 +21,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import NGOLayout from "@/components/NGOLayout";
+import GradientCard from "@/components/GradientCard";
+import AnimatedCard from "@/components/AnimatedCard";
 import { supabase } from "@/lib/supabase";
 import {
   Package,
@@ -281,38 +283,39 @@ const NGOReliefAllocation: React.FC = () => {
 
   return (
     <NGOLayout>
-      <div className="p-8">
+      <div className="space-y-6 p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Relief Allocation
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Manage and track relief supply distributions
-            </p>
-          </div>
+        <AnimatedCard delay={0} className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-100">
+                Relief Allocation
+              </h1>
+              <p className="text-gray-300 mt-1">
+                Manage and track relief supply distributions
+              </p>
+            </div>
 
-          <div className="flex gap-4">
-            <Button
-              onClick={fetchReliefAllocations}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </Button>
+            <div className="flex gap-4">
+              <Button
+                onClick={fetchReliefAllocations}
+                variant="outline"
+                className="flex items-center gap-2 border-white/30 text-gray-100 hover:bg-white/10"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
 
-            <Dialog
-              open={isCreateDialogOpen}
-              onOpenChange={setIsCreateDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  New Allocation
-                </Button>
-              </DialogTrigger>
+              <Dialog
+                open={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700">
+                    <Plus className="h-4 w-4" />
+                    New Allocation
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Create New Relief Allocation</DialogTitle>
@@ -489,86 +492,87 @@ const NGOReliefAllocation: React.FC = () => {
             </Dialog>
           </div>
         </div>
+        </AnimatedCard>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <Card>
+          <GradientCard variant="info" glow>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Package className="h-8 w-8 text-blue-500" />
+                <Package className="h-8 w-8 text-blue-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium text-gray-200">
                     Total Allocations
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-gray-50">
                     {stats.total}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="warning" glow>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Clock className="h-8 w-8 text-yellow-500" />
+                <Clock className="h-8 w-8 text-yellow-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-gray-200">Pending</p>
+                  <p className="text-2xl font-bold text-gray-50">
                     {stats.pending}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="info" glow>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Truck className="h-8 w-8 text-blue-500" />
+                <Truck className="h-8 w-8 text-blue-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium text-gray-200">
                     In Transit
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-gray-50">
                     {stats.inTransit}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="success" glow>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-green-500" />
+                <CheckCircle className="h-8 w-8 text-green-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Delivered</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-gray-200">Delivered</p>
+                  <p className="text-2xl font-bold text-gray-50">
                     {stats.delivered}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="danger" glow>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <AlertTriangle className="h-8 w-8 text-red-500" />
+                <AlertTriangle className="h-8 w-8 text-red-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Urgent</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-gray-200">Urgent</p>
+                  <p className="text-2xl font-bold text-gray-50">
                     {stats.urgent}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
+        <AnimatedCard delay={0.1} className="p-6 mb-6">
           <CardContent className="p-6">
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2">
@@ -608,32 +612,32 @@ const NGOReliefAllocation: React.FC = () => {
               </Select>
             </div>
           </CardContent>
-        </Card>
+        </AnimatedCard>
 
         {/* Relief Allocations List */}
         {filteredReliefItems.length === 0 ? (
-          <Card>
+          <GradientCard variant="default" className="p-12 text-center">
             <CardContent className="p-12 text-center">
-              <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-100 mb-2">
                 No relief allocations found
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-300 mb-6">
                 {reliefItems.length === 0
                   ? "Create your first relief allocation to get started."
                   : "Try adjusting your search or filter criteria."}
               </p>
             </CardContent>
-          </Card>
+          </GradientCard>
         ) : (
           <div className="space-y-4">
-            {filteredReliefItems.map((item) => (
-              <Card key={item.id} className="hover:shadow-md transition-shadow">
+            {filteredReliefItems.map((item, index) => (
+              <AnimatedCard key={item.id} delay={0.2 + index * 0.05} className="p-6">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-100">
                           {item.quantity} {item.unit} of {item.type}
                         </h3>
                         <Badge className={getPriorityColor(item.priority)}>
@@ -645,13 +649,13 @@ const NGOReliefAllocation: React.FC = () => {
                               item.status
                             )}`}
                           />
-                          <span className="text-sm text-gray-600 capitalize">
+                          <span className="text-sm text-gray-300 capitalize">
                             {item.status.replace("_", " ")}
                           </span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-300">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4" />
                           <span>{item.destination}</span>
@@ -670,14 +674,14 @@ const NGOReliefAllocation: React.FC = () => {
                               : "No date set"}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-400">
                           Created:{" "}
                           {new Date(item.created_at).toLocaleDateString()}
                         </div>
                       </div>
 
                       {item.notes && (
-                        <p className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded">
+                        <p className="text-sm text-gray-300 mt-2 bg-white/10 p-2 rounded">
                           {item.notes}
                         </p>
                       )}
@@ -726,7 +730,7 @@ const NGOReliefAllocation: React.FC = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </AnimatedCard>
             ))}
           </div>
         )}

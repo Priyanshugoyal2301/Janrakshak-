@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -19,6 +20,8 @@ import {
   Clock,
   RefreshCw,
   X,
+  Shield,
+  Zap,
 } from "lucide-react";
 
 const Alerts = () => {
@@ -133,80 +136,105 @@ const Alerts = () => {
     return (
       <UserLayout title="Alerts" description="Early warning and communications">
         <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-teal-600 to-blue-800 bg-clip-text text-transparent">
-          Early Warning & Communications
-        </h1>
-        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-          Real-time alert system with multi-channel communication and emergency
-          response coordination
-        </p>
-      </div>
+          {/* Animated Header */}
+          <motion.div 
+            className="text-center space-y-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <h1 className="text-5xl font-black bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 bg-clip-text text-transparent">
+                Early Warning & Communications
+              </h1>
+            </motion.div>
+            <motion.p 
+              className="text-lg text-gray-700 max-w-2xl mx-auto font-medium"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              Real-time alert system with multi-channel communication and emergency
+              response coordination
+            </motion.p>
+          </motion.div>
 
-      {/* Alert Controls */}
-      <div className="flex justify-center">
-        <GradientCard className="p-6 max-w-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-slate-900">
-              Alert Settings
-            </h3>
-            <div className="flex items-center space-x-2">
-              <Volume2 className={`w-5 h-5 ${soundEnabled ? 'text-green-600' : 'text-gray-400'}`} />
-              {soundEnabled ? (
-                <span className="text-xs text-green-600 font-medium">ON</span>
-              ) : (
-                <span className="text-xs text-gray-500 font-medium">OFF</span>
-              )}
-            </div>
-          </div>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center space-x-3">
-                <div className={`w-3 h-3 rounded-full ${soundEnabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                <span className="text-sm font-medium text-slate-700">Sound Alerts</span>
+          {/* Alert Controls */}
+          <motion.div 
+            className="flex justify-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <GradientCard variant="warning" glow className="p-6 max-w-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <Shield className="w-5 h-5 mr-2 text-orange-600" />
+                  Alert Settings
+                </h3>
+                <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
+                  Live
+                </Badge>
               </div>
-              <Switch
-                checked={soundEnabled}
-                onCheckedChange={(enabled) => {
-                  setSoundEnabled(enabled);
-                  if (enabled) {
-                    enableAudioContext();
-                  }
-                }}
-                className="data-[state=checked]:bg-green-600"
-              />
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center space-x-3">
-                <div className={`w-3 h-3 rounded-full ${autoTranslate ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                <span className="text-sm font-medium text-slate-700">Auto-Translate</span>
+              <div className="space-y-6">
+                <motion.div 
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 shadow-sm"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full shadow-md ${soundEnabled ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-sm font-semibold text-gray-700">Sound Alerts</span>
+                  </div>
+                  <Switch
+                    checked={soundEnabled}
+                    onCheckedChange={(enabled) => {
+                      setSoundEnabled(enabled);
+                      if (enabled) {
+                        enableAudioContext();
+                      }
+                    }}
+                    className="data-[state=checked]:bg-green-600"
+                  />
+                </motion.div>
+                <motion.div 
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 shadow-sm"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full shadow-md ${autoTranslate ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-sm font-semibold text-gray-700">Auto-Translate</span>
+                  </div>
+                  <Switch
+                    checked={autoTranslate}
+                    onCheckedChange={setAutoTranslate}
+                    className="data-[state=checked]:bg-blue-600"
+                  />
+                </motion.div>
               </div>
-              <Switch
-                checked={autoTranslate}
-                onCheckedChange={setAutoTranslate}
-                className="data-[state=checked]:bg-blue-600"
-              />
-            </div>
-          </div>
-        </GradientCard>
-      </div>
+            </GradientCard>
+          </motion.div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Alert Feed */}
-        <div className="lg:col-span-2" id="alerts-section">
-          <GradientCard className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-900">
-                  {userLocality ? `${userLocality} Alerts` : 'All Alerts'}
-                </h2>
-                {userLocality && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    Showing alerts for your area
-                  </p>
-                )}
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Alert Feed */}
+            <div className="lg:col-span-2" id="alerts-section">
+              <GradientCard variant="danger" glow className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+                      {userLocality ? `${userLocality} Alerts` : 'All Alerts'}
+                    </h2>
+                    {userLocality && (
+                      <p className="text-sm text-gray-600 mt-1 font-medium">
+                        Showing alerts for your area
+                      </p>
+                    )}
               </div>
               <div className="flex items-center space-x-3">
                 {userLocality && (

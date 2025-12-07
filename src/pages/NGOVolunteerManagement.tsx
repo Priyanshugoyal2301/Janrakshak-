@@ -21,6 +21,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import NGOLayout from "@/components/NGOLayout";
+import GradientCard from "@/components/GradientCard";
+import AnimatedCard from "@/components/AnimatedCard";
 import { supabase } from "@/lib/supabase";
 import {
   Users,
@@ -381,38 +383,39 @@ const NGOVolunteerManagement: React.FC = () => {
 
   return (
     <NGOLayout>
-      <div className="p-8">
+      <div className="space-y-6 p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Volunteer Management
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Manage volunteer registrations and assignments
-            </p>
-          </div>
+        <AnimatedCard delay={0} className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-100">
+                Volunteer Management
+              </h1>
+              <p className="text-gray-300 mt-1">
+                Manage volunteer registrations and assignments
+              </p>
+            </div>
 
-          <div className="flex gap-4">
-            <Button
-              onClick={fetchVolunteers}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </Button>
+            <div className="flex gap-4">
+              <Button
+                onClick={fetchVolunteers}
+                variant="outline"
+                className="flex items-center gap-2 border-white/30 text-gray-100 hover:bg-white/10"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
 
-            <Dialog
-              open={isCreateDialogOpen}
-              onOpenChange={setIsCreateDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Add Volunteer
-                </Button>
-              </DialogTrigger>
+              <Dialog
+                open={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700">
+                    <UserPlus className="h-4 w-4" />
+                    Add Volunteer
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add New Volunteer</DialogTitle>
@@ -648,100 +651,101 @@ const NGOVolunteerManagement: React.FC = () => {
             </Dialog>
           </div>
         </div>
+        </AnimatedCard>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
-          <Card>
+          <GradientCard variant="info" glow>
             <CardContent className="p-4">
               <div className="flex items-center">
-                <Users className="h-6 w-6 text-blue-500" />
+                <Users className="h-6 w-6 text-blue-400" />
                 <div className="ml-3">
-                  <p className="text-xs font-medium text-gray-600">Total</p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-xs font-medium text-gray-200">Total</p>
+                  <p className="text-xl font-bold text-gray-50">
                     {stats.total}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="success" glow>
             <CardContent className="p-4">
               <div className="flex items-center">
-                <CheckCircle className="h-6 w-6 text-green-500" />
+                <CheckCircle className="h-6 w-6 text-green-400" />
                 <div className="ml-3">
-                  <p className="text-xs font-medium text-gray-600">Active</p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-xs font-medium text-gray-200">Active</p>
+                  <p className="text-xl font-bold text-gray-50">
                     {stats.active}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="success" glow>
             <CardContent className="p-4">
               <div className="flex items-center">
-                <Activity className="h-6 w-6 text-green-500" />
+                <Activity className="h-6 w-6 text-green-400" />
                 <div className="ml-3">
-                  <p className="text-xs font-medium text-gray-600">Available</p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-xs font-medium text-gray-200">Available</p>
+                  <p className="text-xl font-bold text-gray-50">
                     {stats.available}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="warning" glow>
             <CardContent className="p-4">
               <div className="flex items-center">
-                <Clock className="h-6 w-6 text-yellow-500" />
+                <Clock className="h-6 w-6 text-yellow-400" />
                 <div className="ml-3">
-                  <p className="text-xs font-medium text-gray-600">Busy</p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-xs font-medium text-gray-200">Busy</p>
+                  <p className="text-xl font-bold text-gray-50">
                     {stats.busy}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="warning" glow>
             <CardContent className="p-4">
               <div className="flex items-center">
-                <Award className="h-6 w-6 text-orange-500" />
+                <Award className="h-6 w-6 text-orange-400" />
                 <div className="ml-3">
-                  <p className="text-xs font-medium text-gray-600">
+                  <p className="text-xs font-medium text-gray-200">
                     Experienced
                   </p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-xl font-bold text-gray-50">
                     {stats.experienced}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
 
-          <Card>
+          <GradientCard variant="purple" glow>
             <CardContent className="p-4">
               <div className="flex items-center">
-                <Star className="h-6 w-6 text-purple-500" />
+                <Star className="h-6 w-6 text-purple-400" />
                 <div className="ml-3">
-                  <p className="text-xs font-medium text-gray-600">
+                  <p className="text-xs font-medium text-gray-200">
                     High Rated
                   </p>
-                  <p className="text-xl font-bold text-gray-900">
+                  <p className="text-xl font-bold text-gray-50">
                     {stats.highRated}
                   </p>
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </GradientCard>
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
+        <AnimatedCard delay={0.1} className="p-6 mb-6">
           <CardContent className="p-6">
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2">
@@ -798,29 +802,30 @@ const NGOVolunteerManagement: React.FC = () => {
               </Select>
             </div>
           </CardContent>
-        </Card>
+        </AnimatedCard>
 
         {/* Volunteers List */}
         {filteredVolunteers.length === 0 ? (
-          <Card>
+          <GradientCard variant="default" className="p-12 text-center">
             <CardContent className="p-12 text-center">
-              <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-100 mb-2">
                 No volunteers found
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-300 mb-6">
                 {volunteers.length === 0
                   ? "Add your first volunteer to get started."
                   : "Try adjusting your search or filter criteria."}
               </p>
             </CardContent>
-          </Card>
+          </GradientCard>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredVolunteers.map((volunteer) => (
-              <Card
+            {filteredVolunteers.map((volunteer, index) => (
+              <AnimatedCard
                 key={volunteer.id}
-                className="hover:shadow-md transition-shadow"
+                delay={0.2 + index * 0.05}
+                className="p-6"
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -835,14 +840,14 @@ const NGOVolunteerManagement: React.FC = () => {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-semibold text-lg text-gray-900">
+                        <h3 className="font-semibold text-lg text-gray-100">
                           {volunteer.name}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-300">
                           {volunteer.email}
                         </p>
                         {volunteer.phone && (
-                          <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <p className="text-sm text-gray-300 flex items-center gap-1">
                             <Phone className="h-3 w-3" />
                             {volunteer.phone}
                           </p>
@@ -865,7 +870,7 @@ const NGOVolunteerManagement: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       {getExperienceIcon(volunteer.experience_level)}
-                      <span className="text-sm text-gray-700 capitalize">
+                      <span className="text-sm text-gray-300 capitalize">
                         {volunteer.experience_level} level
                       </span>
                       <div className="flex items-center gap-1 ml-auto">
@@ -992,7 +997,7 @@ const NGOVolunteerManagement: React.FC = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </AnimatedCard>
             ))}
           </div>
         )}

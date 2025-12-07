@@ -99,3 +99,253 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Beautiful Gradient Backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600;
+  }
+  
+  .gradient-secondary {
+    @apply bg-gradient-to-r from-purple-600 via-pink-600 to-red-600;
+  }
+  
+  .gradient-success {
+    @apply bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500;
+  }
+  
+  .gradient-warning {
+    @apply bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500;
+  }
+  
+  .gradient-info {
+    @apply bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500;
+  }
+  
+  .gradient-danger {
+    @apply bg-gradient-to-r from-red-500 via-rose-500 to-pink-500;
+  }
+
+  /* Glass Morphism Effects */
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl border border-white/20;
+  }
+  
+  .glass-dark {
+    @apply bg-gray-900/80 backdrop-blur-xl border border-gray-800/20;
+  }
+
+  /* Beautiful Shadows */
+  .shadow-glow-blue {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), 0 0 60px rgba(59, 130, 246, 0.1);
+  }
+  
+  .shadow-glow-green {
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.3), 0 0 60px rgba(34, 197, 94, 0.1);
+  }
+  
+  .shadow-glow-purple {
+    box-shadow: 0 0 30px rgba(147, 51, 234, 0.3), 0 0 60px rgba(147, 51, 234, 0.1);
+  }
+  
+  .shadow-glow-orange {
+    box-shadow: 0 0 30px rgba(249, 115, 22, 0.3), 0 0 60px rgba(249, 115, 22, 0.1);
+  }
+
+  .shadow-3xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Animated Gradients */
+  .animated-gradient {
+    background: linear-gradient(270deg, #3b82f6, #06b6d4, #14b8a6);
+    background-size: 600% 600%;
+    animation: gradientShift 8s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Status Color Classes */
+  .status-critical {
+    @apply bg-gradient-to-r from-red-100 to-rose-100 border-red-300 text-red-800;
+  }
+  
+  .status-high {
+    @apply bg-gradient-to-r from-orange-100 to-amber-100 border-orange-300 text-orange-800;
+  }
+  
+  .status-medium {
+    @apply bg-gradient-to-r from-yellow-100 to-amber-100 border-yellow-300 text-yellow-800;
+  }
+  
+  .status-low {
+    @apply bg-gradient-to-r from-green-100 to-emerald-100 border-green-300 text-green-800;
+  }
+  
+  .status-verified {
+    @apply bg-gradient-to-r from-emerald-100 to-teal-100 border-emerald-300 text-emerald-800;
+  }
+  
+  .status-pending {
+    @apply bg-gradient-to-r from-amber-100 to-yellow-100 border-amber-300 text-amber-800;
+  }
+  
+  .status-rejected {
+    @apply bg-gradient-to-r from-rose-100 to-red-100 border-rose-300 text-rose-800;
+  }
+
+  /* Card Enhancements */
+  .card-gradient-blue {
+    @apply bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 border border-blue-200 shadow-lg;
+  }
+  
+  .card-gradient-purple {
+    @apply bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 border border-purple-200 shadow-lg;
+  }
+  
+  .card-gradient-green {
+    @apply bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border border-green-200 shadow-lg;
+  }
+
+  /* Hover Effects */
+  .hover-lift {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-2 shadow-2xl;
+  }
+
+  /* Text Gradients */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-secondary {
+    @apply bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-success {
+    @apply bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent;
+  }
+  
+  /* Enhanced Button Animations */
+  .btn-hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+  }
+  
+  .btn-hover-glow {
+    @apply transition-all duration-300 hover:shadow-2xl hover:brightness-110;
+  }
+  
+  /* Pulse Animation for Live Indicators */
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 20px currentColor;
+    }
+    50% {
+      opacity: 0.7;
+      box-shadow: 0 0 30px currentColor;
+    }
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  /* Shimmer Animation */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 3s infinite;
+  }
+  
+  /* Floating Animation */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  /* Gradient Border Animation */
+  @keyframes gradient-border {
+    0%, 100% {
+      border-color: rgb(59, 130, 246);
+    }
+    25% {
+      border-color: rgb(168, 85, 247);
+    }
+    50% {
+      border-color: rgb(236, 72, 153);
+    }
+    75% {
+      border-color: rgb(14, 165, 233);
+    }
+  }
+  
+  .animate-gradient-border {
+    animation: gradient-border 4s ease-in-out infinite;
+  }
+  
+  /* Glass Effect with Enhanced Backdrop */
+  .glass-enhanced {
+    @apply bg-white/70 backdrop-blur-2xl border border-white/60 shadow-2xl;
+  }
+  
+  /* Card Hover Effects */
+  .card-interactive {
+    @apply transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl cursor-pointer;
+  }
+  
+  /* Text Shine Effect */
+  @keyframes text-shine {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
+  }
+  
+  .text-shine {
+    background: linear-gradient(
+      90deg,
+      #3b82f6 0%,
+      #8b5cf6 25%,
+      #ec4899 50%,
+      #8b5cf6 75%,
+      #3b82f6 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: text-shine 3s linear infinite;
+  }
+}

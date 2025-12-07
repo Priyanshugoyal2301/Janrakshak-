@@ -258,21 +258,23 @@ const AdminDashboardContent = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen">
       {/* Real-time Status Bar */}
-      <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-teal-200 rounded-lg p-4">
+      <div className="flex items-center justify-between bg-gradient-to-r from-white to-teal-50 backdrop-blur-lg border-2 border-teal-300 rounded-2xl p-4 shadow-xl">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <div
-              className={`w-3 h-3 rounded-full ${
-                isLive ? "bg-green-500 animate-pulse" : "bg-gray-400"
+              className={`w-4 h-4 rounded-full ${
+                isLive
+                  ? "bg-green-500 animate-pulse shadow-lg shadow-green-300"
+                  : "bg-gray-400"
               }`}
             ></div>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-bold text-gray-800">
               {isLive ? "Live Updates" : "Paused"}
             </span>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-600 font-semibold bg-gray-100 px-3 py-1 rounded-full">
             Last updated: {lastUpdate.toLocaleTimeString()}
           </div>
         </div>
@@ -281,7 +283,7 @@ const AdminDashboardContent = () => {
             variant="outline"
             size="sm"
             onClick={refreshData}
-            className="text-teal-600 border-teal-300 hover:bg-teal-50"
+            className="text-teal-700 border-teal-400 hover:bg-teal-100 font-bold shadow-md hover:shadow-lg transition-all duration-300"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
@@ -290,9 +292,13 @@ const AdminDashboardContent = () => {
             variant={isLive ? "default" : "outline"}
             size="sm"
             onClick={() => setIsLive(!isLive)}
-            className={isLive ? "bg-green-600 hover:bg-green-700" : ""}
+            className={
+              isLive
+                ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg"
+                : "border-gray-400 font-bold"
+            }
           >
-            {isLive ? "Live" : "Paused"}
+            {isLive ? "Live" : "Start"}
           </Button>
         </div>
       </div>
@@ -309,109 +315,109 @@ const AdminDashboardContent = () => {
         )}
         {!loading && (
           <>
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <Card className="bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-100 border-3 border-blue-300 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-700">
+                <CardTitle className="text-sm font-bold text-blue-800 uppercase tracking-wide">
                   Total Users
                 </CardTitle>
-                <Users className="h-4 w-4 text-blue-600" />
+                <Users className="h-6 w-6 text-blue-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                   {dashboardData.totalUsers.toLocaleString()}
                 </div>
-                <p className="text-xs text-blue-600 flex items-center">
-                  <ArrowUpRight className="w-3 h-3 mr-1" />
+                <p className="text-xs text-blue-700 flex items-center font-semibold mt-1">
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
                   +12% from last month
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <Card className="bg-gradient-to-br from-green-100 via-green-50 to-emerald-100 border-3 border-green-300 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-700">
+                <CardTitle className="text-sm font-bold text-green-800 uppercase tracking-wide">
                   Active Volunteers
                 </CardTitle>
-                <UserCheck className="h-4 w-4 text-green-600" />
+                <UserCheck className="h-6 w-6 text-green-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   {dashboardData.activeUsers.toLocaleString()}
                 </div>
-                <p className="text-xs text-green-600 flex items-center">
-                  <ArrowUpRight className="w-3 h-3 mr-1" />
+                <p className="text-xs text-green-700 flex items-center font-semibold mt-1">
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
                   +8% from last month
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+            <Card className="bg-gradient-to-br from-yellow-100 via-yellow-50 to-amber-100 border-3 border-yellow-300 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-yellow-700">
+                <CardTitle className="text-sm font-bold text-yellow-800 uppercase tracking-wide">
                   Pending Reports
                 </CardTitle>
-                <FileText className="h-4 w-4 text-yellow-600" />
+                <FileText className="h-6 w-6 text-yellow-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-yellow-600 to-amber-600 bg-clip-text text-transparent">
                   {dashboardData.pendingReports}
                 </div>
-                <p className="text-xs text-yellow-600 flex items-center">
-                  <ArrowDownRight className="w-3 h-3 mr-1" />
+                <p className="text-xs text-yellow-700 flex items-center font-semibold mt-1">
+                  <ArrowDownRight className="w-4 h-4 mr-1" />
                   -15% from yesterday
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+            <Card className="bg-gradient-to-br from-red-100 via-red-50 to-rose-100 border-3 border-red-300 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 animate-pulse">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-red-700">
+                <CardTitle className="text-sm font-bold text-red-800 uppercase tracking-wide">
                   Critical Alerts
                 </CardTitle>
-                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertTriangle className="h-6 w-6 text-red-600 animate-bounce" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
                   {dashboardData.criticalReports}
                 </div>
-                <p className="text-xs text-red-600 flex items-center">
-                  <ArrowUpRight className="w-3 h-3 mr-1" />
+                <p className="text-xs text-red-700 flex items-center font-semibold mt-1">
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
                   +3 from last hour
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <Card className="bg-gradient-to-br from-purple-100 via-purple-50 to-violet-100 border-3 border-purple-300 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-purple-700">
+                <CardTitle className="text-sm font-bold text-purple-800 uppercase tracking-wide">
                   Active Shelters
                 </CardTitle>
-                <Home className="h-4 w-4 text-purple-600" />
+                <Home className="h-6 w-6 text-purple-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
                   {dashboardData.activeShelters}
                 </div>
-                <p className="text-xs text-purple-600 flex items-center">
-                  <ArrowUpRight className="w-3 h-3 mr-1" />
+                <p className="text-xs text-purple-700 flex items-center font-semibold mt-1">
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
                   +2 from yesterday
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200">
+            <Card className="bg-gradient-to-br from-teal-100 via-teal-50 to-cyan-100 border-3 border-teal-300 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-teal-700">
+                <CardTitle className="text-sm font-bold text-teal-800 uppercase tracking-wide">
                   Ongoing Missions
                 </CardTitle>
-                <Target className="h-4 w-4 text-teal-600" />
+                <Target className="h-6 w-6 text-teal-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-teal-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                   {dashboardData.pendingMissions}
                 </div>
-                <p className="text-xs text-teal-600 flex items-center">
-                  <ArrowUpRight className="w-3 h-3 mr-1" />
+                <p className="text-xs text-teal-700 flex items-center font-semibold mt-1">
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
                   +5 from this morning
                 </p>
               </CardContent>
@@ -424,91 +430,91 @@ const AdminDashboardContent = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         {!loading && (
           <>
-            <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200">
+            <Card className="bg-gradient-to-br from-indigo-100 to-indigo-200 border-3 border-indigo-400 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-indigo-700">
+                <CardTitle className="text-sm font-bold text-indigo-800 uppercase tracking-wide">
                   System Health
                 </CardTitle>
-                <Activity className="h-4 w-4 text-indigo-600" />
+                <Activity className="h-6 w-6 text-indigo-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-indigo-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   {dashboardData.systemUptime}%
                 </div>
-                <p className="text-xs text-indigo-600 flex items-center">
-                  <CheckCircle className="w-3 h-3 mr-1" />
+                <p className="text-xs text-indigo-700 flex items-center font-semibold">
+                  <CheckCircle className="w-4 h-4 mr-1" />
                   All systems operational
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+            <Card className="bg-gradient-to-br from-orange-100 to-orange-200 border-3 border-orange-400 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-orange-700">
+                <CardTitle className="text-sm font-bold text-orange-800 uppercase tracking-wide">
                   Response Time
                 </CardTitle>
-                <Clock className="h-4 w-4 text-orange-600" />
+                <Clock className="h-6 w-6 text-orange-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                   {dashboardData.avgResponseTime.toFixed(1)} min
                 </div>
-                <p className="text-xs text-orange-600 flex items-center">
-                  <ArrowDownRight className="w-3 h-3 mr-1" />
+                <p className="text-xs text-orange-700 flex items-center font-semibold">
+                  <ArrowDownRight className="w-4 h-4 mr-1" />
                   -30s from target
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-pink-50 to-pink-100 border-pink-200">
+            <Card className="bg-gradient-to-br from-pink-100 to-pink-200 border-3 border-pink-400 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-pink-700">
-                  Training Completed
+                <CardTitle className="text-sm font-bold text-pink-800 uppercase tracking-wide">
+                  Training Done
                 </CardTitle>
-                <BookOpen className="h-4 w-4 text-pink-600" />
+                <BookOpen className="h-6 w-6 text-pink-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-pink-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
                   {Math.floor(dashboardData.totalUsers * 0.6)}
                 </div>
-                <p className="text-xs text-pink-600 flex items-center">
-                  <ArrowUpRight className="w-3 h-3 mr-1" />
+                <p className="text-xs text-pink-700 flex items-center font-semibold">
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
                   +125 this week
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200">
+            <Card className="bg-gradient-to-br from-cyan-100 to-cyan-200 border-3 border-cyan-400 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-cyan-700">
+                <CardTitle className="text-sm font-bold text-cyan-800 uppercase tracking-wide">
                   Equipment Status
                 </CardTitle>
-                <Shield className="h-4 w-4 text-cyan-600" />
+                <Shield className="h-6 w-6 text-cyan-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-cyan-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
                   {dashboardData.shelterCapacity}%
                 </div>
-                <p className="text-xs text-cyan-600 flex items-center">
-                  <CheckCircle className="w-3 h-3 mr-1" />
+                <p className="text-xs text-cyan-700 flex items-center font-semibold">
+                  <CheckCircle className="w-4 h-4 mr-1" />
                   Ready for deployment
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+            <Card className="bg-gradient-to-br from-emerald-100 to-emerald-200 border-3 border-emerald-400 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-emerald-700">
+                <CardTitle className="text-sm font-bold text-emerald-800 uppercase tracking-wide">
                   Deployed Teams
                 </CardTitle>
-                <Users className="h-4 w-4 text-emerald-600" />
+                <Users className="h-6 w-6 text-emerald-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-emerald-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
                   {Math.floor(dashboardData.activeUsers * 0.3)}
                 </div>
-                <p className="text-xs text-emerald-600 flex items-center">
-                  <MapPin className="w-3 h-3 mr-1" />
+                <p className="text-xs text-emerald-700 flex items-center font-semibold">
+                  <MapPin className="w-4 h-4 mr-1" />
                   Active across {Math.ceil(
                     dashboardData.activeShelters / 3
                   )}{" "}
@@ -517,19 +523,19 @@ const AdminDashboardContent = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-violet-50 to-violet-100 border-violet-200">
+            <Card className="bg-gradient-to-br from-violet-100 to-violet-200 border-3 border-violet-400 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-violet-700">
+                <CardTitle className="text-sm font-bold text-violet-800 uppercase tracking-wide">
                   Weather Alerts
                 </CardTitle>
-                <Droplets className="h-4 w-4 text-violet-600" />
+                <Droplets className="h-6 w-6 text-violet-600 animate-pulse" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-violet-800">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
                   {dashboardData.activeAlerts}
                 </div>
-                <p className="text-xs text-violet-600 flex items-center">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
+                <p className="text-xs text-violet-700 flex items-center font-semibold">
+                  <AlertTriangle className="w-4 h-4 mr-1" />
                   {dashboardData.criticalReports} severe warnings
                 </p>
               </CardContent>
@@ -539,13 +545,13 @@ const AdminDashboardContent = () => {
       </div>
 
       {/* Quick Actions Panel */}
-      <Card className="bg-gradient-to-r from-teal-50 to-blue-50 border-teal-200">
+      <Card className="bg-gradient-to-r from-teal-100 via-blue-100 to-purple-100 border-3 border-teal-400 shadow-2xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-teal-600" />
+          <CardTitle className="flex items-center gap-2 text-2xl font-bold bg-gradient-to-r from-teal-700 to-purple-700 bg-clip-text text-transparent">
+            <Zap className="w-7 h-7 text-yellow-500 animate-bounce" />
             Quick Actions
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-700 font-semibold">
             Frequently used administrative functions
           </CardDescription>
         </CardHeader>
@@ -553,51 +559,63 @@ const AdminDashboardContent = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <Button
               variant="outline"
-              className="flex flex-col items-center gap-2 h-auto py-4 hover:bg-blue-50"
+              className="flex flex-col items-center gap-2 h-auto py-4 bg-gradient-to-br from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 border-2 border-red-300 hover:border-red-400 transition-all duration-300 hover:scale-110 shadow-lg"
               onClick={() => navigate("/admin/emergency-alerts")}
             >
               <AlertTriangle className="w-6 h-6 text-red-500" />
-              <span className="text-xs">Emergency Alert</span>
+              <span className="text-xs font-bold text-red-700">
+                Emergency Alert
+              </span>
             </Button>
             <Button
               variant="outline"
-              className="flex flex-col items-center gap-2 h-auto py-4 hover:bg-green-50"
+              className="flex flex-col items-center gap-2 h-auto py-4 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border-2 border-green-300 hover:border-green-400 transition-all duration-300 hover:scale-110 shadow-lg"
               onClick={() => navigate("/admin/volunteers")}
             >
               <Users className="w-6 h-6 text-green-500" />
-              <span className="text-xs">Deploy Teams</span>
+              <span className="text-xs font-bold text-green-700">
+                Deploy Teams
+              </span>
             </Button>
             <Button
               variant="outline"
-              className="flex flex-col items-center gap-2 h-auto py-4 hover:bg-purple-50"
+              className="flex flex-col items-center gap-2 h-auto py-4 bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border-2 border-purple-300 hover:border-purple-400 transition-all duration-300 hover:scale-110 shadow-lg"
               onClick={() => navigate("/admin/gis-mapping")}
             >
               <MapPin className="w-6 h-6 text-purple-500" />
-              <span className="text-xs">GIS Mapping</span>
+              <span className="text-xs font-bold text-purple-700">
+                GIS Mapping
+              </span>
             </Button>
             <Button
               variant="outline"
-              className="flex flex-col items-center gap-2 h-auto py-4 hover:bg-yellow-50"
+              className="flex flex-col items-center gap-2 h-auto py-4 bg-gradient-to-br from-yellow-50 to-yellow-100 hover:from-yellow-100 hover:to-yellow-200 border-2 border-yellow-300 hover:border-yellow-400 transition-all duration-300 hover:scale-110 shadow-lg"
               onClick={() => navigate("/admin/reports")}
             >
               <FileText className="w-6 h-6 text-yellow-500" />
-              <span className="text-xs">Generate Report</span>
+              <span className="text-xs font-bold text-yellow-700">
+                Generate Report
+              </span>
             </Button>
             <Button
               variant="outline"
-              className="flex flex-col items-center gap-2 h-auto py-4 hover:bg-indigo-50"
+              className="flex flex-col items-center gap-2 h-auto py-4 bg-gradient-to-br from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 border-2 border-indigo-300 hover:border-indigo-400 transition-all duration-300 hover:scale-110 shadow-lg"
               onClick={() => navigate("/admin/training")}
             >
               <BookOpen className="w-6 h-6 text-indigo-500" />
-              <span className="text-xs">Training Hub</span>
+              <span className="text-xs font-bold text-indigo-700">
+                Training Hub
+              </span>
             </Button>
             <Button
               variant="outline"
-              className="flex flex-col items-center gap-2 h-auto py-4 hover:bg-cyan-50"
+              className="flex flex-col items-center gap-2 h-auto py-4 bg-gradient-to-br from-cyan-50 to-cyan-100 hover:from-cyan-100 hover:to-cyan-200 border-2 border-cyan-300 hover:border-cyan-400 transition-all duration-300 hover:scale-110 shadow-lg"
               onClick={() => navigate("/admin/system")}
             >
               <Settings className="w-6 h-6 text-cyan-500" />
-              <span className="text-xs">System Health</span>
+              <span className="text-xs font-bold text-cyan-700">
+                System Health
+              </span>
             </Button>
           </div>
         </CardContent>
@@ -605,18 +623,18 @@ const AdminDashboardContent = () => {
 
       {/* Real-time Activities Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="col-span-full">
-          <CardHeader>
+        <Card className="col-span-full bg-gradient-to-br from-white to-blue-50 border-2 border-blue-300 shadow-2xl">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 rounded-t-lg">
             <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
+              <span className="flex items-center gap-2 text-xl font-bold text-gray-900">
+                <Activity className="w-6 h-6 text-teal-600 animate-pulse" />
                 Live Activity Feed
               </span>
               <Badge
                 variant="secondary"
-                className="bg-green-100 text-green-700"
+                className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1 shadow-lg"
               >
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
                 Live
               </Badge>
             </CardTitle>

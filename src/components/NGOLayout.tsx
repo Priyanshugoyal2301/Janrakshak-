@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
 import { supabase } from "@/lib/supabase";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import {
   Menu,
   X,
@@ -142,7 +143,9 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
+    <div className="min-h-screen relative">
+      <AnimatedBackground />
+      
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -185,10 +188,14 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
                   className={`w-full justify-start text-teal-700 ${
                     isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
                   }`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     navigate(item.href);
                     setSidebarOpen(false);
                   }}
+                  asChild={false}
+                  type="button"
                 >
                   <item.icon className="w-4 h-4 mr-3" />
                   {item.name}
@@ -217,8 +224,8 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
 
       {/* Main content */}
       <div className="lg:ml-72">
-        {/* NGO Header Bar */}
-        <div className="bg-gradient-to-r from-purple-600 to-violet-700 text-white shadow-lg mx-4 mt-4 px-6 py-4 rounded-xl">
+        {/* NGO Header Bar - Pink/Rose Theme */}
+        <div className="bg-gradient-to-r from-pink-700 via-rose-700 to-pink-700 text-white shadow-2xl border-2 border-pink-400/30 mx-4 mt-4 px-6 py-4 rounded-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -234,7 +241,7 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
                   <h1 className="text-2xl font-bold">NGO Command Center</h1>
                   <Badge
                     variant="outline"
-                    className="text-xs bg-white/20 border-white/30 text-white"
+                    className="text-xs bg-pink-500/30 border-pink-300/50 text-white"
                   >
                     <Heart className="w-3 h-3 mr-1" />
                     NGO OPERATIONS

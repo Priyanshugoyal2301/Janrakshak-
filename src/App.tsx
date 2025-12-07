@@ -21,6 +21,7 @@ import AdminRoutes from "./pages/AdminRoutes";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSystem from "./pages/AdminSystem";
 import AdminFloodPrediction from "./pages/AdminFloodPrediction";
+import AdminFloodAccuracy from "./pages/AdminFloodAccuracy";
 import AdminRiskAssessment from "./pages/AdminRiskAssessment";
 import AdminTraining from "./pages/AdminTraining";
 import AdminResilienceIndex from "./pages/AdminResilienceIndex";
@@ -192,6 +193,16 @@ const App = () => (
                   <SupabaseAuthProviderMinimal>
                     <AdminProtectedRoute>
                       <AdminFloodPrediction />
+                    </AdminProtectedRoute>
+                  </SupabaseAuthProviderMinimal>
+                }
+              />
+              <Route
+                path="/admin/flood-accuracy"
+                element={
+                  <SupabaseAuthProviderMinimal>
+                    <AdminProtectedRoute>
+                      <AdminFloodAccuracy />
                     </AdminProtectedRoute>
                   </SupabaseAuthProviderMinimal>
                 }
