@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import {
   Menu,
   X,
@@ -28,6 +30,7 @@ import {
   Shield,
   GraduationCap,
   BookOpen,
+  Sparkles,
 } from "lucide-react";
 
 interface UserLayoutProps {
@@ -54,42 +57,42 @@ const UserLayout = ({
       case "CITIZEN":
       case "USER":
         return {
-          headerBg: "bg-gradient-to-r from-blue-500 to-indigo-600",
+          headerBg: "bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-600 shadow-2xl border-2 border-blue-400/30",
           headerText: "text-white",
           roleLabel: "CITIZEN",
           roleIcon: "Users",
         };
       case "VOLUNTEER":
         return {
-          headerBg: "bg-gradient-to-r from-green-500 to-teal-600",
+          headerBg: "bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 shadow-2xl border-2 border-green-400/30",
           headerText: "text-white",
           roleLabel: "VOLUNTEER",
           roleIcon: "Heart",
         };
       case "NGO":
         return {
-          headerBg: "bg-gradient-to-r from-purple-500 to-pink-600",
+          headerBg: "bg-gradient-to-r from-pink-600 via-rose-600 to-pink-600 shadow-2xl border-2 border-pink-400/30",
           headerText: "text-white",
           roleLabel: "NGO PARTNER",
           roleIcon: "Heart",
         };
       case "DMA":
         return {
-          headerBg: "bg-gradient-to-r from-orange-500 to-red-600",
+          headerBg: "bg-gradient-to-r from-orange-600 via-amber-600 to-orange-600 shadow-2xl border-2 border-orange-400/30",
           headerText: "text-white",
           roleLabel: "DMA OFFICER",
           roleIcon: "Shield",
         };
       case "ADMIN":
         return {
-          headerBg: "bg-gradient-to-r from-red-600 to-rose-700",
+          headerBg: "bg-gradient-to-r from-red-700 via-rose-700 to-red-700 shadow-2xl border-2 border-red-400/30",
           headerText: "text-white",
           roleLabel: "ADMIN",
           roleIcon: "Shield",
         };
       default:
         return {
-          headerBg: "bg-gradient-to-r from-teal-500 to-blue-600",
+          headerBg: "bg-gradient-to-r from-teal-600 via-cyan-600 to-teal-600 shadow-2xl border-2 border-teal-400/30",
           headerText: "text-white",
           roleLabel: "USER",
           roleIcon: "Users",
@@ -245,10 +248,15 @@ const UserLayout = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50">
+    <div className="min-h-screen relative">
+      <AnimatedBackground />
+      
       {/* Mobile Sidebar */}
       {sidebarOpen && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -365,7 +373,7 @@ const UserLayout = ({
       <div className="lg:ml-72">
         {/* Role-based Header Bar */}
         <div
-          className={`${roleColors.headerBg} ${roleColors.headerText} shadow-lg mx-4 mt-4 px-6 py-4 rounded-xl`}
+          className={`${roleColors.headerBg} ${roleColors.headerText} mx-4 mt-4 px-6 py-4 rounded-xl`}
         >
           <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
             <div className="flex items-center space-x-4">
