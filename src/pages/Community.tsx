@@ -627,12 +627,16 @@ const Community = () => {
   // Get flood flow data for simulation
   const getFloodFlowData = () => {
     const heatmapData = getHeatmapData();
+    console.log("Getting flood flow data:", {
+      heatmapDataLength: heatmapData.length,
+      filteredLength: heatmapData.filter((point) => point.intensity > 0.3).length
+    });
     return heatmapData
-      .filter((point) => point.intensity > 0.5) // Only high-intensity points
+      .filter((point) => point.intensity > 0.3) // Lower threshold for more points
       .map((point) => ({
         lat: point.lat,
         lng: point.lng,
-        intensity: point.intensity,
+        intensity: Math.min(point.intensity / 10, 1), // Normalize intensity to 0-1 range
         severity: point.report.severity,
       }));
   };

@@ -177,6 +177,12 @@ const FloodFlowLayer: React.FC<{
   useEffect(() => {
     if (!map) return;
 
+    console.log("Initializing flow points:", {
+      usePredictionData,
+      predictionDataLength: predictionData.length,
+      floodDataLength: floodData.length,
+    });
+
     if (usePredictionData && predictionData.length > 0) {
       // Use prediction data
       const predictionFlowPoints = getPredictionFlowPoints();
@@ -197,8 +203,12 @@ const FloodFlowLayer: React.FC<{
       }));
       console.log(
         "Initialized flow points from flood reports:",
-        flowPointsRef.current.length
+        flowPointsRef.current.length,
+        "Sample:",
+        flowPointsRef.current[0]
       );
+    } else {
+      console.warn("No flow data available to initialize flow points");
     }
   }, [map, floodData, usePredictionData, predictionData]);
 
@@ -255,7 +265,7 @@ const FloodFlowLayer: React.FC<{
       );
 
       // Add new flow points from flood sources
-      if (Math.random() < 0.1) {
+      if (floodData.length > 0 && Math.random() < 0.1) {
         const sourcePoint =
           floodData[Math.floor(Math.random() * floodData.length)];
         if (sourcePoint) {
@@ -300,16 +310,18 @@ const FloodFlowLayer: React.FC<{
     const flowLayer = L.layerGroup();
     const trailLayer = L.layerGroup();
 
+    console.log("Updating flow visualization with", flowPointsRef.current.length, "points");
+
     flowPointsRef.current.forEach((point) => {
       if (point.intensity < 0.1) return;
 
-      // Create flow circle
+      // Create flow circle (made more visible)
       const circle = L.circle([point.lat, point.lng], {
-        radius: point.intensity * 50,
+        radius: Math.max(point.intensity * 100, 50), // Minimum radius of 50m
         fillColor: getFlowColor(point.intensity, point.age),
-        fillOpacity: Math.min(0.8, point.intensity),
+        fillOpacity: Math.max(0.4, Math.min(0.8, point.intensity)),
         color: getFlowColor(point.intensity, point.age),
-        weight: 1,
+        weight: 2,
       });
 
       flowLayer.addLayer(circle);
