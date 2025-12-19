@@ -2,6 +2,8 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { diagnoseRLSIssues } from "./lib/adminSupabase.ts";
+import { ThemeProvider } from "./contexts/ThemeContext.tsx";
+import { LanguageProvider } from "./contexts/LanguageContext.tsx";
 
 // Health check function to ping the API on app load/refresh
 const performHealthCheck = async () => {
@@ -41,4 +43,10 @@ If you're experiencing 406 errors or profile loading issues, run:
 This will check your database setup and provide specific fixes.
 `);
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <ThemeProvider>
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
+  </ThemeProvider>
+);
