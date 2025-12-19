@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Menu,
   X,
@@ -49,6 +53,8 @@ const UserLayout = ({
   const { user, userProfile, signOut } = useRoleAwareAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme } = useTheme();
+  const { t } = useLanguage();
 
   // Get role-based header colors only
   const getRoleHeaderColors = () => {
@@ -113,6 +119,101 @@ const UserLayout = ({
     }
   };
 
+  // Load OmniDimension widget script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.id = 'omnidimension-web-widget';
+    script.src = 'https://omnidim.io/web_widget.js?secret_key=3be4e3bb5e468727adb5a5766ef8166a';
+    script.async = true;
+    document.body.appendChild(script);
+
+    // Add custom CSS for widget dimensions and styling
+    const style = document.createElement('style');
+    style.id = 'omnidimension-widget-custom-style';
+    style.textContent = `
+      /* Backdrop overlay for depth */
+      #omnidimension-widget-container::before,
+      .omnidimension-widget::before,
+      [class*="omnidimension"][class*="container"]::before {
+        content: '' !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(8px) !important;
+        z-index: -1 !important;
+        pointer-events: none !important;
+      }
+      
+      /* Widget Container - Fixed dimensions */
+      #omnidimension-widget-container,
+      .omnidimension-widget,
+      [class*="omnidimension"][class*="container"] {
+        width: 400px !important;
+        height: 600px !important;
+        max-width: 400px !important;
+        max-height: 600px !important;
+        position: relative !important;
+      }
+      
+      /* Widget iframe */
+      #omnidimension-widget-container iframe,
+      .omnidimension-widget iframe,
+      [class*="omnidimension"] iframe {
+        width: 400px !important;
+        height: 600px !important;
+        max-width: 400px !important;
+        max-height: 600px !important;
+      }
+      
+      /* Strong boundary and background for widget popup with enhanced depth */
+      #omnidimension-widget-container,
+      .omnidimension-widget,
+      [class*="omnidimension"][class*="container"],
+      [class*="omnidimension"][class*="popup"],
+      [class*="omnidimension"][class*="chat"] {
+        border: 5px solid #1e40af !important;
+        border-radius: 20px !important;
+        box-shadow: 
+          0 0 0 1px rgba(255, 255, 255, 0.2),
+          0 4px 6px rgba(0, 0, 0, 0.1),
+          0 10px 20px rgba(0, 0, 0, 0.15),
+          0 20px 40px rgba(0, 0, 0, 0.2),
+          0 40px 80px rgba(0, 0, 0, 0.3),
+          inset 0 0 0 3px rgba(255, 255, 255, 1) !important;
+        overflow: hidden !important;
+        background: linear-gradient(to bottom, #ffffff, #f9fafb) !important;
+        backdrop-filter: blur(10px) !important;
+        transform: translateZ(100px) !important;
+        z-index: 99999 !important;
+      }
+      
+      /* Iframe styling with depth */
+      #omnidimension-widget-container iframe,
+      .omnidimension-widget iframe,
+      [class*="omnidimension"] iframe {
+        border-radius: 15px !important;
+        background: white !important;
+        border: none !important;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05) !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      const existingScript = document.getElementById('omnidimension-web-widget');
+      if (existingScript) {
+        document.body.removeChild(existingScript);
+      }
+      const existingStyle = document.getElementById('omnidimension-widget-custom-style');
+      if (existingStyle) {
+        document.head.removeChild(existingStyle);
+      }
+    };
+  }, []);
+
   // Detect user's location if not set
   useEffect(() => {
     const detectLocation = async () => {
@@ -173,36 +274,36 @@ const UserLayout = ({
 
     if (role === "VOLUNTEER") {
       return [
-        { name: "Dashboard", href: "/volunteer-dashboard", icon: Home },
+        { name: t('header.dashboard'), href: "/volunteer-dashboard", icon: Home },
         {
-          name: "My Activities",
+          name: t('volunteer.myActivities'),
           href: "/volunteer/activities",
           icon: Activity,
         },
-        { name: "Training", href: "/volunteer/training", icon: GraduationCap },
-        { name: "Community", href: "/community", icon: Users },
-        { name: "Reports", href: "/volunteer/reports", icon: FileText },
+        { name: t('volunteer.training'), href: "/volunteer/training", icon: GraduationCap },
+        { name: t('header.community'), href: "/community", icon: Users },
+        { name: t('volunteer.reports'), href: "/volunteer/reports", icon: FileText },
       ];
     } else if (role === "NGO") {
       return [
-        { name: "Dashboard", href: "/ngo-dashboard", icon: Home },
-        { name: "Active Alerts", href: "/ngo/alerts", icon: AlertTriangle },
-        { name: "User Management", href: "/ngo/users", icon: Users },
-        { name: "Training Programs", href: "/ngo/training", icon: BookOpen },
-        { name: "Analytics", href: "/ngo/analytics", icon: BarChart3 },
+        { name: t('header.dashboard'), href: "/ngo-dashboard", icon: Home },
+        { name: t('ngo.activeAlerts'), href: "/ngo/alerts", icon: AlertTriangle },
+        { name: t('ngo.userManagement'), href: "/ngo/users", icon: Users },
+        { name: t('ngo.trainingPrograms'), href: "/ngo/training", icon: BookOpen },
+        { name: t('header.analytics'), href: "/ngo/analytics", icon: BarChart3 },
       ];
     } else {
       // Default for CITIZEN and other roles
       return [
-        { name: "Dashboard", href: "/dashboard", icon: Home },
-        { name: "My Reports", href: "/reports", icon: FileText },
-        { name: "Community", href: "/community", icon: Users },
+        { name: t('header.dashboard'), href: "/dashboard", icon: Home },
+        { name: t('header.myReports'), href: "/reports", icon: FileText },
+        { name: t('header.community'), href: "/community", icon: Users },
         {
-          name: "Flood Prediction",
+          name: t('header.floodPrediction'),
           href: "/flood-prediction",
           icon: CloudRain,
         },
-        { name: "Analytics", href: "/analytics", icon: BarChart3 },
+        { name: t('header.analytics'), href: "/analytics", icon: BarChart3 },
       ];
     }
   };
@@ -210,9 +311,9 @@ const UserLayout = ({
   const navigation = getNavigationItems();
 
   const quickActions = [
-    { name: "Find Shelters", href: "/shelters", icon: Building },
-    { name: "Emergency Contacts", href: "/emergency-contacts", icon: Phone },
-    { name: "View Alerts", href: "/alerts", icon: Bell },
+    { name: t('header.findShelters'), href: "/shelters", icon: Building },
+    { name: t('header.emergencyContacts'), href: "/emergency-contacts", icon: Phone },
+    { name: t('header.viewAlerts'), href: "/alerts", icon: Bell },
   ];
 
   const profileActions = [
@@ -248,8 +349,14 @@ const UserLayout = ({
   };
 
   return (
-    <div className="min-h-screen relative">
-      <AnimatedBackground />
+    <div 
+      className="min-h-screen relative" 
+      style={theme === 'high-contrast' 
+        ? { backgroundColor: 'hsl(0, 0%, 0%)', color: 'hsl(0, 0%, 100%)' } 
+        : {}
+      }
+    >
+      {theme !== 'high-contrast' && <AnimatedBackground />}
       
       {/* Mobile Sidebar */}
       {sidebarOpen && (
@@ -264,20 +371,35 @@ const UserLayout = ({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-teal-100 to-blue-200 text-gray-700 backdrop-blur-xl shadow-2xl border border-teal-200 rounded-r-2xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:left-4 lg:top-4 lg:bottom-4 lg:rounded-2xl ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 text-white backdrop-blur-xl shadow-2xl border rounded-r-2xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:left-4 lg:top-4 lg:bottom-4 lg:rounded-2xl ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } ${
+          theme === 'high-contrast' ? 'border-[hsl(0,0%,40%)]' : 'border-cyan-500/20'
         }`}
+        style={theme === 'high-contrast' ? {
+          background: 'hsl(0, 0%, 5%)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
+        } : {
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 51, 68, 0.95) 50%, rgba(19, 78, 74, 0.95) 100%)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 2px 4px 0 rgba(255, 255, 255, 0.1)'
+        }}
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-teal-200">
+        <div className={`flex items-center justify-between h-16 px-4 border-b ${
+          theme === 'high-contrast' ? 'border-[hsl(0,0%,40%)]' : 'border-cyan-500/20'
+        }`}>
           <div className="flex items-center space-x-2">
             <img src="/favicon.svg" alt="JanRakshak Logo" className="w-8 h-8" />
-            <span className="text-xl font-bold text-teal-700">JanRakshak</span>
+            <span className={`text-xl font-bold ${
+              theme === 'high-contrast' ? 'text-[hsl(47,100%,60%)]' : 'bg-gradient-to-r from-cyan-100 to-teal-100 bg-clip-text text-transparent'
+            }`}>JanRakshak</span>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden text-teal-700 hover:bg-teal-200"
+            className={`lg:hidden ${
+              theme === 'high-contrast' ? 'text-white hover:bg-[hsl(0,0%,15%)]' : 'text-cyan-100 hover:bg-cyan-500/20'
+            }`}
             onClick={() => setSidebarOpen(false)}
           >
             <X className="w-5 h-5" />
@@ -293,8 +415,10 @@ const UserLayout = ({
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
-                    isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
+                  className={`w-full justify-start ${
+                    theme === 'high-contrast'
+                      ? (isActive ? 'bg-[hsl(47,100%,60%)] text-black shadow-lg' : 'text-white hover:bg-[hsl(0,0%,15%)] hover:text-[hsl(47,100%,60%)]')
+                      : (isActive ? "bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-lg" : "text-gray-300 hover:bg-cyan-500/10 hover:text-white")
                   }`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -308,7 +432,9 @@ const UserLayout = ({
             })}
           </div>
 
-          <div className="border-t border-teal-200 my-4"></div>
+          <div className={`border-t my-4 ${
+            theme === 'high-contrast' ? 'border-[hsl(0,0%,40%)]' : 'border-cyan-500/20'
+          }`}></div>
 
           <div className="space-y-1">
             {quickActions.map((item) => {
@@ -317,8 +443,10 @@ const UserLayout = ({
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
-                    isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
+                  className={`w-full justify-start ${
+                    theme === 'high-contrast'
+                      ? (isActive ? 'bg-[hsl(47,100%,60%)] text-black shadow-lg' : 'text-white hover:bg-[hsl(0,0%,15%)] hover:text-[hsl(47,100%,60%)]')
+                      : (isActive ? "bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-lg" : "text-gray-300 hover:bg-cyan-500/10 hover:text-white")
                   }`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -332,7 +460,9 @@ const UserLayout = ({
             })}
           </div>
 
-          <div className="border-t border-teal-200 my-4"></div>
+          <div className={`border-t my-4 ${
+            theme === 'high-contrast' ? 'border-[hsl(0,0%,40%)]' : 'border-cyan-500/20'
+          }`}></div>
 
           <div className="space-y-1">
             {profileActions.map((item) => {
@@ -341,8 +471,10 @@ const UserLayout = ({
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
-                    isActive ? "bg-teal-600 text-white" : "hover:bg-teal-200"
+                  className={`w-full justify-start ${
+                    theme === 'high-contrast'
+                      ? (isActive ? 'bg-[hsl(47,100%,60%)] text-black shadow-lg' : 'text-white hover:bg-[hsl(0,0%,15%)] hover:text-[hsl(47,100%,60%)]')
+                      : (isActive ? "bg-gradient-to-r from-cyan-600 to-teal-600 text-white shadow-lg" : "text-gray-300 hover:bg-cyan-500/10 hover:text-white")
                   }`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -356,15 +488,19 @@ const UserLayout = ({
             })}
           </div>
 
-          <div className="border-t border-teal-200 my-4"></div>
+          <div className={`border-t my-4 ${
+            theme === 'high-contrast' ? 'border-[hsl(0,0%,40%)]' : 'border-cyan-500/20'
+          }`}></div>
 
           <Button
             variant="ghost"
-            className="w-full justify-start text-red-600 hover:bg-red-100"
+            className={`w-full justify-start ${
+              theme === 'high-contrast' ? 'text-[hsl(0,100%,60%)] hover:bg-[hsl(0,100%,60%)]/10' : 'text-red-400 hover:bg-red-950/50 hover:text-red-300'
+            }`}
             onClick={handleSignOut}
           >
             <LogOut className="w-4 h-4 mr-3" />
-            Sign Out
+            {t('header.signOut')}
           </Button>
         </nav>
       </div>
@@ -373,24 +509,30 @@ const UserLayout = ({
       <div className="lg:ml-72">
         {/* Role-based Header Bar */}
         <div
-          className={`${roleColors.headerBg} ${roleColors.headerText} mx-4 mt-4 px-6 py-4 rounded-xl`}
+          className={`${roleColors.headerBg} ${roleColors.headerText} mx-4 mt-4 px-6 py-5 rounded-2xl relative overflow-hidden backdrop-blur-sm`}
+          style={{
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          }}
         >
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
+          {/* Premium glass effect overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-white/5 pointer-events-none"></div>
+          
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden text-white hover:bg-white/20"
+                className="lg:hidden text-white hover:bg-white/20 backdrop-blur-sm"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="w-5 h-5" />
               </Button>
               <div>
                 <div className="flex items-center space-x-3">
-                  <h1 className="text-2xl font-bold">{title}</h1>
+                  <h1 className="text-2xl font-bold tracking-tight drop-shadow-lg">{title}</h1>
                   <Badge
                     variant="outline"
-                    className="text-xs bg-white/20 border-white/30 text-white flex items-center gap-1"
+                    className="text-xs bg-white/20 border-white/40 text-white flex items-center gap-1 backdrop-blur-sm shadow-lg"
                   >
                     {roleColors.roleIcon === "User" && (
                       <Users className="w-3 h-3" />
@@ -404,20 +546,19 @@ const UserLayout = ({
                     {roleColors.roleIcon === "Shield" && (
                       <Shield className="w-3 h-3" />
                     )}
-                    {roleColors.roleLabel}
+                    {t(`common.${roleColors.roleLabel.toLowerCase()}`)}
                   </Badge>
                 </div>
-                <p className="text-sm opacity-90">
-                  {userProfile?.role?.toUpperCase() === "CITIZEN" &&
-                    "Community Member"}
-                  {userProfile?.role?.toUpperCase() === "USER" &&
-                    "Community Member"}
+                <p className="text-sm opacity-90 mt-1 drop-shadow">
+                  {(userProfile?.role?.toUpperCase() === "CITIZEN" || 
+                    userProfile?.role?.toUpperCase() === "USER") &&
+                    t('common.communityMember')}
                   {userProfile?.role?.toUpperCase() === "VOLUNTEER" &&
-                    "Community Volunteer"}
+                    t('volunteer.communityVolunteer')}
                   {userProfile?.role?.toUpperCase() === "NGO" &&
-                    "NGO Partner Organization"}
+                    t('ngo.ngoCoordinator')}
                   {userProfile?.role?.toUpperCase() === "DMA" &&
-                    "District Magistrate Office"}
+                    t('dma.dmaOfficer')}
                   {userProfile?.role?.toUpperCase() === "ADMIN" &&
                     "System Administrator"}
                   {!userProfile?.role && "Welcome to JanRakshak"}
@@ -426,14 +567,17 @@ const UserLayout = ({
               </div>
             </div>
             <div className="flex items-center space-x-2 flex-wrap">
-              <div className="text-xs text-white/80 hidden md:block">
-                Last updated: {new Date().toLocaleTimeString()}
+              <ThemeToggle />
+              <LanguageToggle />
+              <div className="text-xs text-white/90 hidden md:flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                <Clock className="w-3.5 h-3.5" />
+                {new Date().toLocaleTimeString()}
               </div>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-white border-white/50 hover:bg-white/30 bg-white/20 font-medium"
+                  className="text-white border-white/50 hover:bg-white/30 bg-white/15 font-medium backdrop-blur-sm shadow-lg hover:shadow-xl transition-all"
                   onClick={async () => {
                     if (navigator.geolocation && user && userProfile) {
                       try {
@@ -473,21 +617,21 @@ const UserLayout = ({
                   }}
                 >
                   <MapPin className="w-4 h-4 md:mr-2" />
-                  <span className="hidden md:inline">Update Location</span>
+                  <span className="hidden md:inline">{t('header.updateLocation')}</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-white border-white/50 hover:bg-white/30 bg-white/20 font-medium"
+                  className="text-white border-white/50 hover:bg-white/30 bg-white/15 font-medium backdrop-blur-sm shadow-lg hover:shadow-xl transition-all"
                   onClick={() => window.location.reload()}
                 >
                   <RefreshCw className="w-4 h-4 md:mr-2" />
-                  <span className="hidden md:inline">Refresh</span>
+                  <span className="hidden md:inline">{t('header.refresh')}</span>
                 </Button>
               </div>
               <Badge
                 variant="outline"
-                className="text-xs bg-white/20 border-white/30 text-white hidden lg:flex"
+                className="text-xs bg-white/20 border-white/40 text-white hidden lg:flex backdrop-blur-sm shadow-lg"
               >
                 <MapPin className="w-3 h-3 mr-1" />
                 {userProfile?.district && userProfile?.state
@@ -501,8 +645,23 @@ const UserLayout = ({
         </div>
 
         {/* Page Content */}
-        <div className="p-6 pt-4">{children}</div>
+        <div 
+          className="p-6 pt-4" 
+          style={theme === 'high-contrast' 
+            ? { backgroundColor: 'hsl(0, 0%, 0%)', color: 'hsl(0, 0%, 100%)' }
+            : { backgroundColor: 'transparent' }
+          }
+        >{children}</div>
       </div>
+
+      {/* OmniDimension Widget Button - Fixed Bottom Right */}
+      <button 
+        id="omni-open-widget-btn"
+        className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110"
+        style={{ zIndex: 9999 }}
+      >
+        💬 Help
+      </button>
     </div>
   );
 };
