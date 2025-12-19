@@ -1,4 +1,5 @@
 import React from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import VolunteerLayout from "@/components/VolunteerLayout";
 import {
   Card,
@@ -21,10 +22,24 @@ import {
 } from "lucide-react";
 
 const VolunteerDashboard = () => {
+  const { theme } = useTheme();
   console.log("🏠 VolunteerDashboard: Component rendering");
 
   return (
     <VolunteerLayout>
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-800, .text-muted-foreground,
+          .text-green-100 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\/80, .bg-white\/90, .bg-white\/95 {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+        ` : ''}
+      `}</style>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-lg p-6">

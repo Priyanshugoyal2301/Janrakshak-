@@ -73,7 +73,6 @@ import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
-import JanRakshakChatbot from "./components/JanRakshakChatbot";
 import ReliefAllocation from "./components/ReliefAllocation";
 import FoodResources from "./components/FoodResources";
 import VolunteerManagement from "./components/VolunteerManagement";
@@ -609,7 +608,6 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-          <JanRakshakChatbot />
         </TooltipProvider>
       </RoleAwareAuthProvider>
     </AuthProvider>

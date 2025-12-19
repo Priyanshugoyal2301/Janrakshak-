@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import UserLayout from '@/components/UserLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -94,6 +95,7 @@ interface Shelter {
 
 const ShelterFinder = () => {
   const { currentUser } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   
   // State management
@@ -395,10 +397,19 @@ const ShelterFinder = () => {
     <UserLayout title="Shelter Finder" description="Find nearby flood shelters">
       <div className="space-y-6">
         {/* Search and Filters */}
-        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+        <Card 
+          className="border-0 shadow-lg" 
+          style={theme === 'high-contrast' ? {
+            backgroundColor: 'hsl(0, 0%, 10%)',
+            borderColor: 'hsl(0, 0%, 40%)'
+          } : {
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(8px)'
+          }}
+        >
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Search className="w-5 h-5 mr-2 text-blue-600" />
+            <CardTitle className="flex items-center" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 100%)' } : undefined}>
+              <Search className="w-5 h-5 mr-2" style={theme === 'high-contrast' ? { color: 'hsl(47, 100%, 60%)' } : { color: '#2563eb' }} />
               Search & Filter Shelters
             </CardTitle>
           </CardHeader>
@@ -410,6 +421,11 @@ const ShelterFinder = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full"
+                  style={theme === 'high-contrast' ? {
+                    backgroundColor: 'hsl(0, 0%, 15%)',
+                    color: 'hsl(0, 0%, 100%)',
+                    borderColor: 'hsl(0, 0%, 40%)'
+                  } : undefined}
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -474,6 +490,14 @@ const ShelterFinder = () => {
               variant={showMap ? "default" : "outline"}
               onClick={() => setShowMap(!showMap)}
               className="flex items-center space-x-2"
+              style={theme === 'high-contrast' && showMap ? {
+                backgroundColor: 'hsl(47, 100%, 60%)',
+                color: 'hsl(0, 0%, 0%)'
+              } : theme === 'high-contrast' ? {
+                backgroundColor: 'transparent',
+                color: 'hsl(0, 0%, 100%)',
+                borderColor: 'hsl(0, 0%, 40%)'
+              } : undefined}
             >
               <MapPin className="w-4 h-4" />
               <span>{showMap ? 'Hide Map' : 'Show Map'}</span>
@@ -486,7 +510,7 @@ const ShelterFinder = () => {
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">View:</span>
+            <span className="text-sm" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 100%)' } : { color: '#4b5563' }}>View:</span>
             <Select value={maxDistance.toString()} onValueChange={(value) => setMaxDistance(parseInt(value))}>
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -503,21 +527,30 @@ const ShelterFinder = () => {
 
         {/* Interactive Map */}
         {showMap && (
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+          <Card 
+            className="border-0 shadow-lg"
+            style={theme === 'high-contrast' ? {
+              backgroundColor: 'hsl(0, 0%, 10%)',
+              borderColor: 'hsl(0, 0%, 40%)'
+            } : {
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(8px)'
+            }}
+          >
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
+              <CardTitle className="flex items-center justify-between" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 100%)' } : undefined}>
                 <div className="flex items-center">
-                  <MapPin className="w-5 h-5 mr-2 text-blue-600" />
+                  <MapPin className="w-5 h-5 mr-2" style={theme === 'high-contrast' ? { color: 'hsl(47, 100%, 60%)' } : { color: '#2563eb' }} />
                   Nearby Shelters Map
                 </div>
                 <Badge variant="outline" className="text-xs">
                   {nearbyShelters.length} shelters within {maxDistance}km
                 </Badge>
               </CardTitle>
-              <CardDescription>
+              <CardDescription style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 95%)' } : undefined}>
                 Real-time map showing shelters near your location. Click on markers for details.
                 {userLocation && (
-                  <span className="ml-2 text-green-600 text-xs">
+                  <span className="ml-2 text-xs" style={theme === 'high-contrast' ? { color: 'hsl(47, 100%, 60%)' } : { color: '#16a34a' }}>
                     📍 Using your location: {userLocation.district || userLocation.state}
                   </span>
                 )}
@@ -662,11 +695,11 @@ const ShelterFinder = () => {
 
               {/* Map Legend */}
               <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-xs" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 100%)' } : undefined}>
                   <span className="font-medium">Legend:</span>
                   <span>{nearbyShelters.length} nearby shelters</span>
                 </div>
-                <div className="flex items-center space-x-4 text-xs">
+                <div className="flex items-center space-x-4 text-xs" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 100%)' } : undefined}>
                   <div className="flex items-center space-x-1">
                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                     <span>Your Location</span>
@@ -692,7 +725,7 @@ const ShelterFinder = () => {
         {/* Results Summary */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 100%)' } : { color: '#4b5563' }}>
               Showing {filteredShelters.length} of {shelters.length} shelters
             </p>
             {nearbyShelters.length > 0 && (
@@ -712,13 +745,23 @@ const ShelterFinder = () => {
 
         {/* Nearby Shelters Section */}
         {nearbyShelters.length > 0 && (
-          <Card className="bg-blue-50/80 backdrop-blur-sm border border-blue-200 shadow-lg">
+          <Card 
+            className="border shadow-lg"
+            style={theme === 'high-contrast' ? {
+              backgroundColor: 'hsl(0, 0%, 10%)',
+              borderColor: 'hsl(0, 0%, 40%)'
+            } : {
+              backgroundColor: 'rgba(239, 246, 255, 0.8)',
+              backdropFilter: 'blur(8px)',
+              borderColor: '#bfdbfe'
+            }}
+          >
             <CardHeader>
-              <CardTitle className="flex items-center text-blue-800">
+              <CardTitle className="flex items-center" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 100%)' } : { color: '#1e40af' }}>
                 <MapPin className="w-5 h-5 mr-2" />
                 Nearby Shelters ({nearbyShelters.length})
               </CardTitle>
-              <CardDescription className="text-blue-600">
+              <CardDescription style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 95%)' } : { color: '#2563eb' }}>
                 Shelters within {maxDistance}km of your location
               </CardDescription>
             </CardHeader>
@@ -729,15 +772,26 @@ const ShelterFinder = () => {
                   const availableCapacity = shelter.capacity - shelter.current_occupancy;
                   
                   return (
-                    <div key={shelter.id} className="bg-white rounded-lg p-4 border border-blue-200">
+                    <div 
+                      key={shelter.id} 
+                      className="rounded-lg p-4 border"
+                      style={theme === 'high-contrast' ? {
+                        backgroundColor: 'hsl(0, 0%, 15%)',
+                        borderColor: 'hsl(0, 0%, 40%)',
+                        color: 'hsl(0, 0%, 100%)'
+                      } : {
+                        backgroundColor: 'white',
+                        borderColor: '#bfdbfe'
+                      }}
+                    >
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-sm">{shelter.name}</h4>
+                        <h4 className="font-semibold text-sm" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 100%)' } : undefined}>{shelter.name}</h4>
                         <Badge className={getStatusColor(shelter.status)}>
                           {getStatusIcon(shelter.status)}
                           <span className="ml-1 capitalize">{shelter.status}</span>
                         </Badge>
                       </div>
-                      <div className="space-y-1 text-xs text-gray-600 mb-3">
+                      <div className="space-y-1 text-xs mb-3" style={theme === 'high-contrast' ? { color: 'hsl(0, 0%, 95%)' } : { color: '#4b5563' }}>
                         <div className="flex items-center">
                           <Navigation className="w-3 h-3 mr-1" />
                           {distance !== null && !isNaN(distance) ? `${distance.toFixed(1)} km away` : 'Distance unavailable'}
@@ -805,11 +859,15 @@ const ShelterFinder = () => {
               return (
                 <Card 
                   key={shelter.id} 
-                  className={`backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow ${
-                    isNearby 
-                      ? 'bg-blue-50/80 border-l-4 border-l-blue-500' 
-                      : 'bg-white/80'
-                  }`}
+                  className="border-0 shadow-lg hover:shadow-xl transition-shadow"
+                  style={theme === 'high-contrast' ? {
+                    backgroundColor: 'hsl(0, 0%, 10%)',
+                    borderLeft: isNearby ? '4px solid hsl(47, 100%, 60%)' : 'none'
+                  } : {
+                    backgroundColor: isNearby ? 'rgba(239, 246, 255, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(8px)',
+                    borderLeft: isNearby ? '4px solid #3b82f6' : 'none'
+                  }}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">

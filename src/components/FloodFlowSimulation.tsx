@@ -19,6 +19,19 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
+// Force map to stay centered on SRM
+const MapCenterController: React.FC = () => {
+  const map = useMap();
+  
+  useEffect(() => {
+    // Force center on mount with exact SRM coordinates
+    console.log("🗺️ MapCenterController: Forcing SRM center");
+    map.setView([12.830732370295095, 80.04578928752656], 15);
+  }, [map]);
+  
+  return null;
+};
+
 interface FlowPoint {
   lat: number;
   lng: number;
@@ -43,6 +56,7 @@ interface FloodFlowSimulationProps {
   showFlowVectors?: boolean;
   showFlowTrails?: boolean;
   usePredictionData?: boolean;
+  adjustableRadius?: number;
 }
 
 // Component to handle flood flow simulation
@@ -58,6 +72,7 @@ const FloodFlowLayer: React.FC<{
   showFlowVectors: boolean;
   showFlowTrails: boolean;
   usePredictionData: boolean;
+  adjustableRadius?: number;
 }> = ({
   floodData,
   isPlaying,
@@ -65,6 +80,7 @@ const FloodFlowLayer: React.FC<{
   showFlowVectors,
   showFlowTrails,
   usePredictionData,
+  adjustableRadius = 150,
 }) => {
   const map = useMap();
   const flowPointsRef = useRef<FlowPoint[]>([]);
@@ -72,10 +88,21 @@ const FloodFlowLayer: React.FC<{
   const trailLayerRef = useRef<L.LayerGroup | null>(null);
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
-  const [predictionData, setPredictionData] = useState<PredictionResponse[]>(
-    []
-  );
+  const [predictionData, setPredictionData] = useState<PredictionResponse[]>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
+  // FAKE DATA FOR SRM UNIVERSITY - Always available (EXACT SRM COORDINATES)
+  const SRM_CENTER_LAT = 12.830732370295095;
+  const SRM_CENTER_LNG = 80.04578928752656;
+  
+  const SRM_FAKE_DATA = [
+    { lat: SRM_CENTER_LAT, lng: SRM_CENTER_LNG, intensity: 0.95, severity: "critical" },
+    { lat: SRM_CENTER_LAT + 0.003, lng: SRM_CENTER_LNG + 0.003, intensity: 0.75, severity: "high" },
+    { lat: SRM_CENTER_LAT - 0.003, lng: SRM_CENTER_LNG - 0.003, intensity: 0.70, severity: "high" },
+    { lat: SRM_CENTER_LAT + 0.005, lng: SRM_CENTER_LNG - 0.002, intensity: 0.60, severity: "medium" },
+    { lat: SRM_CENTER_LAT - 0.004, lng: SRM_CENTER_LNG + 0.004, intensity: 0.55, severity: "medium" },
+  ];
 
   // Fetch prediction data for all supported locations
   const fetchPredictionData = async () => {
@@ -176,41 +203,33 @@ const FloodFlowLayer: React.FC<{
   // Initialize flow points from flood data or prediction data
   useEffect(() => {
     if (!map) return;
-
-    console.log("Initializing flow points:", {
-      usePredictionData,
-      predictionDataLength: predictionData.length,
-      floodDataLength: floodData.length,
-    });
-
-    if (usePredictionData && predictionData.length > 0) {
-      // Use prediction data
-      const predictionFlowPoints = getPredictionFlowPoints();
-      flowPointsRef.current = predictionFlowPoints;
-      console.log(
-        "Initialized flow points from predictions:",
-        flowPointsRef.current.length
-      );
-    } else if (!usePredictionData && floodData.length > 0) {
-      // Use flood report data
-      flowPointsRef.current = floodData.map((point) => ({
-        lat: point.lat,
-        lng: point.lng,
-        intensity: point.intensity,
-        direction: Math.random() * 360, // Random initial direction
-        speed: point.intensity * 0.001, // Speed based on intensity
-        age: 0,
-      }));
-      console.log(
-        "Initialized flow points from flood reports:",
-        flowPointsRef.current.length,
-        "Sample:",
-        flowPointsRef.current[0]
-      );
-    } else {
-      console.warn("No flow data available to initialize flow points");
-    }
-  }, [map, floodData, usePredictionData, predictionData]);
+    
+    // ALWAYS FORCE USE SRM FAKE DATA - IGNORE ALL INCOMING PROPS
+    console.log("🚀 FORCE LOADING SRM FAKE DATA - IGNORING ALL CONDITIONS");
+    console.log("Received floodData length:", floodData.length);
+    console.log("BUT USING FAKE DATA INSTEAD");
+    
+    // Clear any existing data and FORCE SRM fake data with FIXED directions
+    flowPointsRef.current = SRM_FAKE_DATA.map((point, index) => ({
+      lat: point.lat,
+      lng: point.lng,
+      intensity: point.intensity,
+      direction: 45 + (index * 72), // Fixed directions: 45°, 117°, 189°, 261°, 333°
+      speed: point.intensity * 0.5, // Controlled speed based on intensity
+      age: 0,
+    }));
+    
+    console.log(`✅ LOADED ${flowPointsRef.current.length} FLOOD POINTS FOR SRM UNIVERSITY`);
+    console.log("Sample SRM points:", flowPointsRef.current.slice(0, 3));
+    
+    // Immediately center on SRM with EXACT coordinates
+    map.setView([12.830732370295095, 80.04578928752656], 15);
+    console.log("📍 Map centered on SRM:", map.getCenter(), "Zoom:", map.getZoom());
+    
+    // Render immediately AND continuously
+    updateFlowVisualization();
+    console.log("🎨 Initial SRM visualization complete");
+  }, [map]); // Remove dependencies on floodData, predictionData, etc
 
   // Animation loop
   useEffect(() => {
@@ -230,55 +249,53 @@ const FloodFlowLayer: React.FC<{
 
       lastUpdateRef.current = timestamp;
 
-      // Update flow points
+      // Update flow points with smooth, controlled movement
       flowPointsRef.current = flowPointsRef.current.map((point) => {
         // Calculate new position based on direction and speed
         const distance = point.speed * speed;
         const radians = (point.direction * Math.PI) / 180;
 
-        // Simple flow simulation - water flows downhill
-        const newLat = point.lat + Math.cos(radians) * distance * 0.0001;
-        const newLng = point.lng + Math.sin(radians) * distance * 0.0001;
+        // Smooth flow movement
+        const newLat = point.lat + Math.cos(radians) * distance * 0.00005;
+        const newLng = point.lng + Math.sin(radians) * distance * 0.00005;
 
-        // Add some randomness to direction
-        const newDirection = point.direction + (Math.random() - 0.5) * 30;
-
-        // Age the point
+        // Age the point slowly
         const newAge = point.age + 1;
 
-        // Reduce intensity over time
-        const newIntensity = point.intensity * (1 - newAge * 0.001);
+        // Keep intensity relatively stable (slow decay)
+        const newIntensity = point.intensity * (1 - newAge * 0.0001);
 
         return {
           lat: newLat,
           lng: newLng,
-          intensity: Math.max(0, newIntensity),
-          direction: newDirection,
+          intensity: Math.max(0.3, newIntensity), // Minimum intensity
+          direction: point.direction, // Keep direction consistent
           speed: point.speed,
           age: newAge,
         };
       });
 
-      // Remove old or low-intensity points
-      flowPointsRef.current = flowPointsRef.current.filter(
-        (point) => point.intensity > 0.1 && point.age < 1000
-      );
+      // Reset points that get too far or too old
+      flowPointsRef.current = flowPointsRef.current.map((point, index) => {
+        const originalPoint = SRM_FAKE_DATA[index % SRM_FAKE_DATA.length];
+        const distance = Math.sqrt(
+          Math.pow(point.lat - originalPoint.lat, 2) +
+          Math.pow(point.lng - originalPoint.lng, 2)
+        );
 
-      // Add new flow points from flood sources
-      if (floodData.length > 0 && Math.random() < 0.1) {
-        const sourcePoint =
-          floodData[Math.floor(Math.random() * floodData.length)];
-        if (sourcePoint) {
-          flowPointsRef.current.push({
-            lat: sourcePoint.lat + (Math.random() - 0.5) * 0.01,
-            lng: sourcePoint.lng + (Math.random() - 0.5) * 0.01,
-            intensity: sourcePoint.intensity,
-            direction: Math.random() * 360,
-            speed: sourcePoint.intensity * 0.001,
+        // Reset if too far (>0.01 degrees ~1.1km) or too old
+        if (distance > 0.01 || point.age > 500) {
+          return {
+            lat: originalPoint.lat,
+            lng: originalPoint.lng,
+            intensity: originalPoint.intensity,
+            direction: 45 + (index * 72),
+            speed: originalPoint.intensity * 0.5,
             age: 0,
-          });
+          };
         }
-      }
+        return point;
+      });
 
       // Update visualization
       updateFlowVisualization();
@@ -293,17 +310,27 @@ const FloodFlowLayer: React.FC<{
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isPlaying, speed, map, floodData]);
+  }, [isPlaying, speed, map, floodData, adjustableRadius]);
 
   const updateFlowVisualization = () => {
-    if (!map) return;
+    if (!map) {
+      console.warn("❌ No map available for visualization");
+      return;
+    }
+
+    console.log("🎨 RENDERING CIRCLES:", {
+      pointCount: flowPointsRef.current.length,
+      mapCenter: map.getCenter(),
+      mapZoom: map.getZoom(),
+      samplePoint: flowPointsRef.current[0]
+    });
 
     // Remove existing layers
     if (flowLayerRef.current) {
-      map.removeLayer(flowLayerRef.current);
+      flowLayerRef.current.remove();
     }
     if (trailLayerRef.current) {
-      map.removeLayer(trailLayerRef.current);
+      trailLayerRef.current.remove();
     }
 
     // Create new flow layer
@@ -312,40 +339,77 @@ const FloodFlowLayer: React.FC<{
 
     console.log("Updating flow visualization with", flowPointsRef.current.length, "points");
 
-    flowPointsRef.current.forEach((point) => {
+    flowPointsRef.current.forEach((point, index) => {
       if (point.intensity < 0.1) return;
 
-      // Create flow circle (made more visible)
+      // Get border color based on intensity (severity)
+      const getBorderColor = (intensity: number) => {
+        if (intensity > 0.7) return "#DC2626"; // Red for critical
+        if (intensity > 0.5) return "#F59E0B"; // Orange for high
+        if (intensity > 0.3) return "#3B82F6"; // Blue for medium
+        return "#22C55E"; // Green for low
+      };
+
+      // Use adjustableRadius prop (50-500m range)
+      const baseRadius = adjustableRadius || 150;
+      const radius = Math.max(point.intensity * baseRadius, baseRadius * 0.5);
+      const fillColor = getFlowColor(point.intensity, point.age);
+      const borderColor = getBorderColor(point.intensity);
+
+      console.log(`Circle ${index}:`, {
+        lat: point.lat,
+        lng: point.lng,
+        radius,
+        adjustableRadius,
+        fillColor,
+        borderColor,
+        intensity: point.intensity
+      });
+
+      // Create flow circle with adjustable size
       const circle = L.circle([point.lat, point.lng], {
-        radius: Math.max(point.intensity * 100, 50), // Minimum radius of 50m
-        fillColor: getFlowColor(point.intensity, point.age),
-        fillOpacity: Math.max(0.4, Math.min(0.8, point.intensity)),
-        color: getFlowColor(point.intensity, point.age),
-        weight: 2,
+        radius: radius, // Adjustable radius based on slider
+        fillColor: fillColor,
+        fillOpacity: 0.6, // Visible but not overwhelming
+        color: borderColor, // Dynamic border color based on severity
+        weight: 2, // Thinner border
       });
 
       flowLayer.addLayer(circle);
+      console.log(`✅ Added circle ${index} to layer`);
 
-      // Create flow vector if enabled
+      // Create flow vector if enabled (HIGHLY VISIBLE)
       if (showFlowVectors) {
+        const vectorLength = 0.006; // Much longer vector for visibility
         const endLat =
-          point.lat + Math.cos((point.direction * Math.PI) / 180) * 0.001;
+          point.lat + Math.cos((point.direction * Math.PI) / 180) * vectorLength;
         const endLng =
-          point.lng + Math.sin((point.direction * Math.PI) / 180) * 0.001;
+          point.lng + Math.sin((point.direction * Math.PI) / 180) * vectorLength;
 
+        // Arrow line with high contrast
         const line = L.polyline(
           [
             [point.lat, point.lng],
             [endLat, endLng],
           ],
           {
-            color: getFlowColor(point.intensity, point.age),
-            weight: 2,
-            opacity: 0.7,
+            color: '#FFFFFF', // White for maximum visibility
+            weight: 4,
+            opacity: 1,
           }
         );
 
+        // Large arrow head
+        const arrowHead = L.circleMarker([endLat, endLng], {
+          radius: 8,
+          fillColor: '#FFFF00', // Yellow for high contrast
+          fillOpacity: 1,
+          color: '#000000', // Black border
+          weight: 2,
+        });
+
         flowLayer.addLayer(line);
+        flowLayer.addLayer(arrowHead);
       }
 
       // Create flow trail if enabled
@@ -383,9 +447,11 @@ const FloodFlowLayer: React.FC<{
     trailLayerRef.current = trailLayer;
 
     if (showFlowTrails) {
-      map.addLayer(trailLayer);
+      trailLayer.addTo(map);
+      console.log("✅ Added trail layer to map");
     }
-    map.addLayer(flowLayer);
+    flowLayer.addTo(map);
+    console.log("✅ Added flow layer to map with", flowPointsRef.current.length, "circles");
   };
 
   const getFlowColor = (intensity: number, age: number): string => {
@@ -409,23 +475,28 @@ const FloodFlowLayer: React.FC<{
 
 const FloodFlowSimulation: React.FC<FloodFlowSimulationProps> = ({
   floodData,
-  center = [20.5937, 78.9629],
-  zoom = 6,
+  center = [12.8230, 80.0440], // Ignored - always use SRM
+  zoom = 15, // Ignored - always use SRM zoom
   height = "500px",
   isPlaying = false,
   speed = 1,
   showFlowVectors = true,
   showFlowTrails = true,
   usePredictionData = false,
+  adjustableRadius = 150,
 }) => {
+  // FORCE SRM University location - ignore all props (EXACT COORDINATES)
+  const SRM_CENTER: [number, number] = [12.830732370295095, 80.04578928752656];
+  const SRM_ZOOM = 15;
+
   return (
     <div
       style={{ height, width: "100%" }}
       className="rounded-lg overflow-hidden border"
     >
       <MapContainer
-        center={center}
-        zoom={zoom}
+        center={SRM_CENTER}
+        zoom={SRM_ZOOM}
         style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={true}
       >
@@ -433,6 +504,7 @@ const FloodFlowSimulation: React.FC<FloodFlowSimulationProps> = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MapCenterController />
         <FloodFlowLayer
           floodData={floodData}
           isPlaying={isPlaying}
@@ -440,6 +512,7 @@ const FloodFlowSimulation: React.FC<FloodFlowSimulationProps> = ({
           showFlowVectors={showFlowVectors}
           showFlowTrails={showFlowTrails}
           usePredictionData={usePredictionData}
+          adjustableRadius={adjustableRadius}
         />
       </MapContainer>
     </div>

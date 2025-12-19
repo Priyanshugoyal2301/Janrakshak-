@@ -1,4 +1,5 @@
 import React from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import NGOLayout from "@/components/NGOLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,21 @@ import {
 } from "lucide-react";
 
 const NGOReports = () => {
+  const { theme } = useTheme();
   return (
     <NGOLayout>
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-purple-600, .text-purple-800,
+          .text-green-600, .text-green-800, .text-blue-600, .text-blue-800 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\/80, .bg-white\/90, .bg-white\/95 {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+        ` : ''}
+      `}</style>
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>

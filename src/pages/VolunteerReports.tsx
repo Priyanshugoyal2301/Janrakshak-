@@ -1,4 +1,5 @@
 import React from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import UserLayout from "@/components/UserLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

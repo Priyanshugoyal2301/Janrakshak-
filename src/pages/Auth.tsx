@@ -188,66 +188,73 @@ const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-blue-950 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0">
-        {/* Floating Orbs */}
+        {/* Animated gradient mesh */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(59,130,246,0.15),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(6,182,212,0.1),transparent_50%)]" />
+        
+        {/* Floating Orbs - Larger and more visible */}
         <motion.div
-          className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-xl"
+          className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-full blur-3xl"
           animate={{
-            y: [0, -20, 0],
-            x: [0, 10, 0],
-            scale: [1, 1.1, 1],
+            y: [0, -40, 0],
+            x: [0, 20, 0],
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
           }}
           transition={{
-            duration: 6,
+            duration: 8,
             repeat: Infinity,
             ease: "easeInOut",
           }}
         />
 
         <motion.div
-          className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-xl"
+          className="absolute top-40 right-32 w-80 h-80 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-full blur-3xl"
           animate={{
-            y: [0, 15, 0],
-            x: [0, -15, 0],
+            y: [0, 30, 0],
+            x: [0, -30, 0],
             rotate: [0, 180, 360],
+            opacity: [0.3, 0.5, 0.3],
           }}
           transition={{
-            duration: 8,
+            duration: 12,
             repeat: Infinity,
             ease: "linear",
           }}
         />
 
         <motion.div
-          className="absolute bottom-32 left-40 w-40 h-40 bg-gradient-to-r from-teal-400/20 to-green-400/20 rounded-full blur-xl"
+          className="absolute bottom-32 left-40 w-96 h-96 bg-gradient-to-r from-teal-500/30 to-emerald-500/30 rounded-full blur-3xl"
           animate={{
-            y: [0, -25, 0],
-            x: [0, 20, 0],
-            scale: [1, 1.2, 1],
+            y: [0, -50, 0],
+            x: [0, 40, 0],
+            scale: [1, 1.3, 1],
+            opacity: [0.3, 0.5, 0.3],
           }}
           transition={{
-            duration: 10,
+            duration: 15,
             repeat: Infinity,
             ease: "easeInOut",
           }}
         />
 
-        {/* Subtle Grid */}
-        <div className="absolute inset-0 opacity-5">
+        {/* Animated Grid */}
+        <div className="absolute inset-0 opacity-10">
           <div className="grid grid-cols-12 grid-rows-12 h-full w-full">
             {Array.from({ length: 144 }).map((_, i) => (
               <motion.div
                 key={i}
-                className="border border-blue-200"
+                className="border border-cyan-400/50"
                 animate={{
-                  opacity: [0.1, 0.3, 0.1],
+                  opacity: [0.05, 0.3, 0.05],
                 }}
                 transition={{
-                  duration: 3,
+                  duration: 4,
                   repeat: Infinity,
-                  delay: i * 0.01,
+                  delay: i * 0.02,
                 }}
               />
             ))}
@@ -268,7 +275,7 @@ const AuthPage = () => {
               <Button
                 variant="ghost"
                 onClick={() => navigate("/")}
-                className="mb-6 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 px-6 py-2 rounded-full"
+                className="mb-6 text-gray-300 hover:text-cyan-400 hover:bg-white/10 transition-all duration-300 px-6 py-2 rounded-full"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Home
@@ -303,7 +310,7 @@ const AuthPage = () => {
               </motion.div>
               <div className="flex flex-col">
                 <motion.h1
-                  className="text-3xl font-black bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent"
+                  className="text-3xl font-black bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 bg-clip-text text-transparent"
                   animate={{
                     backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                   }}
@@ -315,14 +322,14 @@ const AuthPage = () => {
                 >
                   JanRakshak
                 </motion.h1>
-                <span className="text-sm text-blue-600 font-semibold -mt-1">
+                <span className="text-sm text-cyan-400 font-semibold -mt-1">
                   Flood Protection System
                 </span>
               </div>
             </motion.div>
 
             <motion.p
-              className="text-slate-600 text-lg leading-relaxed"
+              className="text-gray-300 text-lg leading-relaxed"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -337,13 +344,13 @@ const AuthPage = () => {
             transition={{ duration: 0.8, delay: 0.3 }}
             whileHover={{ y: -5 }}
           >
-            <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-xl">
+            <Card className="shadow-[0_0_15px_rgba(6,182,212,0.15)] border border-cyan-500/20 bg-white/5 backdrop-blur-xl">
               <CardHeader className="text-center space-y-4">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   className="inline-block"
                 >
-                  <Badge className="bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-3 text-base font-semibold shadow-xl border border-white/20 rounded-full">
+                  <Badge className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-3 text-base font-semibold shadow-[0_0_8px_rgba(6,182,212,0.3)] border border-cyan-400/30 rounded-full">
                     <motion.div
                       animate={{ rotate: [0, 360] }}
                       transition={{
@@ -362,10 +369,10 @@ const AuthPage = () => {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                 >
-                  <CardTitle className="text-2xl font-bold text-slate-900">
+                  <CardTitle className="text-2xl font-bold text-white">
                     {activeTab === "login" ? "Welcome Back" : "Create Account"}
                   </CardTitle>
-                  <CardDescription className="text-slate-600 text-lg">
+                  <CardDescription className="text-gray-300 text-lg">
                     {activeTab === "login"
                       ? "Sign in to access your personalized flood monitoring dashboard"
                       : "Join thousands protecting their communities from floods"}
@@ -384,7 +391,7 @@ const AuthPage = () => {
                   <Button
                     onClick={handleGoogleLogin}
                     disabled={loading}
-                    className="w-full mb-6 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm"
+                    className="w-full mb-6 bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm backdrop-blur-sm"
                   >
                     {loading ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -396,10 +403,10 @@ const AuthPage = () => {
 
                   <div className="relative mb-6">
                     <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-gray-300" />
+                      <span className="w-full border-t border-gray-700" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-gray-500">
+                      <span className="bg-gray-900 px-2 text-gray-200">
                         Or continue with email
                       </span>
                     </div>
@@ -408,9 +415,9 @@ const AuthPage = () => {
                   <TabsContent value="login" className="space-y-4">
                     <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
+                        <Label htmlFor="email" className="text-white">Email Address</Label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                          <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-200" />
                           <Input
                             id="email"
                             name="email"
@@ -418,16 +425,16 @@ const AuthPage = () => {
                             placeholder="your@email.com"
                             value={formData.email}
                             onChange={handleInputChange}
-                            className="pl-10"
+                            className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                             required
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password" className="text-white">Password</Label>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-200" />
                           <Input
                             id="password"
                             name="password"
@@ -435,7 +442,7 @@ const AuthPage = () => {
                             placeholder="Enter your password"
                             value={formData.password}
                             onChange={handleInputChange}
-                            className="pl-10 pr-10"
+                            className="pl-10 pr-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                             required
                           />
                           <Button
@@ -446,9 +453,9 @@ const AuthPage = () => {
                             className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                           >
                             {showPassword ? (
-                              <EyeOff className="w-4 h-4 text-gray-400" />
+                              <EyeOff className="w-4 h-4 text-gray-200" />
                             ) : (
-                              <Eye className="w-4 h-4 text-gray-400" />
+                              <Eye className="w-4 h-4 text-gray-200" />
                             )}
                           </Button>
                         </div>
@@ -459,7 +466,7 @@ const AuthPage = () => {
                           type="button"
                           variant="link"
                           onClick={handleForgotPassword}
-                          className="px-0 text-sm text-blue-600 hover:text-blue-700"
+                          className="px-0 text-sm text-cyan-400 hover:text-cyan-300"
                         >
                           Forgot password?
                         </Button>
@@ -468,7 +475,7 @@ const AuthPage = () => {
                       <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                        className="w-full bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 shadow-[0_0_10px_rgba(6,182,212,0.25)]"
                       >
                         {loading ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -483,9 +490,9 @@ const AuthPage = () => {
                   <TabsContent value="register" className="space-y-4">
                     <form onSubmit={handleRegister} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="displayName">Full Name</Label>
+                        <Label htmlFor="displayName" className="text-white">Full Name</Label>
                         <div className="relative">
-                          <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                          <User className="absolute left-3 top-3 w-4 h-4 text-gray-200" />
                           <Input
                             id="displayName"
                             name="displayName"
@@ -493,16 +500,16 @@ const AuthPage = () => {
                             placeholder="Enter your full name"
                             value={formData.displayName}
                             onChange={handleInputChange}
-                            className="pl-10"
+                            className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                             required
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
+                        <Label htmlFor="email" className="text-white">Email Address</Label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                          <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-200" />
                           <Input
                             id="email"
                             name="email"
@@ -510,16 +517,16 @@ const AuthPage = () => {
                             placeholder="your@email.com"
                             value={formData.email}
                             onChange={handleInputChange}
-                            className="pl-10"
+                            className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                             required
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password" className="text-white">Password</Label>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-200" />
                           <Input
                             id="password"
                             name="password"
@@ -527,7 +534,7 @@ const AuthPage = () => {
                             placeholder="Create a strong password"
                             value={formData.password}
                             onChange={handleInputChange}
-                            className="pl-10 pr-10"
+                            className="pl-10 pr-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                             required
                           />
                           <Button
@@ -538,9 +545,9 @@ const AuthPage = () => {
                             className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                           >
                             {showPassword ? (
-                              <EyeOff className="w-4 h-4 text-gray-400" />
+                              <EyeOff className="w-4 h-4 text-gray-200" />
                             ) : (
-                              <Eye className="w-4 h-4 text-gray-400" />
+                              <Eye className="w-4 h-4 text-gray-200" />
                             )}
                           </Button>
                         </div>
@@ -574,11 +581,11 @@ const AuthPage = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">
+                        <Label htmlFor="confirmPassword" className="text-white">
                           Confirm Password
                         </Label>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                          <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-200" />
                           <Input
                             id="confirmPassword"
                             name="confirmPassword"
@@ -586,7 +593,7 @@ const AuthPage = () => {
                             placeholder="Confirm your password"
                             value={formData.confirmPassword}
                             onChange={handleInputChange}
-                            className="pl-10"
+                            className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                             required
                           />
                           {formData.confirmPassword && (
@@ -605,7 +612,7 @@ const AuthPage = () => {
                       <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                        className="w-full bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 shadow-[0_0_10px_rgba(6,182,212,0.25)]"
                       >
                         {loading ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -618,7 +625,7 @@ const AuthPage = () => {
                   </TabsContent>
                 </Tabs>
 
-                <div className="mt-6 text-center text-xs text-gray-500">
+                <div className="mt-6 text-center text-xs text-gray-200">
                   By continuing, you agree to our Terms of Service and Privacy
                   Policy. Your data is encrypted and secure.
                 </div>
@@ -633,14 +640,14 @@ const AuthPage = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 backdrop-blur-sm">
               <div className="flex items-center justify-center space-x-2 mb-2">
-                <Building2 className="w-4 h-4 text-purple-600" />
-                <span className="text-sm font-semibold text-purple-800">
+                <Building2 className="w-4 h-4 text-purple-400" />
+                <span className="text-sm font-semibold text-purple-300">
                   Organization Access
                 </span>
               </div>
-              <p className="text-xs text-purple-700 mb-3">
+              <p className="text-xs text-purple-300 mb-3">
                 NGO, Volunteer, DMA, or Admin access? Use our role-based
                 authentication
               </p>
@@ -648,7 +655,7 @@ const AuthPage = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => navigate("/supabase-auth")}
-                className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                className="border-purple-500/30 text-purple-400 hover:bg-purple-500/20"
               >
                 <Users className="w-3 h-3 mr-2" />
                 Access Organization Portal
@@ -663,21 +670,21 @@ const AuthPage = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 backdrop-blur-sm">
               <div className="flex items-center justify-center space-x-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <span className="text-sm font-semibold text-red-800">
+                <AlertTriangle className="w-4 h-4 text-red-400" />
+                <span className="text-sm font-semibold text-red-300">
                   Emergency Access
                 </span>
               </div>
-              <p className="text-xs text-red-700 mb-2">
+              <p className="text-xs text-red-300 mb-2">
                 In case of emergency, call 108 immediately
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => window.open("tel:108", "_self")}
-                className="border-red-300 text-red-700 hover:bg-red-50"
+                className="border-red-500/30 text-red-400 hover:bg-red-500/20"
               >
                 Call Emergency Services
               </Button>

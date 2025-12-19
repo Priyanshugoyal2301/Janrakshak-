@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "@/contexts/ThemeContext";
 import AdminLayout from "@/components/AdminLayout";
 import {
   Users,
@@ -130,6 +131,7 @@ const initialData = {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
@@ -408,6 +410,18 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-800 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95 {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+        ` : ''}
+      `}</style>
       <div className="space-y-6">
         {/* Real-time Status Bar */}
         <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-teal-200 rounded-lg p-4">

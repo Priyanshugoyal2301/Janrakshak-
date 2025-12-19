@@ -559,7 +559,7 @@ const SupabaseAuthPage = () => {
       icon: Shield,
       title: "Secure Authentication",
       description: "Enterprise-grade security with Supabase Auth",
-      color: "text-blue-600 bg-blue-100",
+      color: "text-cyan-400 bg-blue-100",
     },
     {
       icon: CheckCircle,
@@ -581,12 +581,12 @@ const SupabaseAuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-teal-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-blue-950 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0">
         {/* Floating Orbs */}
         <motion.div
-          className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-xl"
+          className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-blue-500/30 to-cyan-500/30 rounded-full blur-3xl"
           animate={{
             y: [0, -20, 0],
             x: [0, 10, 0],
@@ -600,7 +600,7 @@ const SupabaseAuthPage = () => {
         />
 
         <motion.div
-          className="absolute top-40 right-32 w-24 h-24 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-xl"
+          className="absolute top-40 right-32 w-80 h-80 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-full blur-xl"
           animate={{
             y: [0, 15, 0],
             x: [0, -15, 0],
@@ -614,7 +614,7 @@ const SupabaseAuthPage = () => {
         />
 
         <motion.div
-          className="absolute bottom-32 left-40 w-40 h-40 bg-gradient-to-r from-teal-400/20 to-green-400/20 rounded-full blur-xl"
+          className="absolute bottom-32 left-40 w-96 h-96 bg-gradient-to-r from-teal-500/30 to-emerald-500/30 rounded-full blur-xl"
           animate={{
             y: [0, -25, 0],
             x: [0, 20, 0],
@@ -633,7 +633,7 @@ const SupabaseAuthPage = () => {
             {Array.from({ length: 144 }).map((_, i) => (
               <motion.div
                 key={i}
-                className="border border-blue-200"
+                className="border border-cyan-400/50"
                 animate={{
                   opacity: [0.1, 0.3, 0.1],
                 }}
@@ -686,7 +686,7 @@ const SupabaseAuthPage = () => {
                 </motion.div>
                 <div className="flex flex-col">
                   <motion.h1
-                    className="text-4xl font-black bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent"
+                    className="text-4xl font-black bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 bg-clip-text text-transparent"
                     animate={{
                       backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                     }}
@@ -698,16 +698,16 @@ const SupabaseAuthPage = () => {
                   >
                     JanRakshak
                   </motion.h1>
-                  <span className="text-sm text-blue-600 font-semibold -mt-1">
+                  <span className="text-sm text-cyan-400 font-semibold -mt-1">
                     Flood Protection System
                   </span>
                 </div>
               </motion.div>
 
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">
+              <h2 className="text-2xl font-bold text-white mb-4">
                 Secure Access to Your Account
               </h2>
-              <p className="text-slate-600 text-lg leading-relaxed">
+              <p className="text-gray-300 text-lg leading-relaxed">
                 Sign in to access your personalized flood monitoring dashboard,
                 emergency alerts, and community features.
               </p>
@@ -731,10 +731,10 @@ const SupabaseAuthPage = () => {
                     <feature.icon className="w-6 h-6" />
                   </motion.div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 text-lg">
+                    <h3 className="font-semibold text-white text-lg">
                       {feature.title}
                     </h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">
+                    <p className="text-gray-300 text-sm leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -747,7 +747,7 @@ const SupabaseAuthPage = () => {
               <div className="bg-gradient-to-br from-slate-50 to-blue-50 border border-slate-200 rounded-xl p-6 shadow-lg">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-blue-600" />
+                    <Shield className="w-4 h-4 text-cyan-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-800">
                     Demo Access Keys
@@ -787,7 +787,7 @@ const SupabaseAuthPage = () => {
                   <div className="bg-white rounded-lg p-3 border border-blue-100">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-blue-600" />
+                        <MapPin className="w-4 h-4 text-cyan-400" />
                         <span className="font-medium text-blue-800">DMA</span>
                       </div>
                       <Button
@@ -796,7 +796,7 @@ const SupabaseAuthPage = () => {
                         onClick={() =>
                           copyToClipboard("DMA_ACCESS_2025", "DMA")
                         }
-                        className="h-6 px-2 text-blue-600 hover:bg-blue-50"
+                        className="h-6 px-2 text-cyan-400 hover:bg-blue-50"
                       >
                         <Copy className="w-3 h-3" />
                       </Button>
@@ -878,7 +878,7 @@ const SupabaseAuthPage = () => {
               whileHover={{ y: -5 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <Card className="w-full max-w-md shadow-2xl border-0 bg-white/90 backdrop-blur-xl">
+              <Card className="w-full max-w-md shadow-2xl border-0 bg-white/5 backdrop-blur-xl">
                 <CardHeader className="text-center space-y-2">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Shield className="w-6 h-6 text-teal-600 animate-pulse" />
@@ -912,7 +912,7 @@ const SupabaseAuthPage = () => {
                     <TabsContent value="signin" className="space-y-4">
                       <form onSubmit={handleSignIn} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
+                          <Label htmlFor="email" className="text-white">Email</Label>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <Input
@@ -922,14 +922,14 @@ const SupabaseAuthPage = () => {
                               placeholder="Enter your email"
                               value={formData.email}
                               onChange={handleInputChange}
-                              className="pl-10"
+                              className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                               required
                             />
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="password">Password</Label>
+                          <Label htmlFor="password" className="text-white">Password</Label>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <Input
@@ -939,14 +939,14 @@ const SupabaseAuthPage = () => {
                               placeholder="Enter your password"
                               value={formData.password}
                               onChange={handleInputChange}
-                              className="pl-10 pr-10"
+                              className="pl-10 pr-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                               autoComplete="current-password"
                               required
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-gray-300"
                             >
                               {showPassword ? (
                                 <EyeOff className="w-4 h-4" />
@@ -957,7 +957,7 @@ const SupabaseAuthPage = () => {
                           </div>
                         </div>
 
-                        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="mb-3 p-3 bg-blue-50 border border-cyan-400/50 rounded-lg">
                           <p className="text-xs text-blue-700 flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" />
                             <strong>Auto Role Detection:</strong> Your dashboard
@@ -989,7 +989,7 @@ const SupabaseAuthPage = () => {
                         <Button
                           variant="link"
                           onClick={() => setActiveTab("reset")}
-                          className="text-sm text-blue-600 hover:text-blue-700"
+                          className="text-sm text-cyan-400 hover:text-blue-700"
                         >
                           Forgot your password?
                         </Button>
@@ -1010,7 +1010,7 @@ const SupabaseAuthPage = () => {
                               placeholder="Enter your full name"
                               value={formData.fullName}
                               onChange={handleInputChange}
-                              className="pl-10"
+                              className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                               required
                             />
                           </div>
@@ -1027,7 +1027,7 @@ const SupabaseAuthPage = () => {
                               placeholder="Enter your email"
                               value={formData.email}
                               onChange={handleInputChange}
-                              className="pl-10"
+                              className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                               required
                             />
                           </div>
@@ -1053,7 +1053,7 @@ const SupabaseAuthPage = () => {
                               </SelectItem>
                               <SelectItem value="DMA">
                                 <div className="flex items-center gap-2">
-                                  <MapPin className="h-4 w-4 text-blue-600" />
+                                  <MapPin className="h-4 w-4 text-cyan-400" />
                                   DMA - Disaster Management Authority
                                 </div>
                               </SelectItem>
@@ -1137,14 +1137,14 @@ const SupabaseAuthPage = () => {
                               placeholder="Create a password"
                               value={formData.password}
                               onChange={handleInputChange}
-                              className="pl-10 pr-10"
+                              className="pl-10 pr-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                               autoComplete="new-password"
                               required
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-gray-300"
                             >
                               {showPassword ? (
                                 <EyeOff className="w-4 h-4" />
@@ -1156,7 +1156,7 @@ const SupabaseAuthPage = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="confirmPassword">
+                          <Label htmlFor="confirmPassword" className="text-white">
                             Confirm Password
                           </Label>
                           <div className="relative">
@@ -1168,7 +1168,7 @@ const SupabaseAuthPage = () => {
                               placeholder="Confirm your password"
                               value={formData.confirmPassword}
                               onChange={handleInputChange}
-                              className="pl-10"
+                              className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                               autoComplete="new-password"
                               required
                             />
@@ -1195,7 +1195,7 @@ const SupabaseAuthPage = () => {
                               }
                               value={formData.secretKey}
                               onChange={handleInputChange}
-                              className="pl-10"
+                              className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                               required
                               disabled={!formData.role}
                             />
@@ -1233,10 +1233,10 @@ const SupabaseAuthPage = () => {
                         <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                           <AlertTriangle className="w-8 h-8 text-orange-600" />
                         </div>
-                        <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                        <h3 className="text-xl font-semibold text-white mb-2">
                           Reset Password
                         </h3>
-                        <p className="text-slate-600">
+                        <p className="text-gray-300">
                           Enter your email address and we'll send you a link to
                           reset your password.
                         </p>
@@ -1257,7 +1257,7 @@ const SupabaseAuthPage = () => {
                               placeholder="Enter your email"
                               value={formData.email}
                               onChange={handleInputChange}
-                              className="pl-10"
+                              className="pl-10 text-white placeholder:text-gray-400 bg-white/10 border-white/20"
                               required
                             />
                           </div>
@@ -1283,7 +1283,7 @@ const SupabaseAuthPage = () => {
                         <Button
                           variant="link"
                           onClick={() => setActiveTab("signin")}
-                          className="text-sm text-blue-600 hover:text-blue-700"
+                          className="text-sm text-cyan-400 hover:text-blue-700"
                         >
                           Back to Sign In
                         </Button>

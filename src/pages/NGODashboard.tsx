@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import NGOLayout from "@/components/NGOLayout";
 import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
@@ -52,6 +53,7 @@ interface NGOMetrics {
 }
 
 const NGODashboard: React.FC = () => {
+  const { theme } = useTheme();
   const { userProfile: firebaseUserProfile } = useRoleAwareAuth();
   const { user: supabaseUser } = useSupabaseAuth();
   const [metrics, setMetrics] = useState<NGOMetrics | null>(null);
@@ -245,6 +247,18 @@ const NGODashboard: React.FC = () => {
 
   return (
     <NGOLayout>
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-800 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95 {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+        ` : ''}
+      `}</style>
       <div className="space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
