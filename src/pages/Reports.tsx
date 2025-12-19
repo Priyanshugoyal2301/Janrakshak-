@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,7 @@ import { toast } from "sonner";
 
 const Reports = () => {
   const { currentUser, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [reports, setReports] = useState<FloodReport[]>([]);
   const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -403,6 +405,45 @@ const Reports = () => {
 
   return (
     <UserLayout title="My Reports" description="View and manage your flood reports">
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-900, .text-slate-800, .text-gray-300 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95, .bg-white {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+          .bg-clip-text {
+            -webkit-text-fill-color: hsl(47, 100%, 60%) !important;
+          }
+          /* All gradient backgrounds */
+          .bg-gradient-to-br, .bg-gradient-to-r, .bg-gradient-to-l, .bg-gradient-to-t, .bg-gradient-to-b {
+            background: hsl(0, 0%, 10%) !important;
+          }
+          /* All -50 level backgrounds */
+          .from-slate-50, .to-slate-50, .from-white, .to-white,
+          .from-blue-50, .to-cyan-50, .from-green-50, .to-emerald-50,
+          .from-red-50, .to-rose-50, .from-orange-50, .to-amber-50,
+          .from-purple-50, .to-pink-50, .from-yellow-50, .to-yellow-50 {
+            background: hsl(0, 0%, 10%) !important;
+          }
+          /* All -100 level backgrounds */
+          .from-blue-100, .to-teal-100, .bg-blue-100, .bg-green-100,
+          .bg-red-100, .bg-orange-100, .bg-slate-100, .bg-gray-100 {
+            background-color: hsl(0, 0%, 20%) !important;
+          }
+          /* All border colors */
+          .border-blue-200, .border-gray-200, .border-gray-300, .border-slate-200 {
+            border-color: hsl(0, 0%, 40%) !important;
+          }
+          /* Shadow/backdrop */
+          .shadow-sm, .shadow-lg, .shadow-xl, .shadow-2xl {
+            box-shadow: none !important;
+          }
+        ` : ''}
+      `}</style>
       <div className="space-y-8">
         {/* Header */}
         <div className="text-center space-y-8 mb-12">

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -50,6 +51,7 @@ import { toast } from "sonner";
 import { floodPredictionService } from "@/lib/floodPredictionService";
 
 const FloodPredictionSimple: React.FC = () => {
+  const { theme } = useTheme();
   const [selectedState, setSelectedState] = useState<string>("");
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -165,6 +167,21 @@ const FloodPredictionSimple: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-900, .text-slate-800 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95, .bg-white {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+          .bg-clip-text {
+            -webkit-text-fill-color: hsl(47, 100%, 60%) !important;
+          }
+        ` : ''}
+      `}</style>
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center space-x-2 mb-2">

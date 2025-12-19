@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface GradientCardProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ const GradientCard = ({
   hover = true,
   glow = false,
 }: GradientCardProps) => {
+  const { theme } = useTheme();
   const variants = {
     default:
       "bg-gradient-to-br from-white via-slate-50 to-blue-50/50 border-blue-200/60 shadow-blue-100/50",
@@ -47,14 +49,21 @@ const GradientCard = ({
     <div
       className={cn(
         "rounded-2xl border-2 backdrop-blur-xl transition-all duration-300 relative overflow-hidden",
-        variants[variant],
-        glowStyles[variant],
+        theme === 'high-contrast' ? '' : variants[variant],
+        theme === 'high-contrast' ? '' : glowStyles[variant],
         hover && "hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.03] hover:border-opacity-100",
         className
       )}
+      style={theme === 'high-contrast' ? {
+        backgroundColor: 'hsl(0, 0%, 10%)',
+        borderColor: 'hsl(0, 0%, 40%)',
+      } : {}}
     >
       {/* Inner glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-transparent opacity-50 pointer-events-none" />
+      <div 
+        className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-transparent opacity-50 pointer-events-none"
+        style={theme === 'high-contrast' ? { display: 'none' } : {}}
+      />
       {children}
     </div>
   );

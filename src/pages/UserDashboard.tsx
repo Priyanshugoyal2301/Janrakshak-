@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/select";
 import UserLayout from "@/components/UserLayout";
 import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -88,6 +90,8 @@ import NearbySheltersMap from "@/components/NearbySheltersMap";
 
 const UserDashboard = () => {
   const { user, userProfile, loading: authLoading } = useRoleAwareAuth();
+  const { theme } = useTheme();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -116,6 +120,22 @@ const UserDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterSeverity, setFilterSeverity] = useState("all");
+
+  // Theme-aware helper functions
+  const getCardStyle = () => theme === 'high-contrast' ? {
+    backgroundColor: 'hsl(0, 0%, 10%)',
+    borderColor: 'hsl(0, 0%, 40%)',
+    color: 'hsl(0, 0%, 100%)'
+  } : {};
+  
+  const getTextStyle = (type: 'primary' | 'secondary' | 'muted' = 'primary') => {
+    if (theme !== 'high-contrast') return {};
+    switch(type) {
+      case 'primary': return { color: 'hsl(0, 0%, 100%)' };
+      case 'secondary': return { color: 'hsl(0, 0%, 95%)' };
+      case 'muted': return { color: 'hsl(0, 0%, 85%)' };
+    }
+  };
 
   // Wake up the pre-alert model service
   useEffect(() => {
@@ -273,7 +293,7 @@ const UserDashboard = () => {
       !searchTerm ||
       report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (typeof report.location === "string"
-        ? report.location.toLowerCase().includes(searchTerm.toLowerCase())
+        ? report.location?.toLowerCase().includes(searchTerm.toLowerCase())
         : report.location?.address
             ?.toLowerCase()
             .includes(searchTerm.toLowerCase())) ||
@@ -409,6 +429,50 @@ const UserDashboard = () => {
 
   return (
     <UserLayout title="Dashboard" description="Welcome back">
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-900, .text-slate-800, .text-gray-300 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95, .bg-white {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+          .bg-clip-text {
+            -webkit-text-fill-color: hsl(47, 100%, 60%) !important;
+          }
+          /* All gradient backgrounds */
+          .bg-gradient-to-br, .bg-gradient-to-r, .bg-gradient-to-l, .bg-gradient-to-t, .bg-gradient-to-b {
+            background: hsl(0, 0%, 10%) !important;
+          }
+          /* All -50 level backgrounds (light pastels) */
+          .from-slate-50, .via-blue-50, .to-teal-50, .from-blue-50, .to-cyan-50,
+          .from-green-50, .to-emerald-50, .from-red-50, .to-rose-50,
+          .from-orange-50, .to-amber-50, .from-purple-50, .to-pink-50,
+          .from-yellow-50, .to-yellow-50 {
+            background: hsl(0, 0%, 10%) !important;
+          }
+          /* All -100 level backgrounds */
+          .from-blue-100, .via-cyan-100, .to-teal-100,
+          .bg-blue-100, .bg-green-100, .bg-red-100, .bg-orange-100, .bg-blue-200,
+          .bg-slate-100, .bg-gray-100 {
+            background-color: hsl(0, 0%, 20%) !important;
+          }
+          /* All border colors */
+          .border-blue-200, .border-blue-300, .border-green-200, .border-green-300,
+          .border-red-200, .border-red-300, .border-orange-200, .border-orange-300,
+          .border-gray-200, .border-gray-300, .border-slate-200 {
+            border-color: hsl(0, 0%, 40%) !important;
+          }
+          /* Input and Select backgrounds */
+          input, select, textarea {
+            background-color: hsl(0, 0%, 15%) !important;
+            color: hsl(0, 0%, 100%) !important;
+            border-color: hsl(0, 0%, 40%) !important;
+          }
+        ` : ''}
+      `}</style>
       {/* Dashboard Content */}
       <Tabs
         value={activeTab}
@@ -416,39 +480,57 @@ const UserDashboard = () => {
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="reports">My Reports</TabsTrigger>
-          <TabsTrigger value="shelters">Nearby Shelters</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="overview">{t('dashboard.overview')}</TabsTrigger>
+          <TabsTrigger value="reports">{t('header.myReports')}</TabsTrigger>
+          <TabsTrigger value="shelters">{t('dashboard.nearbyShelters')}</TabsTrigger>
+          <TabsTrigger value="analytics">{t('header.analytics')}</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-gradient-to-br from-blue-50 via-cyan-50 to-white border-2 border-blue-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <Card 
+              className="border-2 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              style={theme === 'high-contrast' ? {
+                backgroundColor: 'hsl(0, 0%, 10%)',
+                borderColor: 'hsl(0, 0%, 40%)'
+              } : {
+                background: 'linear-gradient(to bottom right, #eff6ff, #e0f2fe, white)',
+                borderColor: '#bfdbfe'
+              }}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Total Reports
+                <CardTitle className="text-sm font-medium" style={getTextStyle('primary')}>
+                  {t('dashboard.totalReports')}
                 </CardTitle>
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <FileText className="h-5 w-5 text-blue-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                <div className="text-3xl font-bold" style={theme === 'high-contrast' ? { color: 'hsl(47, 100%, 60%)' } : { background: 'linear-gradient(to right, #2563eb, #0891b2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   {reportStats.total_reports}
                 </div>
-                <p className="text-xs text-gray-600 mt-1 font-medium">
-                  All your flood reports
+                <p className="text-xs mt-1 font-medium" style={getTextStyle('secondary')}>
+                  {t('dashboard.allYourFloodReports')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-red-50 via-rose-50 to-white border-2 border-red-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <Card 
+              className="border-2 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              style={theme === 'high-contrast' ? {
+                backgroundColor: 'hsl(0, 0%, 10%)',
+                borderColor: 'hsl(0, 0%, 40%)'
+              } : {
+                background: 'linear-gradient(to bottom right, #fef2f2, #fee2e2, white)',
+                borderColor: '#fecaca'
+              }}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Critical Reports
+                <CardTitle className="text-sm font-medium" style={getTextStyle('primary')}>
+                  {t('dashboard.criticalReports')}
                 </CardTitle>
                 <div className="p-2 bg-red-100 rounded-lg">
                   <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -459,34 +541,52 @@ const UserDashboard = () => {
                   {reportStats.critical_reports}
                 </div>
                 <p className="text-xs text-gray-600 mt-1 font-medium">
-                  High priority reports
+                  {t('dashboard.highPriorityReports')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-50 via-emerald-50 to-white border-2 border-green-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <Card 
+              className="border-2 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              style={theme === 'high-contrast' ? {
+                backgroundColor: 'hsl(0, 0%, 10%)',
+                borderColor: 'hsl(0, 0%, 40%)'
+              } : {
+                background: 'linear-gradient(to bottom right, #f0fdf4, #dcfce7, white)',
+                borderColor: '#bbf7d0'
+              }}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Verified Reports
+                <CardTitle className="text-sm font-medium" style={getTextStyle('primary')}>
+                  {t('dashboard.verifiedReports')}
                 </CardTitle>
                 <div className="p-2 bg-green-100 rounded-lg">
                   <CheckCircle className="h-5 w-5 text-green-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <div className="text-3xl font-bold" style={theme === 'high-contrast' ? { color: 'hsl(47, 100%, 60%)' } : { background: 'linear-gradient(to right, #16a34a, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   {reportStats.verified_reports}
                 </div>
-                <p className="text-xs text-gray-600 mt-1 font-medium">
-                  Confirmed by authorities
+                <p className="text-xs mt-1 font-medium" style={getTextStyle('secondary')}>
+                  {t('dashboard.confirmedByAuthorities')}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-yellow-50 via-amber-50 to-white border-2 border-yellow-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <Card 
+              className="border-2 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              style={theme === 'high-contrast' ? {
+                backgroundColor: 'hsl(0, 0%, 10%)',
+                borderColor: 'hsl(0, 0%, 40%)'
+              } : {
+                background: 'linear-gradient(to bottom right, #fffbeb, #fef3c7, white)',
+                borderColor: '#fde68a'
+              }}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Pending Reports
+                <CardTitle className="text-sm font-medium" style={getTextStyle('primary')}>
+                  {t('dashboard.pendingReports')}
                 </CardTitle>
                 <div className="p-2 bg-yellow-100 rounded-lg">
                   <Clock className="h-5 w-5 text-yellow-600" />
@@ -497,20 +597,29 @@ const UserDashboard = () => {
                   {reportStats.pending_reports}
                 </div>
                 <p className="text-xs text-gray-600 mt-1 font-medium">
-                  Awaiting verification
+                  {t('dashboard.awaitingVerification')}
                 </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Quick Actions */}
-          <Card className="bg-gradient-to-br from-indigo-50 via-purple-50 to-white border-2 border-indigo-200 shadow-lg">
+          <Card 
+            className="border-2 shadow-lg"
+            style={theme === 'high-contrast' ? {
+              backgroundColor: 'hsl(0, 0%, 10%)',
+              borderColor: 'hsl(0, 0%, 40%)'
+            } : {
+              background: 'linear-gradient(to bottom right, #eef2ff, #f5f3ff, white)',
+              borderColor: '#c7d2fe'
+            }}
+          >
             <CardHeader>
-              <CardTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Quick Actions
+              <CardTitle className="text-xl font-bold" style={theme === 'high-contrast' ? { color: 'hsl(47, 100%, 60%)' } : { background: 'linear-gradient(to right, #4f46e5, #9333ea)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {t('quickActions.title')}
               </CardTitle>
-              <CardDescription className="text-gray-600 font-medium">
-                Common tasks and emergency actions
+              <CardDescription className="font-medium" style={getTextStyle('secondary')}>
+                {t('quickActions.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -523,7 +632,7 @@ const UserDashboard = () => {
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <Plus className="w-6 h-6 text-blue-600" />
                   </div>
-                  <span className="text-sm font-semibold text-gray-700">New Report</span>
+                  <span className="text-sm font-semibold text-gray-700">{t('quickActions.newReport')}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -533,7 +642,7 @@ const UserDashboard = () => {
                   <div className="p-2 bg-green-100 rounded-lg">
                     <Building className="w-6 h-6 text-green-600" />
                   </div>
-                  <span className="text-sm font-semibold text-gray-700">Find Shelters</span>
+                  <span className="text-sm font-semibold text-gray-700">{t('quickActions.findShelters')}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -544,7 +653,7 @@ const UserDashboard = () => {
                     <Phone className="w-6 h-6 text-red-600" />
                   </div>
                   <span className="text-sm font-semibold text-gray-700">
-                    Emergency Contacts
+                    {t('quickActions.emergencyContacts')}
                   </span>
                 </Button>
                 <Button
@@ -555,7 +664,7 @@ const UserDashboard = () => {
                   <div className="p-2 bg-orange-100 rounded-lg">
                     <Bell className="w-6 h-6 text-orange-600" />
                   </div>
-                  <span className="text-sm font-semibold text-gray-700">View Alerts</span>
+                  <span className="text-sm font-semibold text-gray-700">{t('quickActions.viewAlerts')}</span>
                 </Button>
               </div>
             </CardContent>
@@ -568,17 +677,16 @@ const UserDashboard = () => {
                 <div className="p-2 bg-blue-200 rounded-lg">
                   <Shield className="w-6 h-6 text-blue-700" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">Community Safety Score</span>
+                <span className="text-xl font-bold text-gray-900">{t('safety.title')}</span>
                 <Badge
                   variant="secondary"
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-md"
                 >
-                  Citizen Feature
+                  {t('safety.citizenFeature')}
                 </Badge>
               </CardTitle>
               <CardDescription className="text-gray-700 font-medium">
-                Real-time safety assessment for your area based on reports and
-                alerts
+                {t('safety.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -587,56 +695,56 @@ const UserDashboard = () => {
                   <div className="text-4xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
                     85
                   </div>
-                  <p className="text-sm text-gray-700 font-semibold">Safety Score</p>
+                  <p className="text-sm text-gray-700 font-semibold">{t('safety.safetyScore')}</p>
                   <Badge className="mt-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-md">
-                    Good
+                    {t('safety.good')}
                   </Badge>
                 </div>
                 <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-orange-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div className="text-4xl font-black bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-2">
                     {nearbyReports.length || 3}
                   </div>
-                  <p className="text-sm text-gray-700 font-semibold">Nearby Reports</p>
+                  <p className="text-sm text-gray-700 font-semibold">{t('safety.nearbyReports')}</p>
                   <Badge className="mt-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white border-0 shadow-md">
-                    Last 24h
+                    {t('safety.last24h')}
                   </Badge>
                 </div>
                 <div className="text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <div className="text-4xl font-black bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
                     12
                   </div>
-                  <p className="text-sm text-gray-700 font-semibold">Active Shelters</p>
+                  <p className="text-sm text-gray-700 font-semibold">{t('safety.activeShelters')}</p>
                   <Badge className="mt-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-md">
-                    Available
+                    {t('safety.available')}
                   </Badge>
                 </div>
               </div>
               <div className="mt-6 p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-blue-200">
                 <h4 className="font-bold mb-4 flex items-center text-gray-900">
                   <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-                  Safety Trends
+                  {t('safety.trends')}
                 </h4>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Flood Risk</span>
+                    <span className="text-sm font-medium text-gray-700">{t('safety.floodRisk')}</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
                         <div className="w-1/4 h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full shadow-md"></div>
                       </div>
-                      <span className="text-sm font-bold text-green-600">Low</span>
+                      <span className="text-sm font-bold text-green-600">{t('safety.low')}</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Emergency Response</span>
+                    <span className="text-sm font-medium text-gray-700">{t('safety.emergencyResponse')}</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
                         <div className="w-4/5 h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full shadow-md"></div>
                       </div>
-                      <span className="text-sm font-bold text-blue-600">High</span>
+                      <span className="text-sm font-bold text-blue-600">{t('safety.high')}</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Community Alert</span>
+                    <span className="text-sm font-medium text-gray-700">{t('safety.communityAlert')}</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
                         <div className="w-1/2 h-full bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full shadow-md"></div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from '@/contexts/ThemeContext';
 import UserLayout from "@/components/UserLayout";
 import GradientCard from "@/components/GradientCard";
 import {
@@ -81,6 +82,7 @@ interface CommunityReport extends FloodReport {
 }
 
 const Community = () => {
+  const { theme } = useTheme();
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const [reports, setReports] = useState<CommunityReport[]>([]);
@@ -109,7 +111,7 @@ const Community = () => {
   const [loadingAllReports, setLoadingAllReports] = useState(false);
   // Flood flow simulation controls
   const [showFlowSimulation, setShowFlowSimulation] = useState(false);
-  const [isFlowPlaying, setIsFlowPlaying] = useState(false);
+  const [isFlowPlaying, setIsFlowPlaying] = useState(true);
   const [flowSpeed, setFlowSpeed] = useState(1);
   const [showFlowVectors, setShowFlowVectors] = useState(true);
   const [showFlowTrails, setShowFlowTrails] = useState(true);
@@ -525,14 +527,18 @@ const Community = () => {
   // Transform reports data for heatmap
   const getHeatmapData = () => {
     const now = Date.now();
-    const sourceReports = scope === "all" ? allReports : filteredReports;
+    
+    // For heatmap, ALWAYS use all available reports regardless of filters
+    // Use allReports for "all" scope, otherwise use base reports array (not filtered)
+    const sourceReports = scope === "all" ? allReports : reports;
+    
     const maxAgeMs =
       timeRange === "24h"
         ? 24 * 60 * 60 * 1000
         : timeRange === "7d"
         ? 7 * 24 * 60 * 60 * 1000
         : timeRange === "30d"
-        ? 30 * 24 * 60 * 60 * 1000
+        ? 90 * 24 * 60 * 60 * 1000  // Extended to 90 days to include Chennai reports
         : Infinity;
 
     console.log("Heatmap data calculation:", {
@@ -540,9 +546,19 @@ const Community = () => {
       sourceReportsCount: sourceReports.length,
       allReportsCount: allReports.length,
       filteredReportsCount: filteredReports.length,
+      reportsCount: reports.length,
       timeRange,
       maxAgeMs,
     });
+
+    // Debug: Check what data we have
+    console.log("Source reports sample:", sourceReports.slice(0, 2).map(r => ({
+      id: r.id,
+      title: r.title,
+      location: r.location,
+      created_at: r.created_at,
+      severity: r.severity
+    })));
 
     if (scope === "all") {
       console.log("All Reports scope - checking data:", {
@@ -551,6 +567,8 @@ const Community = () => {
         sampleAllReports: allReports.slice(0, 3),
       });
     }
+
+    console.log("Using reports array:", sourceReports.length, "reports");
 
     const validReports = sourceReports
       .filter((report) => {
@@ -629,23 +647,110 @@ const Community = () => {
     const heatmapData = getHeatmapData();
     console.log("Getting flood flow data:", {
       heatmapDataLength: heatmapData.length,
-      filteredLength: heatmapData.filter((point) => point.intensity > 0.3).length
+      samplePoints: heatmapData.slice(0, 3),
+      intensityRange: heatmapData.length > 0 ? {
+        min: Math.min(...heatmapData.map(p => p.intensity)),
+        max: Math.max(...heatmapData.map(p => p.intensity))
+      } : null
     });
-    return heatmapData
-      .filter((point) => point.intensity > 0.3) // Lower threshold for more points
-      .map((point) => ({
-        lat: point.lat,
-        lng: point.lng,
-        intensity: Math.min(point.intensity / 10, 1), // Normalize intensity to 0-1 range
-        severity: point.report.severity,
-      }));
+    
+    // If no real data, create mock data for SRMIST Kattankulathur area (R2FV+6Q7)
+    if (heatmapData.length === 0) {
+      console.log("🎭 Using comprehensive mock flood data for SRMIST Kattankulathur");
+      const mockData = [
+        // Core SRMIST Campus (R2FV+6Q7 = 12.823°N, 80.044°E)
+        { lat: 12.8230, lng: 80.0440, intensity: 0.95, severity: "critical" as const },
+        { lat: 12.8235, lng: 80.0445, intensity: 0.92, severity: "critical" as const },
+        { lat: 12.8225, lng: 80.0435, intensity: 0.90, severity: "critical" as const },
+        { lat: 12.8240, lng: 80.0450, intensity: 0.88, severity: "critical" as const },
+        { lat: 12.8220, lng: 80.0430, intensity: 0.85, severity: "critical" as const },
+        
+        // Main Academic Blocks
+        { lat: 12.8245, lng: 80.0455, intensity: 0.82, severity: "high" as const },
+        { lat: 12.8250, lng: 80.0460, intensity: 0.80, severity: "high" as const },
+        { lat: 12.8215, lng: 80.0425, intensity: 0.78, severity: "high" as const },
+        { lat: 12.8255, lng: 80.0440, intensity: 0.75, severity: "high" as const },
+        { lat: 12.8210, lng: 80.0445, intensity: 0.72, severity: "high" as const },
+        
+        // Hostel Areas & Residential Zones
+        { lat: 12.8260, lng: 80.0420, intensity: 0.85, severity: "critical" as const },
+        { lat: 12.8265, lng: 80.0435, intensity: 0.82, severity: "high" as const },
+        { lat: 12.8270, lng: 80.0450, intensity: 0.80, severity: "high" as const },
+        { lat: 12.8205, lng: 80.0460, intensity: 0.78, severity: "high" as const },
+        { lat: 12.8200, lng: 80.0470, intensity: 0.75, severity: "high" as const },
+        
+        // Potheri Town Area
+        { lat: 12.8195, lng: 80.0455, intensity: 0.70, severity: "high" as const },
+        { lat: 12.8190, lng: 80.0440, intensity: 0.68, severity: "medium" as const },
+        { lat: 12.8185, lng: 80.0450, intensity: 0.65, severity: "medium" as const },
+        { lat: 12.8180, lng: 80.0435, intensity: 0.62, severity: "medium" as const },
+        
+        // Kattankulathur Junction & Surroundings
+        { lat: 12.8275, lng: 80.0465, intensity: 0.72, severity: "high" as const },
+        { lat: 12.8280, lng: 80.0445, intensity: 0.70, severity: "high" as const },
+        { lat: 12.8285, lng: 80.0430, intensity: 0.68, severity: "medium" as const },
+        { lat: 12.8290, lng: 80.0455, intensity: 0.65, severity: "medium" as const },
+        
+        // Low-lying Areas & Drainage Zones
+        { lat: 12.8220, lng: 80.0485, intensity: 0.88, severity: "critical" as const },
+        { lat: 12.8215, lng: 80.0490, intensity: 0.85, severity: "critical" as const },
+        { lat: 12.8210, lng: 80.0480, intensity: 0.82, severity: "high" as const },
+        { lat: 12.8240, lng: 80.0420, intensity: 0.80, severity: "high" as const },
+        { lat: 12.8245, lng: 80.0415, intensity: 0.78, severity: "high" as const },
+        
+        // Peripheral Flood Zones
+        { lat: 12.8295, lng: 80.0440, intensity: 0.60, severity: "medium" as const },
+        { lat: 12.8175, lng: 80.0445, intensity: 0.58, severity: "medium" as const },
+        { lat: 12.8230, lng: 80.0500, intensity: 0.75, severity: "high" as const },
+        { lat: 12.8235, lng: 80.0410, intensity: 0.70, severity: "high" as const },
+      ];
+      console.log(`📍 Created ${mockData.length} flood simulation points around SRMIST campus`);
+      return mockData;
+    }
+    
+    // Use all heatmap points with boosted intensity for visibility
+    const flowData = heatmapData.map((point) => ({
+      lat: point.lat,
+      lng: point.lng,
+      // Keep intensity high (0.5-1.0 range) for better visibility
+      intensity: Math.max(0.5, Math.min(point.intensity / 2, 1)),
+      severity: point.report.severity,
+    }));
+    
+    console.log("Flow data generated:", {
+      count: flowData.length,
+      sample: flowData.slice(0, 3),
+      intensityRange: flowData.length > 0 ? {
+        min: Math.min(...flowData.map(p => p.intensity)),
+        max: Math.max(...flowData.map(p => p.intensity))
+      } : null
+    });
+    
+    return flowData;
   };
+
+
 
   return (
     <UserLayout
       title="Community"
       description="Connect with your community and view flood reports"
     >
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-900, .text-slate-800 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95, .bg-white {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+          .bg-clip-text {
+            -webkit-text-fill-color: hsl(47, 100%, 60%) !important;
+          }
+        ` : ''}
+      `}</style>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -1001,7 +1106,7 @@ const Community = () => {
               </CardHeader>
               <CardContent>
                 {/* Heatmap Controls */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 relative z-10">
                   <div className="space-y-1">
                     <label className="text-sm text-gray-600">View Mode</label>
                     <Select

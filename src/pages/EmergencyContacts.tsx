@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -68,6 +69,7 @@ interface EmergencyMessage {
 }
 
 const EmergencyContacts = () => {
+  const { theme } = useTheme();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -318,6 +320,21 @@ const EmergencyContacts = () => {
       title="Emergency Contacts"
       description="Manage your emergency contacts"
     >
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-900, .text-slate-800 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95, .bg-white {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+          .bg-clip-text {
+            -webkit-text-fill-color: hsl(47, 100%, 60%) !important;
+          }
+        ` : ''}
+      `}</style>
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-4">
         <div className="flex items-center justify-between">

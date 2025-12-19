@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +41,7 @@ import {
 import { supabase } from '@/lib/supabase';
 
 const Profile = () => {
+  const { theme } = useTheme();
   const { currentUser, userProfile, updateUserProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
@@ -277,6 +279,21 @@ const Profile = () => {
 
   return (
     <UserLayout title="Profile Settings" description="Manage your account and preferences">
+      <style>{`
+        ${theme === 'high-contrast' ? `
+          .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+          .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
+          .text-slate-500, .text-slate-900, .text-slate-800 {
+            color: hsl(0, 0%, 100%) !important;
+          }
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95, .bg-white {
+            background-color: hsl(0, 0%, 10%) !important;
+          }
+          .bg-clip-text {
+            -webkit-text-fill-color: hsl(47, 100%, 60%) !important;
+          }
+        ` : ''}
+      `}</style>
       {/* Profile Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3">
