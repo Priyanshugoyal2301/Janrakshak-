@@ -31,7 +31,7 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.title': 'Dashboard',
     'dashboard.welcomeBack': 'Welcome back',
     'dashboard.overview': 'Overview',
-    'dashboard.nearbyS helters': 'Nearby Shelters',
+    'dashboard.nearbyShelters': 'Nearby Shelters',
     'dashboard.totalReports': 'Total Reports',
     'dashboard.allYourFloodReports': 'All your flood reports',
     'dashboard.criticalReports': 'Critical Reports',

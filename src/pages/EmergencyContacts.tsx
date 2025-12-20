@@ -324,14 +324,33 @@ const EmergencyContacts = () => {
         ${theme === 'high-contrast' ? `
           .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
           .text-gray-500, .text-gray-400, .text-slate-600, .text-slate-700,
-          .text-slate-500, .text-slate-900, .text-slate-800 {
+          .text-slate-500, .text-slate-900, .text-slate-800, .text-red-600,
+          .text-blue-600, .text-green-600, .text-orange-600, .text-blue-900,
+          .text-purple-500, .text-red-500, .text-green-500 {
             color: hsl(0, 0%, 100%) !important;
           }
-          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95, .bg-white {
+          .bg-white\\/80, .bg-white\\/90, .bg-white\\/95, .bg-white, 
+          .bg-red-50, .bg-blue-50, .bg-green-50, .bg-orange-50,
+          .bg-gray-50, .bg-slate-50, .bg-red-100, .bg-blue-100,
+          .bg-yellow-100 {
             background-color: hsl(0, 0%, 10%) !important;
+            border-color: hsl(0, 0%, 40%) !important;
+          }
+          .hover\\:bg-gray-50:hover {
+            background-color: hsl(0, 0%, 15%) !important;
           }
           .bg-clip-text {
             -webkit-text-fill-color: hsl(47, 100%, 60%) !important;
+          }
+          .border-red-200, .border-blue-200, .border-green-200,
+          .border-gray-200, .border-slate-200, .border-yellow-200 {
+            border-color: hsl(0, 0%, 40%) !important;
+          }
+          .shadow-lg, .shadow-sm, .shadow {
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1) !important;
+          }
+          .text-yellow-800 {
+            color: hsl(47, 100%, 60%) !important;
           }
         ` : ''}
       `}</style>

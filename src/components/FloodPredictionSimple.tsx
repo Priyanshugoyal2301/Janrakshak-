@@ -186,7 +186,7 @@ const FloodPredictionSimple: React.FC = () => {
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center space-x-2 mb-2">
           <Shield className="w-8 h-8 text-blue-600" />
-          <span>Flood Damage Assessment</span>
+          <span>Flood Prediction</span>
         </h1>
         <p className="text-gray-600">
           AI-powered flood prediction using JanRakshak Pre-Alert Model

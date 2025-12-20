@@ -19,11 +19,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const root = document.documentElement;
     
+    console.log('ThemeContext: Applying theme:', theme);
+    
     // Remove all theme classes
     root.classList.remove('light', 'high-contrast');
     
     // Add current theme class
     root.classList.add(theme);
+    
+    console.log('ThemeContext: HTML classes:', root.className);
     
     // Save to localStorage
     localStorage.setItem('theme', theme);
@@ -34,7 +38,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleTheme = () => {
-    setThemeState(current => current === 'light' ? 'high-contrast' : 'light');
+    setThemeState(current => {
+      const newTheme = current === 'light' ? 'high-contrast' : 'light';
+      console.log('ThemeContext: Toggling theme from', current, 'to', newTheme);
+      return newTheme;
+    });
   };
 
   return (

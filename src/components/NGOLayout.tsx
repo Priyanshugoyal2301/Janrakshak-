@@ -14,6 +14,7 @@ import {
 import { useRoleAwareAuth } from "@/contexts/RoleAwareAuthContext";
 import { supabase } from "@/lib/supabase";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Menu,
   X,
@@ -40,6 +41,8 @@ import {
   HandHeart,
   Truck,
   Package,
+  Sun,
+  Contrast,
 } from "lucide-react";
 
 interface NGOLayoutProps {
@@ -59,6 +62,9 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, userProfile, signOut } = useRoleAwareAuth();
+  const { theme, toggleTheme } = useTheme();
+
+  console.log('NGOLayout - Current theme:', theme);
 
   // Load real-time counts for NGO dashboard
   useEffect(() => {
@@ -265,6 +271,28 @@ const NGOLayout = ({ children }: NGOLayoutProps) => {
                 >
                   <RefreshCw className="w-4 h-4 md:mr-2" />
                   <span className="hidden md:inline">Refresh</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-white border-2 border-yellow-400 hover:bg-white/30 bg-white/20 font-medium"
+                  onClick={() => {
+                    console.log('NGO Theme toggle clicked, current theme:', theme);
+                    toggleTheme();
+                  }}
+                  title={`Toggle Theme (Current: ${theme})`}
+                >
+                  {theme === 'light' ? (
+                    <>
+                      <Sun className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline text-xs">Light</span>
+                    </>
+                  ) : (
+                    <>
+                      <Contrast className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline text-xs">High</span>
+                    </>
+                  )}
                 </Button>
               </div>
               <Badge

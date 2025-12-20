@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Menu,
   X,
@@ -42,6 +43,8 @@ import {
   Heart as FirstAid,
   Clock,
   Download,
+  Sun,
+  Contrast,
 } from "lucide-react";
 
 interface VolunteerLayoutProps {
@@ -60,6 +63,9 @@ const VolunteerLayout = ({ children }: VolunteerLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useSupabaseAuth();
+  const { theme, toggleTheme } = useTheme();
+
+  console.log('VolunteerLayout - Current theme:', theme);
 
   // For volunteers, extract profile info from user metadata or create a basic profile
   const userProfile = user
@@ -532,6 +538,29 @@ const VolunteerLayout = ({ children }: VolunteerLayoutProps) => {
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Refresh Data
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-2 border-yellow-400 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm font-medium shadow-lg"
+                  onClick={() => {
+                    console.log('Volunteer Theme toggle clicked, current theme:', theme);
+                    toggleTheme();
+                  }}
+                  title={`Toggle Theme (Current: ${theme})`}
+                >
+                  {theme === 'light' ? (
+                    <>
+                      <Sun className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline text-xs">Light</span>
+                    </>
+                  ) : (
+                    <>
+                      <Contrast className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline text-xs">High</span>
+                    </>
+                  )}
                 </Button>
 
                 <DropdownMenu>

@@ -482,7 +482,7 @@ const UserDashboard = () => {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">{t('dashboard.overview')}</TabsTrigger>
           <TabsTrigger value="reports">{t('header.myReports')}</TabsTrigger>
-          <TabsTrigger value="shelters">{t('dashboard.nearbyShelters')}</TabsTrigger>
+          <TabsTrigger value="shelters">{t('header.findShelters')}</TabsTrigger>
           <TabsTrigger value="analytics">{t('header.analytics')}</TabsTrigger>
         </TabsList>
 

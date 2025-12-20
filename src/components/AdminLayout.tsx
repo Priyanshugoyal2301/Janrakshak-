@@ -15,6 +15,7 @@ import {
 import { useSupabaseAuthMinimal } from "@/contexts/SupabaseAuthContextMinimal";
 import { getRealTimeCounts } from "@/lib/adminSupabase";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Menu,
   X,
@@ -44,6 +45,8 @@ import {
   Globe,
   Sparkles,
   Zap,
+  Sun,
+  Contrast,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -63,6 +66,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useSupabaseAuthMinimal();
+  const { theme, toggleTheme } = useTheme();
+
+  console.log('AdminLayout - Current theme:', theme);
 
   // Load real-time counts
   useEffect(() => {
@@ -241,20 +247,20 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-teal-100 to-blue-200 text-gray-700 backdrop-blur-xl shadow-2xl border border-teal-200 rounded-r-2xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:left-4 lg:top-4 lg:bottom-4 lg:rounded-2xl ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-slate-200 backdrop-blur-xl shadow-2xl border border-slate-700/50 rounded-r-2xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:left-4 lg:top-4 lg:bottom-4 lg:rounded-2xl ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-teal-200">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700/50 bg-slate-900/50">
           <div className="flex items-center space-x-2">
             <img src="/favicon.svg" alt="JanRakshak Logo" className="w-8 h-8" />
-            <span className="text-xl font-bold text-teal-700">JanRakshak</span>
+            <span className="text-xl font-bold text-white">JanRakshak</span>
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden text-teal-700 hover:bg-teal-200"
+            className="lg:hidden text-slate-300 hover:bg-slate-700/50 hover:text-white"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="w-5 h-5" />
@@ -271,10 +277,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
+                  className={`w-full justify-start text-slate-300 ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-lg"
-                      : "hover:bg-teal-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50"
+                      : "hover:bg-slate-800/50 hover:text-white"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -295,7 +301,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
           {/* Training Management - Moved up */}
           <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
               Training Management
             </h3>
             {navigationSections.training.map((item) => {
@@ -304,10 +310,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
+                  className={`w-full justify-start text-slate-300 ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-lg"
-                      : "hover:bg-teal-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50"
+                      : "hover:bg-slate-800/50 hover:text-white"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -328,7 +334,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
           {/* GIS Intelligence - Moved up */}
           <div className="space-y-1">
-            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
               GIS Intelligence
             </h3>
             {navigationSections.gis.map((item) => {
@@ -337,10 +343,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
+                  className={`w-full justify-start text-slate-300 ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-lg"
-                      : "hover:bg-teal-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50"
+                      : "hover:bg-slate-800/50 hover:text-white"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -367,7 +373,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
           {/* Real-time Monitoring */}
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
               Real-time Monitoring
             </h3>
             {navigationSections.monitoring.map((item) => {
@@ -376,10 +382,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
+                  className={`w-full justify-start text-slate-300 ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-lg"
-                      : "hover:bg-teal-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50"
+                      : "hover:bg-slate-800/50 hover:text-white"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -410,7 +416,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
           {/* Management */}
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
               Management
             </h3>
             {navigationSections.management.map((item) => {
@@ -419,10 +425,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
+                  className={`w-full justify-start text-slate-300 ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-lg"
-                      : "hover:bg-teal-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50"
+                      : "hover:bg-slate-800/50 hover:text-white"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -443,7 +449,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
           {/* Prediction & Assessment */}
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
               Prediction & Assessment
             </h3>
             {navigationSections.prediction.map((item) => {
@@ -452,10 +458,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
+                  className={`w-full justify-start text-slate-300 ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-lg"
-                      : "hover:bg-teal-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50"
+                      : "hover:bg-slate-800/50 hover:text-white"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -482,7 +488,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
           {/* Analytics & Reporting */}
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
               Analytics & Reporting
             </h3>
             {navigationSections.analytics.map((item) => {
@@ -491,10 +497,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
+                  className={`w-full justify-start text-slate-300 ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-lg"
-                      : "hover:bg-teal-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50"
+                      : "hover:bg-slate-800/50 hover:text-white"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -521,7 +527,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
           {/* System Operations */}
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider px-2">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
               System Operations
             </h3>
             {navigationSections.system.map((item) => {
@@ -530,10 +536,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Button
                   key={item.name}
                   variant={isActive ? "default" : "ghost"}
-                  className={`w-full justify-start text-teal-700 ${
+                  className={`w-full justify-start text-slate-300 ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-lg"
-                      : "hover:bg-teal-200"
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50"
+                      : "hover:bg-slate-800/50 hover:text-white"
                   }`}
                   onClick={() => {
                     navigate(item.href);
@@ -547,11 +553,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             })}
           </div>
 
-          <div className="border-t border-teal-200 my-4"></div>
+          <div className="border-t border-slate-700/50 my-4"></div>
 
           <Button
             variant="ghost"
-            className="w-full justify-start text-red-600 hover:bg-red-100"
+            className="w-full justify-start text-red-400 hover:bg-red-900/30 hover:text-red-300"
             onClick={handleLogout}
           >
             <LogOut className="w-4 h-4 mr-3" />
@@ -586,7 +592,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             </div>
             <div className="flex items-center space-x-3">
               {/* Real-time status indicators */}
-              <div className="flex items-center space-x-3 text-white text-sm">
+              <div className="hidden xl:flex items-center space-x-3 text-white text-sm">
                 <div className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   <span>Live</span>
@@ -605,20 +611,20 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 </Badge>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
+                  className="hidden md:flex border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
                   onClick={loadRealTimeCounts}
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh Data
+                  <RefreshCw className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Refresh Data</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
+                  className="hidden lg:flex border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
                   onClick={() => navigate("/admin/gis-mapping")}
                 >
                   <MapPin className="w-4 h-4 mr-2" />
@@ -629,7 +635,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
+                      className="hidden lg:flex border-2 border-purple-300/50 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Quick Reports
@@ -669,6 +675,30 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                {/* Theme Toggle - Always Visible */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-2 border-yellow-400 text-white hover:bg-purple-500/30 bg-purple-500/20 backdrop-blur-sm font-medium shadow-lg"
+                  onClick={() => {
+                    console.log('Theme toggle clicked, current theme:', theme);
+                    toggleTheme();
+                  }}
+                  title={`Toggle Theme (Current: ${theme})`}
+                >
+                  {theme === 'light' ? (
+                    <>
+                      <Sun className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline text-xs">Light</span>
+                    </>
+                  ) : (
+                    <>
+                      <Contrast className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline text-xs">High</span>
+                    </>
+                  )}
+                </Button>
+                {/* User Avatar */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
