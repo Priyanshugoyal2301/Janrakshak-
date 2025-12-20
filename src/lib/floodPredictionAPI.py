@@ -4,13 +4,25 @@ import pandas as pd
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # --- INITIAL SETUP ---
 load_dotenv()
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(title="JanRakshak Flood Prediction API", version="1.0.0")
+
+# Add rate limit exceeded handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -91,7 +103,8 @@ def process_and_predict(forecast_data):
 
 # --- API ENDPOINTS ---
 @app.get("/")
-def read_root():
+@limiter.limit("10/hour")
+def read_root(request: Request):
     return {"message": "Welcome to the JanRakshak API"}
 
 LOCATION_COORDS = {
@@ -108,8 +121,9 @@ LOCATION_COORDS = {
 }
 
 @app.post("/predict_regional")
-def predict_regional_risk(request: RegionalRequest):
-    selected_location = request.location
+@limiter.limit("10/hour")
+def predict_regional_risk(request: Request, req: RegionalRequest):
+    selected_location = req.location
     if selected_location not in LOCATION_COORDS:
         raise HTTPException(status_code=404, detail=f"Location '{selected_location}' not supported.")
 
@@ -142,9 +156,10 @@ def predict_regional_risk(request: RegionalRequest):
     }
 
 @app.post("/predict_by_coords")
-def predict_risk_by_coords(request: CoordsRequest):
+@limiter.limit("10/hour")
+def predict_risk_by_coords(request: Request, req: CoordsRequest):
     try:
-        forecast_data = get_windy_forecast(request.lat, request.lon)
+        forecast_data = get_windy_forecast(req.lat, req.lon)
         main_prediction, detailed_forecast = process_and_predict(forecast_data)
         
         if main_prediction is None:

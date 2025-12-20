@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSupabaseAuth } from "../contexts/SupabaseAuthContext";
 import { supabase } from "../lib/supabase";
+import NGOLayout from "./NGOLayout";
 import {
   Package,
   Truck,
@@ -186,14 +187,17 @@ export default function ReliefAllocation() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <NGOLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </NGOLayout>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <NGOLayout>
+      <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -559,5 +563,6 @@ export default function ReliefAllocation() {
         </div>
       )}
     </div>
+    </NGOLayout>
   );
 }

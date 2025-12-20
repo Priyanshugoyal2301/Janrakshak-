@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import NGOLayout from "./NGOLayout";
 import {
   Users,
   UserPlus,
@@ -318,14 +319,17 @@ export default function VolunteerManagement() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <NGOLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </NGOLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <NGOLayout>
+      <div className="space-y-6">
       {/* Status Bar */}
       <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm border border-green-200 rounded-lg p-4">
         <div className="flex items-center space-x-4">
@@ -842,5 +846,6 @@ export default function VolunteerManagement() {
         </div>
       )}
     </div>
+    </NGOLayout>
   );
 }

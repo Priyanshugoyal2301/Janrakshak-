@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+fimport { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TranslatedTextProps {
   children: string;
@@ -7,7 +7,11 @@ interface TranslatedTextProps {
   className?: string;
 }
 
-export const TranslatedText = ({ children, as: Component = 'span', className }: TranslatedTextProps) => {
+export const TranslatedText = ({
+  children,
+  as: Component = "span",
+  className,
+}: TranslatedTextProps) => {
   const { language, translateDynamic } = useLanguage();
   const [translatedText, setTranslatedText] = useState(children);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -16,7 +20,7 @@ export const TranslatedText = ({ children, as: Component = 'span', className }: 
     let isMounted = true;
 
     const translate = async () => {
-      if (language === 'en') {
+      if (language === "en") {
         setTranslatedText(children);
         return;
       }
@@ -28,7 +32,7 @@ export const TranslatedText = ({ children, as: Component = 'span', className }: 
           setTranslatedText(translated);
         }
       } catch (error) {
-        console.error('Translation error:', error);
+        console.error("Translation error:", error);
         if (isMounted) {
           setTranslatedText(children);
         }
@@ -54,7 +58,7 @@ export const useTranslate = () => {
   const { translateDynamic, language } = useLanguage();
 
   const translate = async (text: string): Promise<string> => {
-    if (language === 'en' || !text) return text;
+    if (language === "en" || !text) return text;
     return await translateDynamic(text);
   };
 

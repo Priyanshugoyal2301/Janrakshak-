@@ -680,6 +680,8 @@ const AdminRoutes = () => {
             routes={interactiveMap.routes}
             isCalculating={interactiveMap.isCalculating}
             showInstructions={interactiveMap.showInstructions}
+            useWaterRoutes={interactiveMap.useWaterRoutes}
+            floodReports={interactiveMap.floodReports}
             onAddPoint={interactiveMap.addPoint}
             onRemovePoint={interactiveMap.removePoint}
             onCalculateRoute={interactiveMap.calculateRoute}
@@ -687,6 +689,7 @@ const AdminRoutes = () => {
             onToggleInstructions={interactiveMap.toggleInstructions}
             onClearPoints={interactiveMap.clearPoints}
             onOpenFullscreen={openRoutePlanningDialog}
+            onToggleWaterRoutes={interactiveMap.toggleWaterRoutes}
           />
         </div>
 

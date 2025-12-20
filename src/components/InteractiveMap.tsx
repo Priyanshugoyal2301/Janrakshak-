@@ -20,7 +20,9 @@ import {
   AlertTriangle,
   ExternalLink,
   Map,
-  Maximize
+  Maximize,
+  Ship,
+  Waves
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +43,8 @@ interface InteractiveMapProps {
   routes: RouteInfo[];
   isCalculating: boolean;
   showInstructions: boolean;
+  useWaterRoutes?: boolean;
+  floodReports?: any[];
   onAddPoint: (lat: number, lng: number, type: MapPoint['type'], label?: string) => void;
   onRemovePoint: (pointId: string) => void;
   onCalculateRoute: () => Promise<void>;
@@ -48,6 +52,7 @@ interface InteractiveMapProps {
   onToggleInstructions: () => void;
   onClearPoints: () => void;
   onOpenFullscreen?: () => void;
+  onToggleWaterRoutes?: () => void;
 }
 
 // Component to handle map clicks with improved reliability
@@ -176,21 +181,24 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   routes,
   isCalculating,
   showInstructions,
+  useWaterRoutes = false,
+  floodReports = [],
   onAddPoint,
   onRemovePoint,
   onCalculateRoute,
   onOptimizeRoute,
   onToggleInstructions,
   onClearPoints,
-  onOpenFullscreen
+  onOpenFullscreen,
+  onToggleWaterRoutes
 }) => {
   const mapRef = useRef<L.Map>(null);
   const [apiStatus, setApiStatus] = useState<'testing' | 'connected' | 'disconnected'>('testing');
   const [clickFeedback, setClickFeedback] = useState<{lat: number, lng: number} | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
 
-  // Default color for rescue operations
-  const routeColor = '#3b82f6'; // Blue for rescue routes
+  // Route color: Blue for water routes, default for road routes
+  const routeColor = useWaterRoutes ? '#0ea5e9' : '#3b82f6';
 
   // Test API connection on component mount
   useEffect(() => {
@@ -442,15 +450,43 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             
             {/* Map Controls */}
             <div className="mt-3 space-y-3">
+              {/* Water Route Toggle */}
+              {onToggleWaterRoutes && (
+                <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    {useWaterRoutes ? <Ship className="h-5 w-5 text-blue-600" /> : <Car className="h-5 w-5 text-gray-600" />}
+                    <div>
+                      <p className="text-sm font-medium">
+                        {useWaterRoutes ? 'Water Route Mode' : 'Road Route Mode'}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {useWaterRoutes 
+                          ? `Using boat navigation (${floodReports.length} flood reports detected)` 
+                          : 'Using standard road navigation'}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={onToggleWaterRoutes}
+                    variant={useWaterRoutes ? "default" : "outline"}
+                    size="sm"
+                    className={useWaterRoutes ? "bg-blue-600 hover:bg-blue-700" : ""}
+                  >
+                    {useWaterRoutes ? <Waves className="h-4 w-4 mr-2" /> : <Car className="h-4 w-4 mr-2" />}
+                    {useWaterRoutes ? 'Switch to Road' : 'Switch to Water'}
+                  </Button>
+                </div>
+              )}
+              
               {/* Route Actions */}
               <div className="flex items-center space-x-2">
                 <Button
                   onClick={onCalculateRoute}
                   disabled={points.length < 2 || isCalculating}
-                  className="bg-teal-600 hover:bg-teal-700"
+                  className={useWaterRoutes ? "bg-blue-600 hover:bg-blue-700" : "bg-teal-600 hover:bg-teal-700"}
                 >
-                  <Route className="h-4 w-4 mr-2" />
-                  {isCalculating ? 'Calculating...' : 'Calculate Rescue Route'}
+                  {useWaterRoutes ? <Ship className="h-4 w-4 mr-2" /> : <Route className="h-4 w-4 mr-2" />}
+                  {isCalculating ? 'Calculating...' : useWaterRoutes ? 'Calculate Water Route' : 'Calculate Rescue Route'}
                 </Button>
                 <Button
                   onClick={onOptimizeRoute}

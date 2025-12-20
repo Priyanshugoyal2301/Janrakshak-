@@ -3,7 +3,7 @@ FastAPI Service for xView2 Flood Damage Detection
 Deployed on Google Cloud Run for JalRakshak Flood Early Warning System
 """
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -14,10 +14,16 @@ import logging
 from typing import Optional
 from inference import xView2Inference
 from indian_damage_mapping import IndianDamageMapper
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -25,6 +31,10 @@ app = FastAPI(
     description="AI-powered flood damage assessment for Indian disaster management",
     version="1.0.0"
 )
+
+# Add rate limit exceeded handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
  #add cors middle
 # Add CORS middleware
 app.add_middleware(
@@ -49,7 +59,8 @@ def get_model():
     return model_instance
 
 @app.get("/")
-async def root():
+@limiter.limit("10/hour")
+async def root(request: Request):
     """Health check endpoint"""
     return {
         "message": "JalRakshak Flood Damage Detection API",
@@ -58,7 +69,8 @@ async def root():
     }
 
 @app.get("/health")
-async def health_check():
+@limiter.limit("10/hour")
+async def health_check(request: Request):
     """Detailed health check"""
     try:
         model = get_model()
@@ -77,7 +89,9 @@ async def health_check():
         }
 
 @app.post("/analyze")
+@limiter.limit("10/hour")
 async def analyze_damage(
+    request: Request,
     file: UploadFile = File(...),
     state: str = Form(default="punjab"),
     latitude: Optional[float] = Form(default=None),
@@ -156,7 +170,8 @@ async def analyze_damage(
         )
 
 @app.get("/states")
-async def get_supported_states():
+@limiter.limit("10/hour")
+async def get_supported_states(request: Request):
     """Get list of supported Indian states"""
     states = list(damage_mapper.state_relief_amounts.keys())
     return {
@@ -165,7 +180,8 @@ async def get_supported_states():
     }
 
 @app.get("/state/{state_name}")
-async def get_state_info(state_name: str):
+@limiter.limit("10/hour")
+async def get_state_info(request: Request, state_name: str):
     """Get state-specific information"""
     try:
         state_info = damage_mapper.get_state_info(state_name.lower())
@@ -177,7 +193,8 @@ async def get_state_info(state_name: str):
         )
 
 @app.get("/model/info")
-async def get_model_info():
+@limiter.limit("10/hour")
+async def get_model_info(request: Request):
     """Get model information"""
     try:
         model = get_model()
@@ -189,7 +206,9 @@ async def get_model_info():
         )
 
 @app.post("/batch-analyze")
+@limiter.limit("10/hour")
 async def batch_analyze_damage(
+    request: Request,
     files: list[UploadFile] = File(...),
     state: str = Form(default="punjab")
 ):

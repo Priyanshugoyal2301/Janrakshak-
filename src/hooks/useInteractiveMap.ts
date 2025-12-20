@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import L from 'leaflet';
 import { graphHopperService, GraphHopperPoint } from '@/services/graphhopper';
+import { supabase } from '@/lib/supabase';
 
 export interface MapPoint {
   id: string;
@@ -19,6 +20,7 @@ export interface RouteInfo {
     distance: number;
     time: number;
   }>;
+  isWaterRoute?: boolean;
 }
 
 export interface InteractiveMapState {
@@ -26,6 +28,8 @@ export interface InteractiveMapState {
   routes: RouteInfo[];
   isCalculating: boolean;
   showInstructions: boolean;
+  floodReports: any[];
+  useWaterRoutes: boolean;
 }
 
 export const useInteractiveMap = () => {
@@ -33,12 +37,43 @@ export const useInteractiveMap = () => {
     points: [],
     routes: [],
     isCalculating: false,
-    showInstructions: false
+    showInstructions: false,
+    floodReports: [],
+    useWaterRoutes: false
   });
 
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const polylinesRef = useRef<L.Polyline[]>([]);
+
+  // Fetch recent flood reports
+  const fetchFloodReports = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('flood_reports')
+        .select('*')
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      console.log('Fetched flood reports for route calculation:', data);
+      setState(prev => ({ ...prev, floodReports: data || [] }));
+      
+      // Auto-enable water routes if there are recent flood reports
+      if (data && data.length > 0) {
+        setState(prev => ({ ...prev, useWaterRoutes: true }));
+      }
+    } catch (error) {
+      console.error('Error fetching flood reports:', error);
+    }
+  }, []);
+
+  // Toggle water route mode
+  const toggleWaterRoutes = useCallback(() => {
+    setState(prev => ({ ...prev, useWaterRoutes: !prev.useWaterRoutes }));
+  }, []);
 
   // Add point to map
   const addPoint = useCallback((lat: number, lng: number, type: MapPoint['type'], label?: string) => {
@@ -83,33 +118,48 @@ export const useInteractiveMap = () => {
 
     setState(prev => ({ ...prev, isCalculating: true }));
 
+    // Fetch flood reports if not already fetched
+    if (state.floodReports.length === 0) {
+      await fetchFloodReports();
+    }
+
     try {
       const graphHopperPoints: GraphHopperPoint[] = state.points.map(p => ({
         lat: p.lat,
         lng: p.lng
       }));
 
-      console.log('Calculating precise rescue route for points:', graphHopperPoints);
+      console.log('Calculating route for points:', graphHopperPoints);
+      console.log('Water route mode:', state.useWaterRoutes);
+      console.log('Flood reports:', state.floodReports);
 
-      // Use the specialized rescue route method for better precision
-      const response = await graphHopperService.calculateRescueRoute(graphHopperPoints);
+      // Use water route if enabled or if floods detected
+      const response = await graphHopperService.calculateRoute({
+        points: graphHopperPoints,
+        vehicle: state.useWaterRoutes ? 'boat' : 'car',
+        optimize: false,
+        instructions: true,
+        useWaterRoutes: state.useWaterRoutes,
+        floodReports: state.floodReports
+      });
 
-      console.log('Precise rescue route response:', response);
+      console.log('Route response:', response);
 
       const routes: RouteInfo[] = response.paths.map(path => {
-        console.log('Processing precise path:', path);
+        console.log('Processing path:', path);
         const decodedPoints = graphHopperService.decodePolyline(path.points);
-        console.log('Decoded precise points:', decodedPoints);
+        console.log('Decoded points:', decodedPoints);
         
         return {
           distance: graphHopperService.formatDistance(path.distance),
           duration: graphHopperService.formatDuration(path.time),
           points: decodedPoints,
-          instructions: path.instructions || []
+          instructions: path.instructions || [],
+          isWaterRoute: response.isWaterRoute
         };
       });
 
-      console.log('Final precise routes:', routes);
+      console.log('Final routes:', routes);
 
       setState(prev => ({
         ...prev,
@@ -119,11 +169,11 @@ export const useInteractiveMap = () => {
 
       return routes;
     } catch (error) {
-      console.error('Precise route calculation error:', error);
+      console.error('Route calculation error:', error);
       setState(prev => ({ ...prev, isCalculating: false }));
       throw error;
     }
-  }, [state.points]);
+  }, [state.points, state.useWaterRoutes, state.floodReports, fetchFloodReports]);
 
   // Optimize route (TSP) for rescue operations with precise optimization
   const optimizeRoute = useCallback(async () => {
@@ -133,18 +183,31 @@ export const useInteractiveMap = () => {
 
     setState(prev => ({ ...prev, isCalculating: true }));
 
+    // Fetch flood reports if not already fetched
+    if (state.floodReports.length === 0) {
+      await fetchFloodReports();
+    }
+
     try {
       const graphHopperPoints: GraphHopperPoint[] = state.points.map(p => ({
         lat: p.lat,
         lng: p.lng
       }));
 
-      console.log('Optimizing precise rescue route for points:', graphHopperPoints);
+      console.log('Optimizing route for points:', graphHopperPoints);
+      console.log('Water route mode:', state.useWaterRoutes);
 
-      // Use the specialized rescue route method with optimization enabled
-      const response = await graphHopperService.calculateRescueRoute(graphHopperPoints);
+      // Use water route if enabled
+      const response = await graphHopperService.calculateRoute({
+        points: graphHopperPoints,
+        vehicle: state.useWaterRoutes ? 'boat' : 'car',
+        optimize: true,
+        instructions: true,
+        useWaterRoutes: state.useWaterRoutes,
+        floodReports: state.floodReports
+      });
       
-      console.log('Optimized rescue route response:', response);
+      console.log('Optimized route response:', response);
 
       const routes: RouteInfo[] = response.paths.map(path => {
         console.log('Processing optimized path:', path);
@@ -155,7 +218,8 @@ export const useInteractiveMap = () => {
           distance: graphHopperService.formatDistance(path.distance),
           duration: graphHopperService.formatDuration(path.time),
           points: decodedPoints,
-          instructions: path.instructions || []
+          instructions: path.instructions || [],
+          isWaterRoute: response.isWaterRoute
         };
       });
 
@@ -173,7 +237,7 @@ export const useInteractiveMap = () => {
       setState(prev => ({ ...prev, isCalculating: false }));
       throw error;
     }
-  }, [state.points]);
+  }, [state.points, state.useWaterRoutes, state.floodReports, fetchFloodReports]);
 
   // Toggle instructions visibility
   const toggleInstructions = useCallback(() => {
@@ -207,6 +271,8 @@ export const useInteractiveMap = () => {
     toggleInstructions,
     getPointByType,
     reorderPoints,
+    fetchFloodReports,
+    toggleWaterRoutes,
     mapRef,
     markersRef,
     polylinesRef

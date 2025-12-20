@@ -19,14 +19,18 @@ export interface GraphHopperRoute {
 
 export interface GraphHopperResponse {
   paths: GraphHopperRoute[];
+  isWaterRoute?: boolean;
+  floodReports?: any[];
 }
 
 export interface RouteOptimizationRequest {
   points: GraphHopperPoint[];
-  vehicle?: 'car' | 'bike' | 'foot' | 'motorcycle' | 'truck';
+  vehicle?: 'car' | 'bike' | 'foot' | 'motorcycle' | 'truck' | 'boat';
   optimize?: boolean;
   instructions?: boolean;
   elevation?: boolean;
+  useWaterRoutes?: boolean;
+  floodReports?: any[];
 }
 
 class GraphHopperService {
@@ -77,10 +81,16 @@ class GraphHopperService {
    * Calculate route between multiple points for rescue operations
    */
   async calculateRoute(request: RouteOptimizationRequest): Promise<GraphHopperResponse> {
-    const { points, vehicle = 'car', optimize = false, instructions = true, elevation = false } = request;
+    const { points, vehicle = 'car', optimize = false, instructions = true, elevation = false, useWaterRoutes = false, floodReports = [] } = request;
     
     if (points.length < 2) {
       throw new Error('At least 2 points are required for route calculation');
+    }
+
+    // If water routes are requested or flood is detected, calculate water route
+    if (useWaterRoutes || this.shouldUseWaterRoute(floodReports, points)) {
+      console.log('Calculating water route for flooded area');
+      return this.calculateWaterRoute(points, floodReports);
     }
 
     // Convert points to GraphHopper format
@@ -212,53 +222,272 @@ class GraphHopperService {
   }
 
   /**
+   * Determine if water route should be used based on flood reports
+   */
+  private shouldUseWaterRoute(floodReports: any[], points: GraphHopperPoint[]): boolean {
+    if (!floodReports || floodReports.length === 0) return false;
+
+    // Check if any point is near a flood report (within 5km radius)
+    const floodRadius = 5; // km
+
+    for (const point of points) {
+      for (const report of floodReports) {
+        if (report.location?.coordinates) {
+          const distance = this.calculateDistance(
+            point,
+            { lat: report.location.coordinates.lat, lng: report.location.coordinates.lng }
+          ) / 1000; // Convert to km
+
+          if (distance < floodRadius) {
+            console.log(`Flood detected within ${distance.toFixed(2)}km of route point`);
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Calculate water route for flooded areas
+   * This creates a boat navigation route that assumes all areas are flooded
+   */
+  private async calculateWaterRoute(
+    points: GraphHopperPoint[],
+    floodReports: any[]
+  ): Promise<GraphHopperResponse> {
+    console.log('Calculating water route for flooded area');
+    console.log('Flood reports:', floodReports);
+    console.log('Points:', points);
+
+    // Water routes with gentle natural curves
+    const waterRoutePoints: GraphHopperPoint[] = [];
+    
+    for (let i = 0; i < points.length - 1; i++) {
+      const start = points[i];
+      const end = points[i + 1];
+      
+      waterRoutePoints.push(start);
+      
+      const distance = this.calculateDistance(start, end);
+      const steps = Math.max(60, Math.floor(distance / 80));
+      
+      console.log(`Creating highly curved water path with ${steps} steps`);
+      
+      // Calculate perpendicular direction for curve
+      const dx = end.lat - start.lat;
+      const dy = end.lng - start.lng;
+      const perpLat = -dy;
+      const perpLng = dx;
+      const length = Math.sqrt(perpLat * perpLat + perpLng * perpLng);
+      const perpLatNorm = perpLat / length;
+      const perpLngNorm = perpLng / length;
+      
+      // Extreme circular curves - about 1200m+ at peak with randomness
+      const baseCurveAmplitude = 0.0108;
+      const curveDirection = (i % 2 === 0) ? 1 : -1;
+      
+      // Add random variation to curve amplitude (±50%)
+      const randomFactor = 0.5 + Math.random() * 1.0;
+      const curveAmplitude = baseCurveAmplitude * randomFactor;
+      
+      // Add secondary wave for S-curve effect (stronger)
+      const secondaryAmplitude = curveAmplitude * 0.4;
+      
+      for (let j = 1; j < steps; j++) {
+        const t = j / steps;
+        
+        // Main dramatic sine curve
+        const mainCurve = Math.sin(t * Math.PI) * curveAmplitude * curveDirection;
+        
+        // Secondary wave creates S-curves and circular feel
+        const secondaryCurve = Math.sin(t * Math.PI * 2.5) * secondaryAmplitude * curveDirection;
+        
+        // Add subtle random wobble for natural feel
+        const randomWobble = (Math.sin(t * 19.3) * 0.0008 + Math.cos(t * 27.7) * 0.0006) * curveDirection;
+        
+        const curveOffset = mainCurve + secondaryCurve + randomWobble;
+        
+        const baseLat = start.lat + dx * t;
+        const baseLng = start.lng + dy * t;
+        
+        const lat = baseLat + perpLatNorm * curveOffset;
+        const lng = baseLng + perpLngNorm * curveOffset;
+        
+        waterRoutePoints.push({ lat, lng });
+      }
+    }
+    
+    waterRoutePoints.push(points[points.length - 1]);
+    
+    console.log(`Generated water route with ${waterRoutePoints.length} total points`);
+    
+    // Calculate distance
+    let totalDistance = 0;
+    for (let i = 0; i < waterRoutePoints.length - 1; i++) {
+      totalDistance += this.calculateDistance(waterRoutePoints[i], waterRoutePoints[i + 1]);
+    }
+    
+    console.log(`Water route total distance: ${(totalDistance / 1000).toFixed(2)} km`);
+    
+    const estimatedTime = (totalDistance / 1000) * 6;
+    const encodedPoints = this.encodePolyline(waterRoutePoints);
+    const instructions = this.createWaterNavigationInstructions(points, floodReports);
+    
+    return {
+      paths: [{
+        distance: totalDistance,
+        time: estimatedTime * 60000,
+        points_encoded: true,
+        points: encodedPoints,
+        instructions: instructions
+      }],
+      isWaterRoute: true,
+      floodReports: floodReports
+    };
+  }
+
+  /**
+   * Find nearby flood report
+   */
+  private findNearbyFloodReport(
+    point: GraphHopperPoint,
+    floodReports: any[],
+    maxDistance: number
+  ): any | null {
+    for (const report of floodReports) {
+      if (report.location?.coordinates) {
+        const distance = this.calculateDistance(
+          point,
+          { lat: report.location.coordinates.lat, lng: report.location.coordinates.lng }
+        );
+        
+        if (distance <= maxDistance) {
+          return report;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Create water navigation instructions
+   */
+  private createWaterNavigationInstructions(
+    points: GraphHopperPoint[],
+    floodReports: any[]
+  ): Array<{ text: string; distance: number; time: number; sign: number }> {
+    const instructions = [];
+    
+    instructions.push({
+      text: '⚠️ WATER ROUTE - Use boat or watercraft only. All roads are flooded.',
+      distance: 0,
+      time: 0,
+      sign: -3 // Warning sign
+    });
+    
+    for (let i = 0; i < points.length - 1; i++) {
+      const start = points[i];
+      const end = points[i + 1];
+      const distance = this.calculateDistance(start, end);
+      const time = (distance / 1000) * 6; // 6 minutes per km for boat
+      
+      // Check for nearby flood reports
+      const nearbyFlood = this.findNearbyFloodReport(
+        { lat: (start.lat + end.lat) / 2, lng: (start.lng + end.lng) / 2 },
+        floodReports,
+        1000
+      );
+      
+      let instruction = `Navigate by water to waypoint ${i + 2}`;
+      
+      if (nearbyFlood) {
+        const severity = nearbyFlood.severity || 'moderate';
+        const waterLevel = nearbyFlood.water_level || 'unknown';
+        instruction += ` (Flood severity: ${severity}, water level: ${waterLevel})`;
+      }
+      
+      instructions.push({
+        text: instruction,
+        distance: distance,
+        time: time * 60000, // Convert to milliseconds
+        sign: 0
+      });
+    }
+    
+    instructions.push({
+      text: '🎯 Arrive at destination via water route',
+      distance: 0,
+      time: 0,
+      sign: 4 // Finish
+    });
+    
+    return instructions;
+  }
+
+  /**
    * Decode polyline string to coordinates using @mapbox/polyline
    */
   decodePolyline(encoded: string): GraphHopperPoint[] {
+    console.log('Decoding polyline, length:', encoded.length);
+    
     try {
       // Import polyline decoder dynamically
       const polyline = require('@mapbox/polyline');
       const coordinates = polyline.decode(encoded);
+      console.log('Decoded with @mapbox/polyline:', coordinates.length, 'points');
       return coordinates.map((coord: [number, number]) => ({
         lat: coord[0],
         lng: coord[1]
       }));
     } catch (error) {
-      console.error('Error decoding polyline:', error);
-      // Fallback to simple decoder
-      const points: GraphHopperPoint[] = [];
-      let index = 0;
-      let lat = 0;
-      let lng = 0;
-
-      while (index < encoded.length) {
-        let b, shift = 0, result = 0;
-        do {
-          b = encoded.charCodeAt(index++) - 63;
-          result |= (b & 0x1f) << shift;
-          shift += 5;
-        } while (b >= 0x20);
-        const dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lat += dlat;
-
-        shift = 0;
-        result = 0;
-        do {
-          b = encoded.charCodeAt(index++) - 63;
-          result |= (b & 0x1f) << shift;
-          shift += 5;
-        } while (b >= 0x20);
-        const dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lng += dlng;
-
-        points.push({
-          lat: lat / 1e5,
-          lng: lng / 1e5
-        });
-      }
-
-      return points;
+      console.warn('Failed to use @mapbox/polyline, using fallback decoder:', error);
+      // Fallback to manual decoder
+      return this.manualDecodePolyline(encoded);
     }
+  }
+
+  /**
+   * Manual polyline decoder (more reliable fallback)
+   */
+  private manualDecodePolyline(encoded: string): GraphHopperPoint[] {
+    const points: GraphHopperPoint[] = [];
+    let index = 0;
+    let lat = 0;
+    let lng = 0;
+
+    while (index < encoded.length) {
+      let b, shift = 0, result = 0;
+      
+      // Decode latitude
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      // Decode longitude
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      points.push({
+        lat: lat / 1e5,
+        lng: lng / 1e5
+      });
+    }
+
+    console.log('Manual decoder produced:', points.length, 'points');
+    return points;
   }
 
   /**
