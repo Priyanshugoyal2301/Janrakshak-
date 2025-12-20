@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { TranslatedText } from "@/components/TranslatedText";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +47,7 @@ import { toast } from "sonner";
 const Reports = () => {
   const { currentUser, userProfile } = useAuth();
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const [reports, setReports] = useState<FloodReport[]>([]);
   const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
   const [loading, setLoading] = useState(false);

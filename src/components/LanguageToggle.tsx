@@ -2,11 +2,25 @@ import { Languages } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from './ui/button';
 
+declare global {
+  interface Window {
+    translatePageContent: (lang: string) => void;
+    translationCache: Record<string, string>;
+    isTranslating: boolean;
+  }
+}
+
 const LanguageToggle = () => {
   const { language, setLanguage } = useLanguage();
 
   const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'hi' : 'en');
+    const newLang = language === 'en' ? 'hi' : 'en';
+    setLanguage(newLang);
+    
+    // Trigger page translation
+    if (window.translatePageContent) {
+      window.translatePageContent(newLang);
+    }
   };
 
   return (
@@ -26,3 +40,4 @@ const LanguageToggle = () => {
 };
 
 export default LanguageToggle;
+

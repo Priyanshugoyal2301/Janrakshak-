@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import UserLayout from '@/components/UserLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -96,6 +97,7 @@ interface Shelter {
 const ShelterFinder = () => {
   const { currentUser } = useAuth();
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   
   // State management

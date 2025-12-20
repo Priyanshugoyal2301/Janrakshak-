@@ -388,4 +388,19 @@
     -webkit-text-fill-color: transparent;
     animation: text-shine 3s linear infinite;
   }
+
+  /* Hide Google Translate toolbar and elements */
+  .goog-te-banner-frame.skiptranslate,
+  .goog-te-balloon-frame,
+  body > .skiptranslate {
+    display: none !important;
+  }
+  
+  body {
+    top: 0 !important;
+  }
+  
+  .goog-te-combo {
+    display: none;
+  }
 }

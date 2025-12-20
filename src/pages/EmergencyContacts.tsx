@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -70,6 +71,7 @@ interface EmergencyMessage {
 
 const EmergencyContacts = () => {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 

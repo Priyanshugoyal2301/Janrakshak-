@@ -7,6 +7,8 @@ import GradientCard from "@/components/GradientCard";
 import UserLayout from "@/components/UserLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAlert } from "@/contexts/AlertContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { TranslatedText } from "@/components/TranslatedText";
 import { toast } from "sonner";
 import {
   Bell,
@@ -26,6 +28,7 @@ import {
 
 const Alerts = () => {
   const { userProfile } = useAuth();
+  const { t } = useLanguage();
   const { 
     alerts, 
     soundEnabled, 

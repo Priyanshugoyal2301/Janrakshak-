@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { translateWithCache } from '@/lib/translate';
 
 type Language = 'en' | 'hi';
 
@@ -6,6 +7,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
   t: (key: string) => string;
+  translateDynamic: (text: string) => Promise<string>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -234,12 +236,17 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     return translations[language][key] || key;
   };
 
+  const translateDynamic = async (text: string): Promise<string> => {
+    if (language === 'en' || !text) return text;
+    return await translateWithCache(text, language);
+  };
+
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translateDynamic }}>
       {children}
     </LanguageContext.Provider>
   );

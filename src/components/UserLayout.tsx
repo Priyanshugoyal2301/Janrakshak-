@@ -119,6 +119,26 @@ const UserLayout = ({
     }
   };
 
+  // Auto-translate page on mount if language is Hindi
+  useEffect(() => {
+    const currentLang = localStorage.getItem('language');
+    console.log('🔄 UserLayout: Current language:', currentLang, 'Path:', location.pathname);
+    
+    if (currentLang === 'hi') {
+      // Wait for DOM to be ready and translation function to be available
+      const timer = setTimeout(() => {
+        if ((window as any).translatePageContent) {
+          console.log('🌐 UserLayout: Triggering auto-translation for path:', location.pathname);
+          (window as any).translatePageContent('hi');
+        } else {
+          console.warn('⚠️ Translation function not available yet');
+        }
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname]); // Re-run when route changes
+
   // Load OmniDimension widget script
   useEffect(() => {
     const script = document.createElement('script');
